@@ -18,7 +18,7 @@ alert("Leave the comment here")
 return
 }
 
-const res = await fetch("emb.json")
+const res = await fetch("/Assest/emb.json")
 const data = await res.json()
 
 
