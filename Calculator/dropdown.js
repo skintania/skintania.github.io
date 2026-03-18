@@ -8,7 +8,8 @@ allDropdowns.forEach(dropdown => {
     gradeOptions.forEach(option => {
         option.addEventListener('click', function() {
             const selectedGradeText = this.innerText;
-            const selectedGradeValue = this.getAttribute('data-value');
+            // support both `data-value` and `value` to make the dropdown reusable
+            const selectedGradeValue = this.getAttribute('data-value') ?? this.getAttribute('value');
             displayBox.innerText = selectedGradeText;
             displayBox.setAttribute('data-value', selectedGradeValue);
             

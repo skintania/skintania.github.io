@@ -173,6 +173,20 @@
     margin-bottom: 15px;
 }
 
+.status-message.warning {
+    color: #e67e22;
+    font-size: 2em;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.status-message.success {
+    color: #16a085;
+    font-size: 2em;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
 .score-text {
     font-size: 2rem !important;
     font-weight: 700;
