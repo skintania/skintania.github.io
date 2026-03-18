@@ -10,17 +10,40 @@ allDropdowns.forEach(dropdown => {
     const showOptions = () => {
         clearTimeout(hideTimer);
         optionsList.style.display = 'block';
+        document.addEventListener('click', closeOnOutsideClick);
+    };
+
+    const hideOptions = () => {
+        optionsList.style.display = 'none';
+        document.removeEventListener('click', closeOnOutsideClick);
     };
 
     const hideOptionsDelayed = () => {
         clearTimeout(hideTimer);
         hideTimer = setTimeout(() => {
-            optionsList.style.display = 'none';
+            hideOptions();
         }, 200);
     };
 
+    const closeOnOutsideClick = (event) => {
+        if (!dropdown.contains(event.target)) {
+            hideOptions();
+        }
+    };
+
+    // Desktop: hover behavior
     dropdown.addEventListener('mouseenter', showOptions);
     dropdown.addEventListener('mouseleave', hideOptionsDelayed);
+
+    // Mobile / touch: toggle on click
+    displayBox.addEventListener('click', (event) => {
+        event.stopPropagation();
+        if (optionsList.style.display === 'block') {
+            hideOptions();
+        } else {
+            showOptions();
+        }
+    });
 
     gradeOptions.forEach(option => {
         option.addEventListener('click', function() {
@@ -30,7 +53,7 @@ allDropdowns.forEach(dropdown => {
             displayBox.innerText = selectedGradeText;
             displayBox.setAttribute('data-value', selectedGradeValue);
             
-            optionsList.style.display = 'none';
+            hideOptions();
         });
     });
 });
