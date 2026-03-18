@@ -31,9 +31,13 @@ allDropdowns.forEach(dropdown => {
         }
     };
 
+    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+
     // Desktop: hover behavior
-    dropdown.addEventListener('mouseenter', showOptions);
-    dropdown.addEventListener('mouseleave', hideOptionsDelayed);
+    if (!isTouchDevice) {
+        dropdown.addEventListener('mouseenter', showOptions);
+        dropdown.addEventListener('mouseleave', hideOptionsDelayed);
+    }
 
     // Mobile / touch: toggle on click
     displayBox.addEventListener('click', (event) => {
