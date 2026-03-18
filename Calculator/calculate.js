@@ -90,12 +90,14 @@ document.getElementById('calbutton').addEventListener('click', function() {
 
             let percent = 0;
             if (yearScorePercents.length && maxPercent > minPercent) {
-                if (normalizedPercent >= maxPercent) {
+                const midPercent = (minPercent + maxPercent) / 2;
+
+                if (normalizedPercent >= midPercent) {
                     percent = 100;
                 } else if (normalizedPercent <= minPercent) {
                     percent = 0;
                 } else {
-                    percent = ((normalizedPercent - minPercent) / (maxPercent - minPercent)) * 100;
+                    percent = ((normalizedPercent - minPercent) / (midPercent - minPercent)) * 100;
                 }
             } else {
                 // fallback: percent of max possible score
@@ -197,12 +199,14 @@ document.getElementById('calbutton').addEventListener('click', function() {
 
                     let deptPercent = 0;
                     if (historyPercents.length && deptMaxPercent > deptMinPercent) {
-                        if (deptNormalizedPercent >= deptMaxPercent) {
+                        const deptMidPercent = (deptMinPercent + deptMaxPercent) / 2;
+
+                        if (deptNormalizedPercent >= deptMidPercent) {
                             deptPercent = 100;
                         } else if (deptNormalizedPercent <= deptMinPercent) {
                             deptPercent = 0;
                         } else {
-                            deptPercent = ((deptNormalizedPercent - deptMinPercent) / (deptMaxPercent - deptMinPercent)) * 100;
+                            deptPercent = ((deptNormalizedPercent - deptMinPercent) / (deptMidPercent - deptMinPercent)) * 100;
                         }
                     } else {
                         deptPercent = deptNormalizedPercent;

@@ -204,6 +204,19 @@
         font-size: 0.9rem;
     }
 
+    /* Stack navigation links on narrow screens */
+    .navbar ul {
+        flex-wrap: wrap;
+    }
+
+    .navbar li {
+        width: 100%;
+    }
+
+    .navbar a {
+        text-align: center;
+    }
+
     .card {
         padding: 14px;
     }
@@ -227,12 +240,22 @@
     }
 
     .selected-option {
-        width: 100%;
+        width: auto;
         justify-content: center;
     }
 
     .options-list {
-        min-width: 100%;
+        width: 100%;
+    }
+
+    /* Ensure department dropdowns don’t overflow on narrow screens */
+    #depart {
+        min-width: 0;
+        width: auto;
+    }
+
+    #depart + .options-list {
+        min-width: 0;
         width: 100%;
     }
 

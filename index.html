@@ -18,9 +18,8 @@
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       margin-bottom: 30px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      /* Removed sticky positioning so the navbar scrolls with the page */
+      position: static;
     }
 
     .navbar ul {
@@ -124,7 +123,7 @@
 
     <nav class="navbar">
       <ul>
-        <li><a href="/">หน้าแรก</a></li>
+        <li><a href="">หน้าแรก</a></li>
         <li><a href="/">คอร์สเรียน</a></li>
         <li><a href="/Calculator/">คำนวณระยะแห่งความฝัน</a></li>
         <li><a href="/">คำแนะนำรายวิชา</a></li>
