@@ -1,0 +1,192 @@
+.grade-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.grade-row h4 {
+    margin: 0; 
+    white-space: nowrap;
+}
+
+.custom-dropdown {
+    position: relative;
+    width: 100px;
+}
+
+.selected-option {
+    background-color: #fff;
+    min-width: 70px;
+    padding: 8px 12px;
+    margin: 5px 10px;
+    border: 2px solid #d1d5db; 
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem; 
+    font-weight: 600;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}   
+
+/* 5. Add a hover state so the user knows it's clickable */
+.selected-option:hover {
+    border-color: #3498db; /* Changes to a nice blue */
+    background-color: #f8faff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Soft shadow */
+}
+
+.options-list {
+    display: none; 
+    position: absolute;
+    z-index: 10;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 0;
+    margin-top: 0px;
+    list-style: none;
+    min-width: 70px;
+    text-align: center;
+    color: #333;
+}
+
+.custom-dropdown:hover .options-list {
+    display: block;
+}
+
+.options-list li {
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.options-list li:hover {
+    background-color: #3498db;
+    color: white;
+}
+
+.depart-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.depart-row h4 {
+    margin: 0; 
+    white-space: nowrap;
+}
+
+#depart {
+    min-width: 500px;
+    justify-content: flex-start;
+}
+
+#depart + .options-list{
+    min-width: 280px;
+    width: max-content;
+    text-align: left;
+}
+
+#calbutton {
+    display: block;
+    margin: 30px auto;
+
+    padding: 12px 40px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white; 
+    background-color: #3498db; 
+    border: none; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 6px rgba(52, 152, 219, 0.3); 
+    cursor: pointer;
+    transition: all 0.2s ease; 
+}
+
+#calbutton:hover {
+    background-color: #2980b9; 
+    transform: translateY(-2px); 
+    box-shadow: 0 6px 12px rgba(52, 152, 219, 0.4); 
+}
+
+#calbutton:active {
+    transform: translateY(1px); 
+    box-shadow: 0 2px 4px rgba(52, 152, 219, 0.2); 
+}
+
+/* circle */
+.chance-circle {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    
+    --fill-color: color-mix(in srgb, #3498db var(--percentage), #e74c3c);
+    
+    background: conic-gradient(
+        var(--fill-color) var(--percentage), 
+        #e0e0e0 0
+    );
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    transition: --percentage 0.5s ease-in-out; 
+}
+
+.chance-circle::before {
+    content: "";
+    position: absolute;
+    width: 150px;
+    height: 150px;
+    background-color: white;
+    border-radius: 50%;
+}
+
+.chance-text {
+    position: relative;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Circle Chance */
+.score-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+}
+
+.score-details {
+    text-align: left;
+}
+
+.status-message.error {
+    color: #c0392b;
+    font-size: 2em;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
+
+.score-text {
+    font-size: 2rem !important;
+    font-weight: 700;
+    color: #222;
+    margin: 8px 0;
+}
+
+@media (max-width: 600px) {
+    .score-row {
+        flex-direction: column; /* Stacks them vertically on phones */
+        text-align: center;
+        gap: 20px;
+    }
+    .score-details {
+        text-align: center; /* Centers the text on phones */
+    }
+}
