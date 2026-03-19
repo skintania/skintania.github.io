@@ -11,14 +11,11 @@
     .wrap{max-width:1100px;margin:48px auto;padding:24px}
     h1{margin:0;font-size:1.6rem}
 
-    
-
-    /* 📌 สไตล์สำหรับแบนเนอร์ที่เพิ่มเข้ามาใหม่ */
     .banner {
       width: 100%;
       height: auto;
-      max-height: 300px; /* ปรับความสูงสูงสุดได้ตามต้องการ */
-      object-fit: cover; /* ทำให้รูปไม่เบี้ยวเวลาถูกบีบ */
+      max-height: 300px;
+      object-fit: cover; 
       border-radius: 12px;
       margin-bottom: 24px;
       box-shadow: 0 6px 18px rgba(2,6,23,0.6);
@@ -56,22 +53,11 @@
   <script src="/Assest/cmt.js" defer></script>
   <script src="/loadCourse.js" defer></script>
 
-  <script src="/callHeader/component.js" defer></script>
+  <script src="/Template/component.js" defer></script>
 </head>
 
 <body>
-  <div id="commentBtn">💬</div>
-
-  <div id="commentPopup" class="hidden">
-    <div class="popupBox">
-      <h3>ส่งคำถาม / แจ้งปัญหา</h3>
-      <textarea id="commentText" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
-      <div class="popupActions">
-        <button onclick="sendComment()">ส่ง</button>
-        <button onclick="togglePopup()">ปิด</button>
-      </div>
-    </div>
-  </div>
+  <comment-widget></comment-widget>
 
   <main class="wrap">
     
