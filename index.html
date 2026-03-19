@@ -56,22 +56,11 @@
   <script src="/Assest/cmt.js" defer></script>
   <script src="/loadCourse.js" defer></script>
 
-  <script src="/callHeader/component.js" defer></script>
+  <script src="/Template/component.js" defer></script>
 </head>
 
 <body>
-  <div id="commentBtn">💬</div>
-
-  <div id="commentPopup" class="hidden">
-    <div class="popupBox">
-      <h3>ส่งคำถาม / แจ้งปัญหา</h3>
-      <textarea id="commentText" placeholder="พิมพ์ข้อความที่นี่..."></textarea>
-      <div class="popupActions">
-        <button onclick="sendComment()">ส่ง</button>
-        <button onclick="togglePopup()">ปิด</button>
-      </div>
-    </div>
-  </div>
+  <comment-widget></comment-widget>
 
   <main class="wrap">
     
