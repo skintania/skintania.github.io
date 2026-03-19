@@ -66,8 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         const percent = totalVotes > 0 ? (votes / totalVotes) * 100 : 0;
 
                         pollContent.innerHTML = `
-                            <div style="display:flex; justify-content:space-between; font-size:2em; margin-bottom:4px;">
-                                <strong>${choice}</strong>
+                            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                <strong class="event-description">${choice}</strong> 
                                 <span class="vote-text" style="color: #60a5fa;">${votes} โหวต (${percent.toFixed(0)}%)</span>
                             </div>
                             <div style="height:20px; background:rgba(255,255,255,0.1); border-radius:10px; overflow:hidden;">
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (eventItem.description) {
                         const desc = document.createElement('p');
                         desc.style.margin = '0 0 5px 0';
-                        desc.style.fontSize = '2em';
+                        desc.classList.add('event-description');
                         desc.innerText = eventItem.description;
                         textContent.appendChild(desc);
                     }
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (eventItem.description) {
                         const desc = document.createElement('p');
-                        desc.style.fontSize = '1.5em';
+                        desc.classList.add('event-description');
                         desc.style.lineHeight = '1.5';
                         desc.innerText = eventItem.description;
                         announceContainer.appendChild(desc);
