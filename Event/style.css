@@ -1,0 +1,38 @@
+/* ขนาดมาตรฐานสำหรับ Desktop */
+.event-description {
+    font-size: 1.5rem !important; /* ลองใช้ 1.5rem เพื่อให้เห็นความต่างชัดๆ */
+    display: block;
+}
+
+/* ลดขนาดเมื่อดูในมือถือ */
+@media screen and (max-width: 768px) {
+    .event-description {
+        font-size: 1rem !important; /* ขนาดพอดีคำสำหรับมือถือ */
+    }
+    .vote-text {
+        font-size: 0.8rem !important;
+    }
+    
+    /* เพิ่มเติม: ปรับให้รูปภาพเล็กลงในมือถือด้วยถ้าจำเป็น */
+    .card img {
+        width: 100px !important; 
+    }
+
+    .navbar a {
+        padding: 12px 10px;
+        font-size: 0.9rem;
+    }
+
+    /* Stack navigation links on narrow screens */
+    .navbar ul {
+        flex-wrap: wrap;
+    }
+
+    .navbar li {
+        width: 100%;
+    }
+
+    .navbar a {
+        text-align: center;
+    }
+}

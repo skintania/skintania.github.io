@@ -9,42 +9,9 @@
     :root{--bg:#0f1724;--card:#0b1220;--accent:#3b82f6;--muted:#9aa4b2}
     body{margin:0;font-family: 'Sukhumvit Set', 'Kanit', sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans",Arial;background:linear-gradient(180deg,#071029 0%,var(--bg) 100%);color:#e6eef8}
     .wrap{max-width:1100px;margin:48px auto;padding:24px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:16px}
     h1{margin:0;font-size:1.6rem}
 
-    /* สไตล์สำหรับ Navbar */
-    .navbar {
-      background: rgba(15, 23, 36, 0.8);
-      backdrop-filter: blur(10px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 30px;
-      /* Removed sticky positioning so the navbar scrolls with the page */
-      position: static;
-    }
-
-    .navbar ul {
-      display: flex;
-      justify-content: center;
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      overflow-x: auto;
-      white-space: nowrap;
-    }
-
-    .navbar a {
-      padding: 16px 20px;
-      display: inline-block;
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.95rem;
-      transition: 0.3s;
-    }
-
-    .navbar a:hover {
-      color: var(--accent);
-      background: rgba(59, 130, 246, 0.1);
-    }
+    
 
     /* 📌 สไตล์สำหรับแบนเนอร์ที่เพิ่มเข้ามาใหม่ */
     .banner {
@@ -83,12 +50,13 @@
     .card h2{margin:0 0 6px;font-size:1.05rem}
     .card p{margin:0;color:var(--muted);font-size:0.95rem}
     footer{margin-top:40px;color:var(--muted);font-size:0.9rem}
-    @media (max-width:650px){.wrap{margin:20px;padding:16px}.navbar ul{flex-wrap:wrap;overflow:hidden}.navbar li{flex:1;width:100%;min-width:100%}.navbar a{text-align:center}}
   </style>
   <link rel="icon" href="/Assest/sk-cu.png" type="image/jpg">
   <link rel="stylesheet" href="/Assest/cmt.css">
   <script src="/Assest/cmt.js" defer></script>
   <script src="/loadCourse.js" defer></script>
+
+  <script src="/callHeader/component.js" defer></script>
 </head>
 
 <body>
@@ -109,31 +77,10 @@
     
     <img src="https://scontent.fbkk9-2.fna.fbcdn.net/v/t1.6435-9/76948988_2237161509746072_4194807550555717632_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=f798df&_nc_ohc=i28II4h4BMYQ7kNvwGH7UiC&_nc_oc=AdlmMGcYnNuF5MFDEtiHVqgebqjztKrtam18lD19tQocAeBnJW4MOYaYYP7rPm5xXPEAabfYeb2Hj0OQpDfJUP5L&_nc_zt=23&_nc_ht=scontent.fbkk9-2.fna&_nc_gid=QWERT6qcDKa2bwL63M6NLA&_nc_ss=8&oh=00_AfwMRQcF_eERVjJzv7t2TIFadhFy0AOlPmIzt8_cpLk8pQ&oe=69E20ED0" alt="SkIntania Banner" class="banner">
 
-    <header>
-      <div>
-        <h1>SkIntania — StudyKits</h1>
-        <p class="lead">เลือกคอร์สที่ต้องการเรียน</p>
-      </div>
-      <div style="text-align:right;color:var(--muted)">
-        <div>จัดทำโดย</div>
-        <small>GSC15 OSK143</small>
-        <small>IG : gsc15_sk143</small>
-      </div>
-    </header>
-    <br>
-
-    <nav class="navbar">
-      <ul>
-        <li><a href="">หน้าแรก</a></li>
-        <li><a href="/">คอร์สเรียน</a></li>
-        <li><a href="/">สื่อการเรียน</a></li>
-        <li><a href="/Calculator/">คำนวณระยะแห่งความฝัน</a></li>
-        <li><a href="/">คำแนะนำรายวิชา</a></li>
-        <li><a href="/">กิจกรรม</a></li>
-        <li><a href="/Event/">ลงทะเบียนพบปะ</a></li>
-        <li><a href="/">เกี่ยวกับเรา</a></li>
-      </ul>
-    </nav>
+    <site-header 
+        page-title="Home" 
+        page-desc="หน้าแรก">
+    </site-header>
 
     <section id="coursesGrid" class="grid" aria-label="Courses">
         </section>
