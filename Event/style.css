@@ -17,4 +17,22 @@
     .card img {
         width: 100px !important; 
     }
+
+    .navbar a {
+        padding: 12px 10px;
+        font-size: 0.9rem;
+    }
+
+    /* Stack navigation links on narrow screens */
+    .navbar ul {
+        flex-wrap: wrap;
+    }
+
+    .navbar li {
+        width: 100%;
+    }
+
+    .navbar a {
+        text-align: center;
+    }
 }

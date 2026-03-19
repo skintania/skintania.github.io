@@ -9,42 +9,8 @@
         :root{--bg:#0f1724;--card:#0b1220;--accent:#3b82f6;--muted:#9aa4b2}
         body{margin:0;font-family: 'Sukhumvit Set', 'Kanit', sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans",Arial;background:linear-gradient(180deg,#071029 0%,var(--bg) 100%);color:#e6eef8;overflow-x: hidden; max-width: 100%;}
         .wrap{max-width:1100px;margin:48px auto;padding:24px}
-        header{display:flex;align-items:center;justify-content:space-between;gap:16px}
         h1{margin:0;font-size:1.6rem}
         p.lead{margin:6px 0 0;color:var(--muted)}
-       .navbar {
-  background: rgba(15, 23, 36, 0.8);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  margin-bottom: 30px;
-  /* Removed sticky positioning so the navbar scrolls with the page */
-  position: static;
-}
-
-.navbar ul {
-  display: flex;
-  justify-content: center;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  overflow-x: auto;
-  white-space: nowrap;
-}
-
-.navbar a {
-  padding: 16px 20px;
-  display: inline-block;
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 0.95rem;
-  transition: 0.3s;
-}
-
-.navbar a:hover {
-  color: var(--accent);
-  background: rgba(59, 130, 246, 0.1);
-}
-
         .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:28px}
         .card{background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));padding:18px;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);transition:transform .18s,box-shadow .18s}
         .card h2{margin:0 0 6px;font-size:1.05rem}
@@ -54,34 +20,17 @@
     <link rel="stylesheet" href="dropdown.css">
     <script src="dropdown.js" defer></script>
     <script src="calculate.js" defer></script>
+
+    <script src="/callHeader/component.js" defer></script>
 </head>
 <body>
     <main class="wrap">
-    <header>
-      <div>
-        <h1>SkIntania — Calculator</h1>
-        <p class="lead">ใส่คะแนนที่ต้องการคำนวณ</p>
-      </div>
-      <div style="text-align:right;color:var(--muted)">
-        <div>จัดทำโดย</div>
-        <small>GSC15 OSK143</small>
-      </div>
-    </header>
-    <br>
 
-    <!-- Navigation Bar-->
-    <nav class="navbar">
-      <ul>
-        <li><a href="/">หน้าแรก</a></li>
-        <li><a href="/">คอร์สเรียน</a></li>
-        <li><a href="/">สื่อการเรียน</a></li>
-        <li><a href="">คำนวณระยะแห่งความฝัน</a></li>
-        <li><a href="/">คำแนะนำรายวิชา</a></li>
-        <li><a href="/">กิจกรรม</a></li>
-        <li><a href="/Event/">ลงทะเบียนพบปะ</a></li>
-        <li><a href="/">เกี่ยวกับเรา</a></li>
-      </ul>
-    </nav>
+    <site-header 
+        page-title="Calculator" 
+        page-desc="ระบบคำนวณคะแนนและระยะทางสู่ความฝัน">
+    </site-header>
+    
     <br>
 
     <div class="card">
