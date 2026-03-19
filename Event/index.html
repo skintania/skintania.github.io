@@ -6,81 +6,117 @@
     <title>Skintania — Event</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
-        :root{--bg:#0f1724;--card:#0b1220;--accent:#3b82f6;--muted:#9aa4b2}
-        body{margin:0;font-family: 'Sukhumvit Set', 'Kanit', sans-serif,-apple-system,Segoe UI,Roboto,"Noto Sans",Arial;background:linear-gradient(180deg,#071029 0%,var(--bg) 100%);color:#e6eef8}
-        .wrap{max-width:1100px;margin:48px auto;padding:24px}
-        h1{margin:0;font-size:1.6rem}
+
+        :root {
+            --bg: #0f1724;
+            --card: #0b1220;
+            --accent: #3b82f6;
+            --muted: #9aa4b2
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Sukhumvit Set', 'Kanit', sans-serif, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial;
+            background: linear-gradient(180deg, #071029 0%, var(--bg) 100%);
+            color: #e6eef8
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 48px auto;
+            padding: 24px
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.6rem
+        }
+
         /* สไตล์ปุ่มและการ์ด */
         .btn {
-        display: block; 
-        text-align: center;
-        margin-top: 12px;
-        padding: 8px 12px;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: #fff;
-        text-decoration: none;
-        font-weight: 600;
-        transition: transform 0.2s;
+            display: block;
+            text-align: center;
+            margin-top: 12px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: transform 0.2s;
         }
 
         .btn:hover {
-        transform: scale(1.05);
+            transform: scale(1.05);
         }
-        
-        p.lead{margin:6px 0 0;color:var(--muted)}
-        .grid{display:flex;flex-direction:column;gap:18px;margin-top:28px}
-        .card{
-            width:100%;
-            background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(0,0,0,0.06));
-            padding:18px;
-            border-radius:12px;
-            box-shadow:0 6px 18px rgba(2,6,23,0.6);
-            border:1px solid rgba(255,255,255,0.03);
-            transition:transform .18s,box-shadow .18s
+
+        p.lead {
+            margin: 6px 0 0;
+            color: var(--muted)
         }
-        .card h2{
+
+        .grid {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 28px
+        }
+
+        .card {
+            width: 100%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.06));
+            padding: 18px;
+            border-radius: 12px;
+            box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: transform .18s, box-shadow .18s
+        }
+
+        .card h2 {
             text-align: center;
-            margin:0 0 6px;
-            font-size:2rem
+            margin: 0 0 6px;
+            font-size: 2rem
         }
-        .card p{margin:0;
-            color:var(--muted);
-            font-size:1.5rem
+
+        .card p {
+            margin: 0;
+            color: var(--muted);
+            font-size: 1.5rem
         }
-        footer{
-            margin-top:40px;
-            color:var(--muted);
-            font-size:0.9rem
+
+        footer {
+            margin-top: 40px;
+            color: var(--muted);
+            font-size: 0.9rem
         }
     </style>
-    <link rel="icon" href="/Assest/sk-cu.png" type="image/jpg">
+
     <link rel="stylesheet" href="/Event/style.css">
 
     <script src="/Template/component.js" defer></script>
 </head>
+
 <body>
     <comment-widget></comment-widget>
     <main class="wrap">
-        <site-header 
-            page-title="Event" 
-            page-desc="Event ต่างๆที่น่าสนใจสำหรับ SkIntania">
+        <site-header page-title="Event" page-desc="Event ต่างๆที่น่าสนใจสำหรับ SkIntania">
         </site-header>
 
         <section id="coursesGrid" class="grid" aria-label="Courses">
-            
+
         </section>
 
         <script src="loadEvent.js" defer></script>
 
         <footer>
-        <p>เรื่องแจ้ง น่ารู้</p>
-        <ul style="color:var(--muted)">
-            <li>กำลัง Test อยู่</li>
-            <li>ยังไม่มี Database รองรับที</li>
-            <li>อันอื่นรอก่อนนๆ</li>
-        </ul>
+            <p>เรื่องแจ้ง น่ารู้</p>
+            <ul style="color:var(--muted)">
+                <li>กำลัง Test อยู่</li>
+                <li>ยังไม่มี Database รองรับที</li>
+                <li>อันอื่นรอก่อนนๆ</li>
+            </ul>
         </footer>
     </main>
 </body>
+
 </html>
