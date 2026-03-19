@@ -72,17 +72,36 @@ header{
         margin:20px;
         padding:16px;
     }
+    .navbar{
+        margin-bottom: 0px;
+    }
     .navbar ul{
         flex-wrap:wrap;
-        overflow:hidden
+        overflow:hidden;
     }
-    .navbar li{
+    .navbar ul li{
         flex:1;
         width:100%;
-        min-width:100%
+        min-width:100%;
+        
     }
-    .navbar a{
+    .navbar ul li a{
         text-align:center
+    }
+
+    .header-text h1{
+        font-size:1.2rem
+    }
+    .header-text p{
+        font-size:0.7rem
+    }
+    .header-credits{
+        font-size:0.6rem
+    }
+
+    .header-logo{
+        width:60px;
+        height:60px
     }
 }
 
