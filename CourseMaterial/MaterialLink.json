@@ -2,20 +2,21 @@
     {
         "name": "General Physics 1",
         "type": "folder",
+        "icon": "fa-solid fa-atom",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
                 "type": "folder",
                 "contents": [
                     {
-                        "name": "สไลด์ 1.pdf",
+                        "name": "Test.pdf",
                         "type": "file",
-                        "link": "/"
+                        "link": "/CourseMaterial/TestPreview/Test1.pdf"
                     },
                     {
-                        "name": "สไลด์ 2.pdf",
+                        "name": "Test2.png",
                         "type": "file",
-                        "link": "/"
+                        "link": "/CourseMaterial/TestPreview/Test2.png"
                     }
                 ]
             },
@@ -29,6 +30,7 @@
     {
         "name": "General Physics 2",
         "type": "folder",
+        "icon": "fa-solid fa-magnet",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -56,6 +58,7 @@
     {
         "name": "Calculus 1",
         "type": "folder",
+        "icon": "fa-solid fa-calculator",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -83,6 +86,7 @@
     {
         "name": "Calculus 2",
         "type": "folder",
+        "icon": "fa-solid fa-square-root-variable",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -110,6 +114,7 @@
     {
         "name": "General Physics Lab 1",
         "type": "folder",
+        "icon": "fa-solid fa-microscope",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -137,6 +142,7 @@
     {
         "name": "General Physics Lab 2",
         "type": "folder",
+        "icon": "fa-solid fa-wave-square",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -164,6 +170,7 @@
     {
         "name": "General Chemistry",
         "type": "folder",
+        "icon": "fa-solid fa-flask",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -191,6 +198,7 @@
     {
         "name": "General Chemistry Lab",
         "type": "folder",
+        "icon": "fa-solid fa-vials",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -218,6 +226,7 @@
     {
         "name": "Computer Programming",
         "type": "folder",
+        "icon": "fa-solid fa-laptop-code",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -245,6 +254,7 @@
     {
         "name": "Engineering Materials",
         "type": "folder",
+        "icon": "fa-solid fa-cubes",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -272,6 +282,7 @@
     {
         "name": "Engineering Drawing",
         "type": "folder",
+        "icon": "fa-solid fa-pen-ruler",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -299,6 +310,7 @@
     {
         "name": "Exploring Engineering World",
         "type": "folder",
+        "icon": "fa-solid fa-gears",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -326,6 +338,7 @@
     {
         "name": "Experiential English 1",
         "type": "folder",
+        "icon": "fa-solid fa-language",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
@@ -353,6 +366,7 @@
     {
         "name": "Experiential English 2",
         "type": "folder",
+        "icon": "fa-solid fa-book-open-reader",
         "contents": [
             {
                 "name": "Chapter 1 & 2 Slides",
