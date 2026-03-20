@@ -1,0 +1,75 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  margin-top: 28px;
+}
+
+/* Removed padding from the main card, added flexbox & overflow */
+.card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.06));
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  transition: transform .18s, box-shadow .18s;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Keeps the image inside the rounded corners */
+}
+
+.card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px rgba(2, 6, 23, 0.7);
+}
+
+/* Thumbnail specific styling (16:9 ratio like YouTube) */
+.card-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  /* Prevents the image from stretching */
+  display: block;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Wrapped padding for the text section */
+.card-content {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  /* Pushes the button to the bottom if descriptions vary in length */
+}
+
+.card h2 {
+  margin: 0 0 6px;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+.card p {
+  margin: 0 0 12px 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+  flex-grow: 1;
+}
+
+.default-thumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: rgba(255, 255, 255, 0.05);
+  /* สีพื้นหลังกล่องแบบจางๆ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  /* ใช้สีเทาเดียวกับข้อความ */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* หากใช้ default icon ตอนชี้เมาส์ (hover) สามารถทำให้มันเปลี่ยนสีได้นิดหน่อย */
+.card:hover .default-thumb {
+  color: var(--accent);
+  transition: color 0.3s ease;
+}
