@@ -71,8 +71,11 @@
     <link rel="stylesheet" href="dropdown.css">
     <script src="dropdown.js" defer></script>
     <script src="calculate.js" defer></script>
+    <script src="graph.js" defer></script>
 
     <script src="/Template/component.js" defer></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -427,6 +430,26 @@
                 </div>
 
             </div>
+        </div>
+
+        <br>
+
+        <div class="card" id="trendChartCard">
+            <h2>สถิติคะแนนย้อนหลัง (%)</h2>
+            <p class="lead" style="margin-bottom: 20px;">เปรียบเทียบแนวโน้มคะแนนต่ำสุด-สูงสุด แต่ละสาขาวิชา</p>
+            
+            <div class="chart-controls">
+                <button id="btnMinScore" class="btn-chart active">คะแนนต่ำสุด</button>
+                <button id="btnMaxScore" class="btn-chart">คะแนนสูงสุด</button>
+                <button id="btnToggleAll" class="btn-chart" style="margin-left: auto; border-color: #8b5cf6; color: #8b5cf6;">ซ่อน/แสดงทั้งหมด</button>
+            </div>
+
+            <div style="position: relative; height: 400px; width: 100%; margin-top: 25px;">
+                <canvas id="scoreTrendChart"></canvas>
+            </div>
+
+            <div id="customLegend" class="custom-legend-container"></div>
+
         </div>
 
         <br>

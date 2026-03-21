@@ -76,3 +76,4 @@ function updateChance(newPercentage) {
 
 // Example: Test it by setting the chance to 42%
 // updateChance(42);
+
