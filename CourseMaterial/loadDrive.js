@@ -1,18 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- 1. DOM Elements ---
     const gridContainer = document.getElementById('coursesGrid');
-    const breadcrumbContainer = document.getElementById('breadcrumbContainer');
     const backBtn = document.getElementById('backBtn');
     const currentPathText = document.getElementById('currentPathText');
-    const viewToggleBtn = document.getElementById('viewToggleBtn'); // NEW: The toggle button
+    const viewToggleBtn = document.getElementById('viewToggleBtn');
+    const selectBtn = document.getElementById('selectBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const selectedCountSpan = document.getElementById('selectedCount');
 
+    // --- 2. State Variables ---
     let subjectIcons = {};
     let folderHistory = [];
     let pathNames = ["Home"];
+    let currentItemsData = [];
+    let viewMode = 'grid';
+    let isSelectMode = false;
+    let selectedFiles = new Set();
 
-    // NEW: State trackers for the view mode
-    let currentItemsData = []; // Remembers the current folder's files so we can re-render instantly
-    let viewMode = 'grid'; // Default view
-
+    // --- 3. PDF.js Setup ---
     const pdfJS = window['pdfjs-dist/build/pdf'];
     if (pdfJS) {
         pdfJS.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -31,6 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, { rootMargin: '150px', threshold: 0.1 });
 
+    // --- 4. Core Logic Functions ---
+
     async function init() {
         try {
             const iconResponse = await fetch('icons.json');
@@ -41,27 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- View Toggle Logic ---
-    if (viewToggleBtn) {
-        viewToggleBtn.addEventListener('click', () => {
-            // Switch the mode
-            viewMode = viewMode === 'grid' ? 'list' : 'grid';
-
-            // Update the button icon/text so the user knows what clicking it next will do
-            if (viewMode === 'grid') {
-                viewToggleBtn.innerHTML = '<i class="fa-solid fa-list"></i> Switch to List View';
-            } else {
-                viewToggleBtn.innerHTML = '<i class="fa-solid fa-grip"></i> Switch to Grid View';
-            }
-
-            // Re-render the exact same files, but in the new layout!
-            renderGrid(currentItemsData);
-        });
-    }
-
     async function loadDirectory(targetPath) {
         gridContainer.innerHTML = '<div style="text-align:center; padding: 20px;">Loading...</div>';
-
         try {
             const url = targetPath
                 ? `https://skintania-api.beamsvj.workers.dev/?path=${encodeURIComponent(targetPath)}`
@@ -71,68 +59,85 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('API failed to return data');
 
             const items = await response.json();
-            currentItemsData = items; // Save this so the toggle button can re-use it!
+            currentItemsData = items;
             renderGrid(items);
         } catch (error) {
             showError(`Could not load folder: ${error.message}`);
         }
     }
 
+    async function getAllFilesFromFolder(apiPath, zipPrefix) {
+        let files = [];
+        try {
+            const url = `https://skintania-api.beamsvj.workers.dev/?path=${encodeURIComponent(apiPath)}`;
+            const response = await fetch(url);
+            const items = await response.json();
+
+            for (const item of items) {
+                if (item.type === 'file') {
+                    // We attach the prefix (e.g., "Folder A/") to the filename
+                    files.push({
+                        link: item.link,
+                        zipPath: `${zipPrefix}/${item.name}`
+                    });
+                } else if (item.type === 'folder') {
+                    // Dig deeper, adding this folder name to the prefix
+                    const subFiles = await getAllFilesFromFolder(
+                        `${apiPath}/${item.name}`,
+                        `${zipPrefix}/${item.name}`
+                    );
+                    files.push(...subFiles);
+                }
+            }
+        } catch (e) {
+            console.error("Deep fetch error:", e);
+        }
+        return files;
+    }
+
+    function updateDownloadBtn() {
+        if (!downloadBtn || !selectedCountSpan) return;
+        const count = selectedFiles.size;
+        selectedCountSpan.textContent = count;
+        downloadBtn.style.display = count > 0 ? 'flex' : 'none';
+    }
+
     function renderGrid(items) {
         gridContainer.innerHTML = '';
+        pdfObserver.disconnect();
 
-        // --- 1. NEW: BUILD CLICKABLE BREADCRUMBS ---
-        currentPathText.innerHTML = ''; // Clear the "Home > Folder" text
-
+        // Breadcrumbs
+        currentPathText.innerHTML = '';
         pathNames.forEach((name, index) => {
             const isLast = index === pathNames.length - 1;
-
-            // Create the clickable span
             const span = document.createElement('span');
             span.className = 'breadcrumb-link';
             span.textContent = name;
-
             if (!isLast) {
                 span.onclick = () => {
-                    // Logic to jump back multiple levels
                     const levelsToPop = pathNames.length - 1 - index;
                     for (let i = 0; i < levelsToPop; i++) {
                         pathNames.pop();
                         folderHistory.pop();
                     }
-                    const newPath = pathNames.slice(1).join('/');
-                    loadDirectory(newPath);
+                    loadDirectory(pathNames.slice(1).join('/'));
                 };
-
                 currentPathText.appendChild(span);
-
-                // Add a separator ( > )
-                const separator = document.createElement('span');
-                separator.className = 'path-separator';
-                separator.textContent = ' > ';
-                currentPathText.appendChild(separator);
+                const sep = document.createElement('span');
+                sep.className = 'path-separator';
+                sep.textContent = ' > ';
+                currentPathText.appendChild(sep);
             } else {
-                // Last item is the current folder (not clickable/different color)
                 span.style.color = '#e6eef8';
-                span.style.cursor = 'default';
                 currentPathText.appendChild(span);
             }
         });
 
-        // --- 2. Handle Back Button State ---
         backBtn.disabled = (folderHistory.length === 0);
-
-        // --- 3. Set the View Mode ---
-        if (viewMode === 'list') {
-            gridContainer.classList.add('list-view');
-        } else {
-            gridContainer.classList.remove('list-view');
-        }
-
-        pdfObserver.disconnect();
+        gridContainer.className = viewMode === 'list' ? 'grid list-view' : 'grid';
 
         if (!items || items.length === 0) {
-            gridContainer.innerHTML = '<div style="text-align:center; padding: 20px; color: gray;">This folder is empty.</div>';
+            gridContainer.innerHTML = '<div style="text-align:center; padding: 40px; color: gray;">Folder is empty</div>';
             return;
         }
 
@@ -140,17 +145,63 @@ document.addEventListener('DOMContentLoaded', () => {
             const isFile = item.type === 'file';
             const card = document.createElement(isFile ? 'a' : 'div');
             card.className = 'drive-card';
+            if (selectedFiles.has(item.link)) card.classList.add('selected');
 
-            if (isFile) {
+            const footer = document.createElement('div');
+            footer.className = 'card-footer';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'item-checkbox';
+            checkbox.checked = selectedFiles.has(item.link);
+            checkbox.style.display = isSelectMode ? 'block' : 'none';
+
+            checkbox.onclick = (e) => {
+                e.stopPropagation();
+                // Create a unique ID for this specific item in this specific folder
+                const currentDir = pathNames.slice(1).join('/');
+                const itemID = currentDir ? `${currentDir}/${item.name}` : item.name;
+
+                if (checkbox.checked) {
+                    // Store the whole object as a JSON string so we don't lose data
+                    selectedFiles.add(JSON.stringify({
+                        name: item.name,
+                        link: item.link,
+                        type: item.type,
+                        fullPath: itemID
+                    }));
+                    card.classList.add('selected');
+                } else {
+                    // Find and remove the matching item
+                    for (let selected of selectedFiles) {
+                        const parsed = JSON.parse(selected);
+                        if (parsed.fullPath === itemID) {
+                            selectedFiles.delete(selected);
+                            break;
+                        }
+                    }
+                    card.classList.remove('selected');
+                }
+                updateDownloadBtn();
+            };
+
+            const nameLabel = document.createElement('div');
+            nameLabel.className = 'drive-name';
+            nameLabel.textContent = item.name;
+
+            footer.appendChild(checkbox);
+            footer.appendChild(nameLabel);
+
+            card.innerHTML = getIconHtml(item);
+            card.appendChild(footer);
+
+            if (isFile && !isSelectMode) {
                 card.href = item.link;
                 card.target = '_blank';
             }
 
-            let iconHtml = getIconHtml(item);
-            card.innerHTML = `${iconHtml}<div class="drive-name">${item.name}</div>`;
             gridContainer.appendChild(card);
 
-            // Only observe PDFs if we are actually in Grid mode (List mode uses static icons)
             if (viewMode === 'grid' && isFile && item.name.toLowerCase().endsWith('.pdf')) {
                 const container = card.querySelector('.pdf-container');
                 if (container) {
@@ -159,14 +210,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (!isFile) {
-                card.addEventListener('click', () => {
+            card.addEventListener('click', (e) => {
+                if (isSelectMode) {
+                    e.preventDefault();
+                    checkbox.click();
+                    return;
+                }
+                if (!isFile) {
                     folderHistory.push(items);
                     pathNames.push(item.name);
-                    const newPath = pathNames.slice(1).join('/');
-                    loadDirectory(newPath);
-                });
-            }
+                    loadDirectory(pathNames.slice(1).join('/'));
+                }
+            });
         });
     }
 
@@ -181,23 +236,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
 
         if (imageExtensions.includes(ext)) {
-            // Optional: You could also return a standard icon for images in list mode if you want it super clean!
-            return `<div class="drive-icon"><img src="${item.link}" alt="${item.name}" class="file-preview-img" loading="lazy" style="max-width:40px; border-radius:4px;"/></div>`;
-        } else if (ext === 'pdf') {
-            // NEW: If we are in list view, skip the canvas and just return a static icon
-            if (viewMode === 'list') {
-                return `<div class="drive-icon"><i class="fa-solid fa-file-pdf" style="color:#e74c3c; font-size: 1.5rem;"></i></div>`;
-            } else {
-                // Otherwise, give them the nice grid preview
-                return `
-                <div class="drive-icon pdf-container">
-                    <div class="loader" style="border: 3px solid #f3f3f3; border-top: 3px solid #3498db; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: auto;"></div>
-                    <canvas class="pdf-preview-canvas" style="display:none; width: 100%; height: 100%; object-fit: cover;"></canvas>
-                    <i class="fa-solid fa-file-pdf fallback-icon" style="display:none; color:#e74c3c;"></i>
-                </div>`;
-            }
+            return `<div class="drive-icon"><img src="${item.link}" alt="${item.name}" class="file-preview-img" loading="lazy"/></div>`;
+        } else if (ext === 'pdf' && viewMode !== 'list') {
+            return `<div class="drive-icon pdf-container">
+                        <div class="loader"></div>
+                        <canvas class="pdf-preview-canvas"></canvas>
+                        <i class="fa-solid fa-file-pdf fallback-icon" style="display:none; color:#e74c3c;"></i>
+                    </div>`;
         } else {
-            return `<div class="drive-icon"><i class="fa-solid fa-file-lines"></i></div>`;
+            const iconColor = ext === 'pdf' ? '#e74c3c' : 'inherit';
+            return `<div class="drive-icon"><i class="fa-solid ${ext === 'pdf' ? 'fa-file-pdf' : 'fa-file-lines'}" style="color:${iconColor}"></i></div>`;
         }
     }
 
@@ -205,42 +253,134 @@ document.addEventListener('DOMContentLoaded', () => {
         const canvas = container.querySelector('.pdf-preview-canvas');
         const loader = container.querySelector('.loader');
         const fallbackIcon = container.querySelector('.fallback-icon');
-
-        if (!canvas || !loader || !fallbackIcon) return;
-
+        if (!canvas) return;
         try {
             const loadingTask = pdfJS.getDocument(url);
             const pdf = await loadingTask.promise;
             const page = await pdf.getPage(1);
-
-            const viewport = page.getViewport({ scale: 0.3 });
+            const viewport = page.getViewport({ scale: 0.4 });
             const context = canvas.getContext('2d');
             canvas.height = viewport.height;
             canvas.width = viewport.width;
-
             await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-            loader.style.display = 'none';
+            if (loader) loader.style.display = 'none';
             canvas.style.display = 'block';
         } catch (e) {
-            console.warn("Preview failed, showing icon instead:", url);
-            loader.style.display = 'none';
-            fallbackIcon.style.display = 'block';
+            if (loader) loader.style.display = 'none';
+            if (fallbackIcon) fallbackIcon.style.display = 'block';
         }
     }
 
-    function showError(msg) {
-        gridContainer.innerHTML = `<p style="color:red; text-align:center;">${msg}</p>`;
+    // --- 5. Event Listeners ---
+
+    if (viewToggleBtn) {
+        viewToggleBtn.addEventListener('click', () => {
+            viewMode = viewMode === 'grid' ? 'list' : 'grid';
+            viewToggleBtn.innerHTML = viewMode === 'grid'
+                ? '<i class="fa-solid fa-list"></i> Switch to List View'
+                : '<i class="fa-solid fa-grip"></i> Switch to Grid View';
+            renderGrid(currentItemsData);
+        });
+    }
+
+    if (selectBtn) {
+        selectBtn.addEventListener('click', () => {
+            isSelectMode = !isSelectMode;
+            gridContainer.classList.toggle('selecting', isSelectMode);
+            selectBtn.innerHTML = isSelectMode
+                ? '<i class="fa-solid fa-xmark"></i> Cancel'
+                : '<i class="fa-solid fa-check-double"></i> Select';
+            if (!isSelectMode) {
+                selectedFiles.clear();
+                updateDownloadBtn();
+            }
+            renderGrid(currentItemsData);
+        });
+    }
+
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', async () => {
+            if (selectedFiles.size === 0) return;
+
+            const MAX_SIZE_MB = 100; // Set your limit here (e.g., 100MB)
+            const zip = new JSZip();
+            const originalHTML = downloadBtn.innerHTML;
+            downloadBtn.disabled = true;
+            downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Calculating size...';
+
+            try {
+                let allFilesToDownload = [];
+                let totalSizeBytes = 0;
+
+                // 1. Map all files and folders
+                for (let jsonString of selectedFiles) {
+                    const item = JSON.parse(jsonString);
+                    if (item.type === 'folder') {
+                        const folderContents = await getAllFilesFromFolder(item.fullPath, item.name);
+                        allFilesToDownload.push(...folderContents);
+                    } else {
+                        allFilesToDownload.push({ link: item.link, zipPath: item.name });
+                    }
+                }
+
+                // 2. Check sizes using HEAD requests
+                downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking limits...';
+                
+                const sizePromises = allFilesToDownload.map(async (file) => {
+                    try {
+                        const res = await fetch(file.link, { method: 'HEAD' });
+                        const size = res.headers.get('content-length');
+                        if (size) totalSizeBytes += parseInt(size, 10);
+                    } catch (e) {
+                        console.warn("Could not determine size for:", file.zipPath);
+                    }
+                });
+
+                await Promise.all(sizePromises);
+
+                // 3. Abort if too large
+                const totalMB = totalSizeBytes / (1024 * 1024);
+                if (totalMB > MAX_SIZE_MB) {
+                    alert(`Download Aborted: The total size (${totalMB.toFixed(1)}MB) exceeds the ${MAX_SIZE_MB}MB limit. Please download a smaller group of files.`);
+                    return; // Stop here
+                }
+
+                // 4. Proceed with Download
+                downloadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Fetching ${allFilesToDownload.length} files...`;
+
+                await Promise.all(allFilesToDownload.map(async (file) => {
+                    const res = await fetch(file.link);
+                    const blob = await res.blob();
+                    zip.file(file.zipPath, blob);
+                }));
+
+                const content = await zip.generateAsync({ type: "blob" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(content);
+                link.download = `Skintania_Archive_${Date.now()}.zip`;
+                link.click();
+
+            } catch (err) {
+                alert("Download failed: " + err.message);
+            } finally {
+                downloadBtn.disabled = false;
+                downloadBtn.innerHTML = originalHTML;
+            }
+        });
     }
 
     backBtn.addEventListener('click', () => {
         if (folderHistory.length > 0) {
             pathNames.pop();
             const previousItems = folderHistory.pop();
-            currentItemsData = previousItems; // Update our tracker
+            currentItemsData = previousItems;
             renderGrid(previousItems);
         }
     });
+
+    function showError(msg) {
+        gridContainer.innerHTML = `<p style="color:red; text-align:center;">${msg}</p>`;
+    }
 
     init();
 });
