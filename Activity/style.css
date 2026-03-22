@@ -1,0 +1,245 @@
+/* คอนเทนเนอร์หลักของ Roadmap */
+.roadmap-container {
+  position: relative;
+  padding-left: 100px;
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* เส้น Timeline แกนหลัก */
+.roadmap-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 65px !important;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--accent) 0%, rgba(59, 130, 246, 0.2) 100%);
+  border-radius: 4px;
+  transform: translateX(-50%);
+}
+
+/* จุดวงกลมบน Timeline (Dot) */
+.roadmap-card {
+  position: relative;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px !important; /* คืนค่าพื้นที่ด้านในให้เนื้อหาหายใจได้ */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.roadmap-card::before {
+  content: '';
+  position: absolute;
+  top: 24px;
+  left: -35px !important;
+  width: 16px;
+  height: 16px;
+  background: var(--bg);
+  border: 4px solid var(--accent);
+  border-radius: 50%;
+  z-index: 2;
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+  transform: translateX(-50%);
+}
+
+/* ป้ายบอกเดือน (Date Tag) */
+.date-tag {
+  display: inline-block;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 12px;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* --- ส่วนของ Dropdown และปุ่ม (ใช้คล้ายๆ เดิม) --- */
+.btn-expand {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: background 0.2s;
+}
+
+.btn-expand:hover { background: rgba(255, 255, 255, 0.1); }
+
+.roadmap-card .details-container {
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.4s ease-in-out, opacity 0.4s, margin 0.4s, padding 0.4s;
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 1px solid transparent;
+  display: block !important; /* ป้องกันการไปติด display: none จากไฟล์อื่น */
+}
+
+.roadmap-card .details-container.show {
+  max-height: 1000px;
+  opacity: 1;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.roadmap-card.same-time {
+  margin-top: -16px; 
+  left: -2px !important;
+}
+
+.roadmap-card.same-time::before {
+  width: 10px;
+  height: 10px;
+  left: -30px; /* ปรับให้จุดเล็กยังคงอยู่กึ่งกลางเส้น */
+  top: 27px;
+  border-width: 3px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ระบบ Tab */
+.tab-header {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+.tab-header::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--muted);
+  padding: 6px 14px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.tab-btn.active, .tab-btn:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.tab-content {
+  display: none;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 16px;
+  border-radius: 8px;
+}
+.tab-content.active { display: block; }
+
+/* แยกสีของการ์ดสอบ (Exam) ให้ดูแตกต่าง */
+.roadmap-card.type-exam {
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.roadmap-card.type-exam::before {
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+.roadmap-card.type-exam .date-tag {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.timeline-date-left {
+  position: absolute;
+  left: -100px !important;
+  top: 22px; /* ให้อยู่ระดับเดียวกับวงกลม */
+  width: 50px !important;
+  text-align: center !important;
+  font-weight: 600;
+  color: #fff;
+  font-size: 1rem;
+}
+
+/* 2. รูปภาพตกแต่งใน Card */
+.roadmap-card-image {
+  width: calc(100% + 48px); /* ชดเชยกับ padding 24px ซ้ายขวา */
+  margin: -24px -24px 20px -24px; /* ดึงรูปขึ้นไปติดขอบบนสุดของการ์ด */
+  height: 180px;
+  object-fit: cover;
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* 3. สถานะ: ผ่านมาแล้ว (Past) */
+.roadmap-card.past {
+  opacity: 0.6; /* ดรอปสีการ์ดลงให้รู้ว่าผ่านไปแล้ว */
+}
+.roadmap-card.past::before {
+  background: var(--muted); /* เปลี่ยนวงกลมเป็นสีเทา */
+  border-color: var(--muted);
+  box-shadow: none;
+}
+
+/* 4. สถานะ: ปัจจุบัน (Current) - ไฮไลท์สีเขียว + เอฟเฟกต์กระพริบ */
+.roadmap-card.current {
+  border: 1px solid #10b981;
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.15);
+}
+.roadmap-card.current::before {
+  background: #10b981;
+  border-color: #10b981;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.8);
+  animation: pulse 2s infinite;
+}
+.roadmap-card.current .timeline-date-left {
+  color: #10b981; /* เปลี่ยนสีเดือนเป็นสีเขียวด้วย */
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@media (max-width: 650px) {
+  .roadmap-container {
+    padding-left: 70px !important;
+  }
+  
+  .roadmap-container::before {
+    left: 40px !important;
+  }
+  
+  .timeline-date-left {
+    left: -70px !important;
+    width: 35px !important;
+    font-size: 0.85rem; /* ลดขนาดตัวอักษรลงนิดหน่อย */
+    top: 24px;
+  }
+
+  .roadmap-card::before, .roadmap-card.same-time::before {
+    left: -30px !important;
+  }
+  
+  /* ไม่ต้องแก้ตำแหน่งวงกลม เพราะระยะห่างจากการ์ดถึงเส้นยังเท่าเดิม (25px) */
+}
