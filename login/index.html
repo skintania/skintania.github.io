@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>เข้าสู่ระบบ - Skintania</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <main class="auth-wrap">
+    <div class="card">
+      <h1>เข้าสู่ระบบ</h1>
+      <p class="lead">ยินดีต้อนรับกลับสู่ Skintania</p>
+
+      <form method="POST">
+        <div class="form-group">
+          <label for="student_id">รหัสนิสิต / อีเมล</label>
+          <input type="text" id="student_id" name="student_id" class="form-control" placeholder="กรอกรหัสนิสิตหรืออีเมล" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">รหัสผ่าน</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn">เข้าสู่ระบบ</button>
+      </form>
+
+      <a href="/register/" class="auth-link">ยังไม่มีบัญชีใช่ไหม? สมัครสมาชิกที่นี่</a>
+      <a href="/" class="auth-link" style="margin-top: 8px; font-size: 0.85rem;">&larr; กลับสู่หน้าแรก</a>
+    </div>
+  </main>
+
+</body>
+</html>

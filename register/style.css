@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
+
+:root {
+  --bg: #0f1724;
+  --card: #0b1220;
+  --accent: #3b82f6;
+  --muted: #9aa4b2;
+}
+
+body {
+  margin: 0;
+  font-family: 'Sukhumvit Set', 'Kanit', sans-serif, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial;
+  background: linear-gradient(180deg, #071029 0%, var(--bg) 100%);
+  color: #e6eef8;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-wrap {
+  width: 100%;
+  max-width: 500px;
+  /* Changed from 400px. Use 550px for the Register page if you want it even wider */
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.06));
+  padding: 48px 40px;
+  /* Increased top/bottom and left/right padding */
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.card h1 {
+  margin: 0 0 8px;
+  font-size: 1.8rem;
+  /* Slightly larger title */
+  text-align: center;
+}
+
+.card p.lead {
+  margin: 0 0 32px;
+  /* Increased bottom margin */
+  color: var(--muted);
+  text-align: center;
+  font-size: 1rem;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #e6eef8;
+}
+
+.form-control {
+  width: 100%;
+  padding: 14px 16px;
+  /* Increased padding */
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e6eef8;
+  font-family: inherit;
+  font-size: 1rem;
+  /* Added explicit font size */
+  box-sizing: border-box;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 32px;
+  /* Pushed the button down a bit more */
+  padding: 14px;
+  /* Increased padding */
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1.1rem;
+  /* Slightly larger button text */
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.auth-link {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.auth-link:hover {
+  color: var(--accent);
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.row .form-group {
+  flex: 1;
+}
+
+/* สำหรับ Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* สำหรับ Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
+}
