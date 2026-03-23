@@ -4,7 +4,7 @@
     "title": "ปฐมนิเทศ",
     "dateShort": "ก.ค.",
     "compareDate": "2026-07-04",
-    "imageUrl": "https://images.unsplash.com/photo-1523580494863-6f3031224c94?q=80&w=600&auto=format&fit=crop",
+    "imageUrl": "asset/orientation",
     "type": "activity",
     "shortDesc": "กิจกรรมต้อนรับน้องใหม่และแนะนำการใช้ชีวิตในรั้วมหาวิทยาลัย",
     "details": {
@@ -125,14 +125,28 @@
   {
     "id": "midterm-1",
     "title": "สอบกลางภาคเทอม 1",
-    "dateShort": "ต.ค.",
-    "compareDate": "2026-12-15",
+    "dateShort": "ก.ย.",
+    "compareDate": "2026-09-22",
     "imageUrl": "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?q=80&w=600&auto=format&fit=crop",
     "type": "exam",
     "shortDesc": "สอบกลางภาคครั้งแรก",
     "details": {
       "info": "สอบเนื้อหาครึ่งแรก ประเดิมความรู้ที่เรียนมา",
       "tips": "ไปดูในแทปคำแนะนำได้เลย"
+    }
+  },
+  {
+    "id": "intania-game",
+    "title": "Intania Game",
+    "dateShort": "ต.ค.",
+    "compareDate": "2026-10-13",
+    "imageUrl": "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?q=80&w=600&auto=format&fit=crop",
+    "type": "activity",
+    "shortDesc": "งานแข่งขันกีฬาของนิสิตคณะวิศวกรรมศาสตร์",
+    "details": {
+      "info": "งานแข่งขันกีฬาภายในคณะวิศวกรรมศาสตร์ จุฬา ปี 1 จะแยกจาก ปีโต",
+      "duration": "2 สัปดาห์",
+      "roles": "ลงแข่งในฐานนะตัวแทนสี หรือเชียร์เพื่อนก็ได้"
     }
   },
   {
@@ -279,6 +293,15 @@
       "roles": "เข้าร่วมได้ทุกคนเลย",
       "tips": "ไปเถอะสนุกดี อาจจะได้แฟนก็ได้นะ แต่ส่วนใหญ่เป็นปีโตที่มากัน"
     }
+  },
+  {
+    "id": "election",
+    "title": "เลือกตั้งประธานนิสิต ของแต่ละชั้นปี",
+    "dateShort": "เม.ย.",
+    "compareDate": "2027-04-03",
+    "imageUrl": "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?q=80&w=600&auto=format&fit=crop",
+    "type": "event",
+    "shortDesc": "เลือกตั้งประธานชั้นปี"
   },
   {
     "id": "midterm-2",
