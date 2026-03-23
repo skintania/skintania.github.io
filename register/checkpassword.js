@@ -1,57 +1,59 @@
+const form = document.getElementById('registerForm');
+const username = document.getElementById('username');
 const password = document.getElementById('password');
 const confirmPassword = document.getElementById('confirm_password');
-const form = document.querySelector('form');
 
+// 1. ฟังก์ชันเช็คการพิมพ์รหัสผ่านแบบ Real-time
 function validatePassword() {
-  // 1. เช็คความยาวรหัสผ่าน (ต้อง 8 ตัวขึ้นไป)
-  if (password.value.length < 8) {
-    password.setCustomValidity("รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรครับ");
-  } else {
-    password.setCustomValidity(""); // ผ่านเงื่อนไขความยาว
-  }
-
-  // 2. เช็คว่ารหัสผ่านและการยืนยันรหัสผ่านตรงกันไหม
   if (confirmPassword.value !== password.value) {
-    confirmPassword.setCustomValidity("รหัสผ่านไม่ตรงกันครับ กรุณาตรวจสอบอีกครั้ง");
+    confirmPassword.setCustomValidity("รหัสผ่านไม่ตรงกันครับ");
   } else {
-    confirmPassword.setCustomValidity(""); // ผ่านเงื่อนไขรหัสตรงกัน
+    confirmPassword.setCustomValidity(""); 
   }
 }
 
-// ให้ระบบเช็คทุกครั้งที่มีการพิมพ์
 password.addEventListener('input', validatePassword);
 confirmPassword.addEventListener('input', validatePassword);
 
-// เช็คอีกรอบตอนกดปุ่ม Submit เพื่อป้องกันการลักไก่
+// 2. ดักจับตอนกดปุ่ม Submit
 form.addEventListener('submit', function(e) {
-  // ตรวจสอบว่ามีช่องไหนว่างไหม (เผื่อเบราว์เซอร์บางตัวข้าม required)
-  const inputs = form.querySelectorAll('input[required]');
-  let isValid = true;
+  // หยุดการส่งฟอร์มแบบปกติไว้ก่อน เพื่อให้ JS ตรวจสอบให้เสร็จ
+  e.preventDefault(); 
+
+  // --- A. เช็คว่าทุกช่องต้องกรอกข้อมูล (ห้ามมีแต่ช่องว่าง) ---
+  const inputs = form.querySelectorAll('input[required]'); // ดึงช่องที่บังคับกรอกมาทั้งหมด
+  let isAllFilled = true;
 
   inputs.forEach(input => {
-    if (!input.value.trim()) {
-      isValid = false;
+    // .trim() จะตัดช่องว่าง (Space) ออก ถ้าตัดแล้วเหลือความยาวเป็น 0 แปลว่าไม่ได้พิมพ์ตัวอักษรเลย
+    if (input.value.trim() === '') {
+      isAllFilled = false;
+      // สั่งให้โฟกัสไปที่ช่องที่ยังไม่ได้กรอก
+      input.focus(); 
     }
   });
 
-  if (!isValid) {
-    e.preventDefault();
-    alert('กรุณากรอกข้อมูลให้ครบทุกช่องครับ');
+  if (!isAllFilled) {
+    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง (ห้ามพิมพ์แค่ช่องว่าง) ครับ');
+    return; // หยุดการทำงาน ไม่ให้ไปหน้าอื่น
+  }
+
+  // --- B. เช็ค Username ว่าถูกต้องไหม (อังกฤษ/ตัวเลข เท่านั้น) ---
+  const usernameRegex = /^[a-zA-Z0-9]+$/;
+  if (!usernameRegex.test(username.value)) {
+    alert('ชื่อผู้ใช้ต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้นครับ');
+    username.focus();
     return;
   }
 
-  if (password.value.length < 8) {
-    e.preventDefault();
-    alert('รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษรครับ');
-    return;
-  }
-
+  // --- C. เช็ครหัสผ่านว่าตรงกันไหม ---
   if (password.value !== confirmPassword.value) {
-    e.preventDefault();
     alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกันครับ');
+    confirmPassword.focus();
     return;
   }
-  
-  // ถ้าผ่านทั้งหมด ฟอร์มจะถูกส่งไปที่ action="/register-endpoint" 
-  // จากนั้นคุณค่อยสั่ง redirect ไปหน้ายืนยันอีเมลจากฝั่ง Backend ครับ
+
+  // --- D. ถ้าผ่านด่านทั้งหมดมาได้ ให้เปลี่ยนหน้าไปยืนยันอีเมล ---
+  // (สมมติว่าคุณเซฟข้อมูล หรือจะทำอะไรต่อ ก็เขียนโค้ดเพิ่มตรงนี้ได้ครับ)
+  window.location.replace("verify-email.html"); 
 });
