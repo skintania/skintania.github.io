@@ -8,14 +8,18 @@ function playVideo(src, el) {
     });
 
     el.classList.add("active");
-
-    player.src = src;
+    player.src = `${src}&Authorization=${"Bearer " + localStorage.getItem("authToken")}`;
     player.play();
 
 }
 
 
-fetch("https://skintania-api.skintania143.workers.dev/course?path=material%2F")
+fetch("https://skintania-api.skintania143.workers.dev/course?path=material%2F",
+    {
+        headers: {
+            "Authorization": "Bearer " + localStorage.getItem("authToken")
+        }
+    })
 
     .then(res => res.json())
     
