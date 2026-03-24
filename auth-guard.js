@@ -16,7 +16,7 @@ async function checkSecurityStatus() {
     }
 
     // 3. If requireAuth is TRUE, check the token
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken");
 
     if (!token) {
       window.location.replace("/login/");
@@ -27,7 +27,7 @@ async function checkSecurityStatus() {
     const payload = JSON.parse(decodedString);
 
     if (Date.now() > payload.exp) {
-      localStorage.removeItem("token");
+      localStorage.removeItem("authToken");
       window.location.replace("/login/");
       return;
     }
@@ -39,7 +39,7 @@ async function checkSecurityStatus() {
     console.error("⚠️ Could not reach server. Falling back to strict check.");
     
     // If the server is down, we still check if they have a token locally just in case
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken");
     if (!token) {
       window.location.replace("/login/");
     } else {
