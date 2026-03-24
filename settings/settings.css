@@ -1,0 +1,406 @@
+/* --- settings.css --- */
+:root {
+    --bg-body: #0b0f1a; /* สีพื้นหลังเว็บคุณ */
+    --card-bg: #161b2a; /* สีพื้นหลัง Card/Panel */
+    --accent: #3b82f6;  /* สีฟ้าหลัก */
+    --accent-hover: #2563eb;
+    --border: rgba(255, 255, 255, 0.08);
+    --text-main: #f1f5f9;
+    --text-muted: #94a3b8;
+    --danger: #ef4444;
+}
+
+body {
+    background-color: var(--bg-body);
+    font-family: 'Kanit', sans-serif;
+    color: var(--text-main);
+}
+
+.settings-main-container {
+    max-width: 1200px;
+    margin: 40px auto 80px;
+    padding: 0 20px;
+    display: flex;
+    gap: 30px;
+    align-items: flex-start; /* Sidebar ไม่ต้องขยายสูงตาม Content */
+}
+
+/* --- 👈 SIDEBAR STYLES --- */
+.settings-sidebar {
+    flex: 1;
+    min-width: 280px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 25px;
+    position: sticky; /* เลื่อนตามหน้าจอ */
+    top: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.sidebar-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.avatar-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid var(--accent);
+}
+
+.avatar-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.user-text .name {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.user-text .status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.user-text .status i {
+    color: #10b981; /* Green */
+    font-size: 7px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--text-muted);
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.nav-item i {
+    width: 20px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.nav-item:hover {
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-main);
+}
+
+.nav-item.active {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.nav-divider {
+    border: 0;
+    border-top: 1px solid var(--border);
+    margin: 15px 0;
+}
+
+.logout-item:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+/* --- 👉 CONTENT PANEL STYLES --- */
+.settings-content-panel {
+    flex: 3;
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 40px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+.content-section {
+    display: none; /* ซ่อนทุก Section */
+}
+
+.content-section.active {
+    display: block; /* โชว์เฉพาะ Section ที่เลือก */
+}
+
+.section-header {
+    margin-bottom: 35px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-header h2 {
+    margin: 0 0 8px 0;
+    font-size: 1.8rem;
+    font-weight: 600;
+}
+
+.section-header p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+/* Form Styles */
+.settings-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.flex-1 { flex: 1; }
+
+.form-group label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-main);
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 14px;
+    background: #0b101e; /* สีเข้มกว่าพื้นหลัง Card */
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: white;
+    font-size: 0.95rem;
+    transition: 0.2s;
+    box-sizing: border-box;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.form-group input:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    background: #0f1423;
+}
+
+.form-text {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 6px;
+    display: block;
+}
+
+/* Input with Icon */
+.input-with-icon {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
+.input-with-icon input {
+    padding-left: 45px;
+}
+
+/* Avatar Edit Row */
+.avatar-edit-row {
+    align-items: center;
+}
+
+.avatar-edit-row > label {
+    width: 120px;
+    color: var(--text-main);
+    font-weight: 500;
+}
+
+.avatar-edit-container {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.avatar-preview-big {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 4px solid var(--accent);
+}
+
+.avatar-preview-big img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.avatar-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.avatar-actions label, .avatar-actions button {
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 0; /* ลบ margin เดิมของ label */
+}
+
+.file-hint {
+    margin: 5px 0 0 0;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+/* Buttons */
+button, .btn-primary, .btn-secondary, .btn-danger-outline {
+    font-family: inherit;
+    transition: 0.2s;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.btn-primary:hover {
+    background: var(--accent-hover);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.btn-danger-outline {
+    background: transparent;
+    border: 1px solid var(--danger);
+    color: var(--danger);
+    padding: 9px 18px;
+    border-radius: 8px;
+}
+
+.btn-danger-outline:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.form-actions {
+    margin-top: 30px;
+    text-align: right;
+}
+
+/* Container คุมขนาด */
+.avatar-wrapper, .avatar-preview-big {
+    position: relative; /* สำคัญสำหรับการจัดองค์ประกอบด้านใน */
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ขนาดสำหรับ Sidebar */
+.avatar-wrapper {
+    width: 60px;
+    height: 60px;
+}
+
+/* ขนาดสำหรับหน้าตั้งค่า */
+.avatar-preview-big {
+    width: 150px;
+    height: 150px;
+}
+
+/* 👤 สไตล์ของไอคอน Fallback */
+.avatar-icon-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: #3b82f6; /* สีน้ำเงินธีม */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px; /* ขนาดไอคอนปกติ */
+    position: absolute; /* ทับกัน */
+    top: 0;
+    left: 0;
+}
+
+/* ไอคอนขนาดใหญ่ */
+.avatar-icon-placeholder.large {
+    font-size: 70px;
+}
+
+/* 🖼️ สไตล์ของรูปภาพจริง */
+.avatar-wrapper img, .avatar-preview-big img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* รูปไม่เพี้ยน */
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .settings-main-container {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .settings-sidebar {
+        width: 100%;
+        min-width: 0;
+        position: static;
+        box-sizing: border-box;
+    }
+    .settings-content-panel {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 30px;
+    }
+}

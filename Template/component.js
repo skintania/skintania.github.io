@@ -1,3 +1,5 @@
+import { CONFIG } from '/config.js';
+
 class SiteHeader extends HTMLElement {
     async connectedCallback() {
         const pageTitle = this.getAttribute('page-title') || 'StudyKits';
@@ -110,3 +112,34 @@ class CommentWidget extends HTMLElement {
     }
 }
 customElements.define('comment-widget', CommentWidget);
+
+// เพิ่มส่วนนี้ลงในโค้ดที่จัดการ Header Component
+async function syncHeaderProfile() {
+    const token = localStorage.getItem("authToken");
+    if (!token) return;
+
+    try {
+        // ดึงข้อมูลโปรไฟล์ (ใช้ API เดียวกับหน้า Settings)
+        const response = await fetch(`${CONFIG.API_URL}/user/profile`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        const imgEl = document.getElementById('headerAvatarImg');
+        const iconEl = document.getElementById('headerDefaultIcon');
+
+        if (data.profileUrl) {
+            imgEl.src = data.profileUrl;
+            imgEl.style.display = 'block';
+            iconEl.style.display = 'none';
+        } else {
+            imgEl.style.display = 'none';
+            iconEl.style.display = 'flex';
+        }
+    } catch (e) {
+        console.error("Header sync failed");
+    }
+}
+
+// เรียกใช้งานเมื่อโหลด Component เสร็จ
+syncHeaderProfile();

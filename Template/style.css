@@ -217,6 +217,35 @@ header{
     display: block;
 }
 
+.profile-avatar {
+    width: 40px; /* ปรับขนาดตามต้องการ */
+    height: 40px;
+    background-color: #3b82f6; /* สีพื้นหลังไอคอน */
+    border-radius: 50%;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.profile-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.default-icon {
+    color: white;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 
 
 @media (max-width:650px) {

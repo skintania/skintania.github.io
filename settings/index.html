@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ตั้งค่าบัญชี - SkIntania</title>
+
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="settings.css">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        function handleImageError(imgEl, iconId) {
+            console.warn("Image load failed, switching to icon.");
+            imgEl.style.display = 'none';
+            var iconEl = document.getElementById(iconId);
+            if (iconEl) {
+                iconEl.style.display = 'flex';
+            }
+        }
+    </script>
+</head>
+
+<body>
+
+    <site-header page-title="ตั้งค่าบัญชี" page-desc="จัดการข้อมูลส่วนตัวและการเข้าถึงระบบ"></site-header>
+
+    <div class="settings-main-container">
+
+        <aside class="settings-sidebar">
+            <div class="sidebar-user-info">
+                <div class="avatar-wrapper">
+                    <div id="sidebarIcon" class="avatar-icon-placeholder">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <img id="sidebarAvatar" src="" alt="User" style="display: none;" onerror="handleImageError(this, 'sidebarIcon')">
+                </div>
+                <div class="user-text">
+                    <span class="name" id="sidebarUsername">กำลังโหลด...</span>
+                    <span class="status"><i class="fa-solid fa-circle"></i> ออนไลน์</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="/" class="nav-item back-home-btn">
+                    <i class="fa-solid fa-arrow-left"></i> กลับหน้าหลัก
+                </a>
+                <hr class="nav-divider">
+
+                <a href="#" class="nav-item active" data-section="profile">
+                    <i class="fa-solid fa-user-gear"></i> ข้อมูลส่วนตัว
+                </a>
+                <a href="#" class="nav-item" data-section="security">
+                    <i class="fa-solid fa-lock"></i> ความปลอดภัย
+                </a>
+                <a href="#" class="nav-item" data-section="notifications">
+                    <i class="fa-solid fa-bell"></i> การแจ้งเตือน
+                </a>
+                <hr class="nav-divider">
+                <a href="#" class="nav-item logout-item" id="settingsLogoutBtn">
+                    <i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ
+                </a>
+            </nav>
+        </aside>
+
+        <section class="settings-content-panel">
+
+            <div id="section-profile" class="content-section active">
+                <div class="section-header">
+                    <h2>ข้อมูลส่วนตัว</h2>
+                    <p>จัดการชื่อ ข้อมูลสถาบัน และช่องทางการติดต่อของคุณ</p>
+                </div>
+
+                <form class="settings-form" id="profileForm">
+
+                    <div class="form-row avatar-edit-row">
+                        <label>รูปโปรไฟล์</label>
+                        <div class="avatar-edit-container">
+                            <div class="avatar-preview-big">
+                                <div id="mainIcon" class="avatar-icon-placeholder large">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <img id="imagePreview" src="" alt="Profile" style="display: none;" 
+                                    onerror="handleImageError(this, 'mainIcon')">
+                            </div>
+                            <div class="avatar-actions">
+                                <input type="file" id="imageUpload" hidden accept="image/png, image/jpeg, image/webp">
+                                <label for="imageUpload" class="btn-secondary">เลือกรูปใหม่</label>
+                                <p class="file-hint">รองรับ JPG, PNG, WEBP. ขนาดไม่เกิน 5MB.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="firstName">ชื่อจริง</label>
+                            <input type="text" id="firstName" placeholder="กรอกชื่อจริง" required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="lastName">นามสกุล</label>
+                            <input type="text" id="lastName" placeholder="กรอกนามสกุล" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="username">Username (ชื่อที่แสดง)</label>
+                            <input type="text" id="username" placeholder="กรอกชื่อผู้ใช้งาน" required>
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="email">อีเมล</label>
+                            <div class="input-with-icon" style="position: relative;">
+                                <i class="fa-solid fa-envelope input-icon"></i>
+                                <input type="email" id="email" placeholder="example@email.com" required>
+
+                                <div id="unverifiedWarning"
+                                    style="display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; align-items: center; gap: 10px;">
+                                    <span style="color: #ef4444; font-size: 0.8rem; font-weight: 500;">
+                                        <i class="fa-solid fa-circle-exclamation"></i> ยังไม่ยืนยัน
+                                    </span>
+                                    <button type="button" id="btnVerifyOtp"
+                                        style="background: #ef4444; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.8rem; cursor: pointer;">
+                                        ยืนยัน OTP
+                                    </button>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="oskGen">รุ่น OSK</label>
+                            <input type="number" id="oskGen" placeholder="เช่น 143">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="oskNum">เลขประจำตัว OSK</label>
+                            <input type="text" id="oskNum" placeholder="เลขประจำตัว 5 หลัก">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="cuId">รหัสนิสิต CU</label>
+                            <input type="text" id="cuId" placeholder="รหัสนิสิต 10 หลัก">
+                        </div>
+                    </div>
+
+                    <div class="form-actions" id="actionButtons">
+                        <button type="button" id="editProfileBtn" class="btn-secondary">
+                            <i class="fa-solid fa-pen"></i> ขอแก้ไขข้อมูล
+                        </button>
+
+                        <button type="button" id="cancelEditBtn" class="btn-danger-outline" style="display: none;">
+                            ยกเลิก
+                        </button>
+                        <button type="submit" id="saveProfileBtn" class="btn-primary" style="display: none;">
+                            บันทึกการเปลี่ยนแปลง
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="section-security" class="content-section">
+                <div class="section-header">
+                    <h2>ความปลอดภัย</h2>
+                    <p>เปลี่ยนรหัสผ่านเพื่อความปลอดภัยของบัญชี</p>
+                </div>
+                <div
+                    style="padding: 40px; text-align: center; color: var(--text-muted); background: rgba(255,255,255,0.02); border-radius: 12px;">
+                    <i class="fa-solid fa-wrench" style="font-size: 2rem; margin-bottom: 15px; opacity: 0.5;"></i>
+                    <p>ระบบเปลี่ยนรหัสผ่านกำลังอยู่ระหว่างการพัฒนา</p>
+                </div>
+            </div>
+
+            <div id="section-notifications" class="content-section">
+                <div class="section-header">
+                    <h2>การแจ้งเตือน</h2>
+                    <p>จัดการการรับข่าวสารจากระบบ</p>
+                </div>
+            </div>
+
+        </section>
+    </div>
+
+    <script type="module" src="/Template/component.js"></script>
+    <script type="module" src="settings.js"></script>
+</body>
+
+</html>
