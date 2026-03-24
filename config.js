@@ -9,7 +9,7 @@ export const CONFIG = {
 อย่าลืม pass header เข้าไปด้วย
 fetch("https://your-worker.workers.dev/skdrive", {
   headers: {
-    "Authorization": "Bearer " + localStorage.getItem("user_token")
+    "Authorization": "Bearer " + localStorage.getItem("authToken")
   }
 })
 */
