@@ -5,8 +5,10 @@ class SiteHeader extends HTMLElement {
 
         try {
             const response = await fetch('/Template/header.html');
-            this.innerHTML = await response.text();
+            const html = await response.text();
+            this.innerHTML = html;
 
+            // Set Dynamic Text
             this.querySelector('#dynamic-title').textContent = pageTitle;
             this.querySelector('#dynamic-desc').textContent = pageDesc;
 
@@ -20,7 +22,45 @@ class SiteHeader extends HTMLElement {
                     btn.innerHTML = nav.classList.contains('active') ? '✕' : '☰';
                 };
             }
-        } catch (e) { console.error(e); }
+
+            // --- INTEGRATED PROFILE LOGIC ---
+            const profileBtn = this.querySelector('#profileBtn');
+            const dropdown = this.querySelector('#profileDropdown');
+            const logoutBtn = this.querySelector('#logoutBtn');
+
+            if (profileBtn && dropdown) {
+                // 1. Toggle Dropdown on Click
+                profileBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    const isVisible = dropdown.style.display === 'block';
+                    
+                    dropdown.style.display = isVisible ? 'none' : 'block';
+                    dropdown.style.opacity = isVisible ? '0' : '1';
+                    dropdown.style.visibility = isVisible ? 'hidden' : 'visible';
+                };
+
+                // 2. Close when clicking outside
+                window.addEventListener('click', (e) => {
+                    if (!e.target.closest('.profile-dropdown')) {
+                        dropdown.style.display = 'none';
+                        dropdown.style.opacity = '0';
+                        dropdown.style.visibility = 'hidden';
+                    }
+                });
+            }
+
+            // 3. Logout Logic
+            if (logoutBtn) {
+                logoutBtn.onclick = (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('authToken');
+                    window.location.href = '/login/';
+                };
+            }
+
+        } catch (e) { 
+            console.error("Error loading header template:", e); 
+        }
     }
 }
 customElements.define('site-header', SiteHeader);

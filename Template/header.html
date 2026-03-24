@@ -12,9 +12,28 @@
     <button id="menu-toggle" class="menu-toggle">☰</button>
 
     <div class="header-credits">
-        <div>จัดทำโดย</div>
-        <small>OSK143</small><br>
-        <small>IG : sk143</small>
+        <div class="credits-info">
+            <div>จัดทำโดย</div>
+            <small>OSK143</small><br>
+            <small>IG : sk143</small>
+        </div>
+
+        <div class="profile-dropdown">
+            <button class="profile-btn" id="profileBtn">
+                <div class="profile-avatar">
+                    <img src="/Assest/profile-icon.png" alt="" onerror="this.style.display='none'">
+                    <span class="default-icon">👤</span>
+                </div>
+            </button>
+
+            <div class="dropdown-content" id="profileDropdown">
+                <div class="dropdown-menu-card">
+                    <a href="/Settings/">ตั้งค่าโปรไฟล์</a>
+                    <hr style="margin:0; border:0; border-top:1px solid #eee;">
+                    <a href="#" id="logoutBtn" class="logout-text">ออกจากระบบ</a>
+                </div>
+            </div>
+        </div>
     </div>
 </header>
 <br>
