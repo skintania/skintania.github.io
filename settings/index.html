@@ -36,7 +36,7 @@
                     <div id="sidebarIcon" class="avatar-icon-placeholder">
                         <i class="fa-solid fa-user"></i>
                     </div>
-                    <img id="sidebarAvatar" src="" alt="User" style="display: none;" onerror="handleImageError(this, 'sidebarIcon')">
+                    <img id="sidebarAvatar" alt="User" style="display: none;" onerror="handleImageError(this, 'sidebarIcon')">
                 </div>
                 <div class="user-text">
                     <span class="name" id="sidebarUsername">กำลังโหลด...</span>
@@ -83,8 +83,7 @@
                                 <div id="mainIcon" class="avatar-icon-placeholder large">
                                     <i class="fa-solid fa-user"></i>
                                 </div>
-                                <img id="imagePreview" src="" alt="Profile" style="display: none;" 
-                                    onerror="handleImageError(this, 'mainIcon')">
+                                <img id="imagePreview" alt="Profile" style="display: none;" onerror="handleImageError(this, 'mainIcon')">
                             </div>
                             <div class="avatar-actions">
                                 <input type="file" id="imageUpload" hidden accept="image/png, image/jpeg, image/webp">
@@ -183,8 +182,9 @@
         </section>
     </div>
 
-    <script type="module" src="/Template/component.js"></script>
     <script type="module" src="settings.js"></script>
+    <script type="module" src="/Template/component.js"></script>
+    
 </body>
 
 </html>

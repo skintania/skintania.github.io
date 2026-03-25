@@ -278,6 +278,24 @@ body {
     margin: 0; /* ลบ margin เดิมของ label */
 }
 
+.avatar-actions label.btn-secondary {
+    display: inline-block;
+    padding: 8px 16px;
+    background: var(--primary-color, #3b82f6);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.avatar-actions label.btn-secondary:hover {
+    filter: brightness(1.1);
+}
+
+.avatar-actions {
+    display: none; /* จะเปิดด้วย JS เมื่อเข้าโหมด Edit */
+}
+
 .file-hint {
     margin: 5px 0 0 0;
     color: var(--text-muted);

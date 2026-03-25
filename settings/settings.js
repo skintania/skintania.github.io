@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const editBtn = document.getElementById('editProfileBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');
     const profileForm = document.getElementById('profileForm');
+    const imageUpload = document.getElementById('imageUpload');
 
     if (editBtn) editBtn.addEventListener('click', () => toggleEditMode(true));
     
@@ -13,6 +14,29 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleEditMode(false);
         loadUserData(); 
     });
+
+    // 📸 Preview รูปภาพเมื่อเลือกไฟล์
+    if (imageUpload) {
+        imageUpload.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                    alert("❌ ไฟล์ใหญ่เกินไป! กรุณาเลือกไฟล์ขนาดไม่เกิน 5MB");
+                    this.value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const imgPreview = document.getElementById('imagePreview');
+                    const iconEl = document.getElementById('mainIcon');
+                    imgPreview.src = event.target.result;
+                    imgPreview.style.display = 'block';
+                    iconEl.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
     if (profileForm) {
         profileForm.addEventListener('submit', async (e) => {
@@ -39,7 +63,6 @@ async function loadUserData() {
         const data = await response.json();
         if (!response.ok) throw new Error(data.error);
 
-        // 1. แสดงข้อมูลใน Input
         setInputValue('firstName', data.firstName);
         setInputValue('lastName', data.lastName);
         setInputValue('username', data.username);
@@ -48,12 +71,17 @@ async function loadUserData() {
         setInputValue('oskNum', data.oskNum);
         setInputValue('cuId', data.cuId);
 
-        // 2. จัดการรูปโปรไฟล์ (เพิ่มส่วนนี้)
-        const profileUrl = data.profileUrl || "";
-        updateAvatarDisplay('sidebarAvatar', 'sidebarIcon', profileUrl);
-        updateAvatarDisplay('imagePreview', 'mainIcon', profileUrl);
+        // 🎯 1. ดึง URL มา และเอา CONFIG.API_URL ประกอบร่าง!
+        let fullProfileUrl = "";
+        if (data.profileUrl && data.profileUrl.trim() !== "") {
+            fullProfileUrl = `${CONFIG.API_URL}${data.profileUrl}`;
+        }
 
-        // 3. อัปเดต Sidebar Username
+        // 🎯 2. ส่ง fullProfileUrl (ที่ประกอบร่างแล้ว) ไปให้ฟังก์ชันอัปเดตหน้าจอ
+        const profilePath = data.profileUrl || ""; // เก็บแค่ /Profile-Picture/...
+        updateAvatarDisplay('sidebarAvatar', 'sidebarIcon', profilePath);
+        updateAvatarDisplay('imagePreview', 'mainIcon', profilePath);
+
         const sidebarName = document.getElementById('sidebarUsername');
         if (sidebarName) sidebarName.innerText = data.username || 'User';
 
@@ -63,13 +91,12 @@ async function loadUserData() {
         }
 
         toggleEditMode(false);
-
     } catch (error) {
         console.error("Load Error:", error);
     }
 }
 
-// --- ฟังก์ชันอัปเดตข้อมูล (เหมือนเดิมที่คุณแก้) ---
+// --- ฟังก์ชันอัปเดตข้อมูล (FormData เวอร์ชันที่ถูกต้อง) ---
 async function updateUserData() {
     const saveBtn = document.getElementById('saveProfileBtn');
     if (!saveBtn) return;
@@ -80,36 +107,42 @@ async function updateUserData() {
         saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
 
         const token = localStorage.getItem("authToken");
-        const updatedData = {
-            firstName: document.getElementById('firstName').value,
-            lastName: document.getElementById('lastName').value,
-            username: document.getElementById('username').value,
-            email: document.getElementById('email').value,
-            oskGen: parseInt(document.getElementById('oskGen').value) || 0,
-            oskNum: document.getElementById('oskNum').value,
-            cuId: document.getElementById('cuId').value
-        };
+        const imageUpload = document.getElementById('imageUpload');
+
+        // 📦 ใช้ FormData เพื่อรองรับไฟล์ภาพ
+        const formData = new FormData();
+        formData.append('firstName', document.getElementById('firstName').value);
+        formData.append('lastName', document.getElementById('lastName').value);
+        formData.append('username', document.getElementById('username').value);
+        formData.append('email', document.getElementById('email').value);
+        formData.append('oskGen', document.getElementById('oskGen').value);
+        formData.append('oskNum', document.getElementById('oskNum').value);
+        formData.append('cuId', document.getElementById('cuId').value);
+
+        if (imageUpload.files[0]) {
+            formData.append('profileImage', imageUpload.files[0]);
+        }
 
         const response = await fetch(`${CONFIG.API_URL}/user/profile`, {
             method: 'PUT',
             headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${token}`
+                // ห้ามใส่ Content-Type: application/json
             },
-            body: JSON.stringify(updatedData)
+            body: formData
         });
 
         const result = await response.json();
 
         if (response.ok) {
-            alert("บันทึกข้อมูลสำเร็จ!");
+            alert("✅ บันทึกข้อมูลสำเร็จ!");
             toggleEditMode(false);
             loadUserData();
         } else {
             throw new Error(result.error || "บันทึกล้มเหลว");
         }
     } catch (error) {
-        alert("เกิดข้อผิดพลาด: " + error.message);
+        alert("⚠️ " + error.message);
     } finally {
         saveBtn.disabled = false;
         saveBtn.innerHTML = originalBtnText;
@@ -117,7 +150,6 @@ async function updateUserData() {
 }
 
 // --- Helpers ---
-
 function setInputValue(id, value) {
     const el = document.getElementById(id);
     if (el) el.value = value || '';
@@ -133,6 +165,12 @@ function toggleEditMode(isEditing) {
         }
     });
 
+    // 📸 แสดง/ซ่อน ส่วนเลือกรูปภาพ
+    const avatarActions = document.querySelector('.avatar-actions');
+    if (avatarActions) {
+        avatarActions.style.display = isEditing ? 'block' : 'none';
+    }
+
     const editBtn = document.getElementById('editProfileBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');
     const saveBtn = document.getElementById('saveProfileBtn');
@@ -142,18 +180,38 @@ function toggleEditMode(isEditing) {
     if (saveBtn) saveBtn.style.display = isEditing ? 'inline-flex' : 'none';
 }
 
-// --- ฟังก์ชันจัดการรูปภาพ (เพิ่มตัวช่วยสลับโหมด) ---
-function updateAvatarDisplay(imgId, iconId, url) {
+async function updateAvatarDisplay(imgId, iconId, urlPath) {
     const imgEl = document.getElementById(imgId);
     const iconEl = document.getElementById(iconId);
     if (!imgEl || !iconEl) return;
 
-    if (url && url.trim() !== "") {
-        imgEl.src = url;
-        imgEl.style.display = 'block';
-        iconEl.style.display = 'none';
-    } else {
-        imgEl.style.display = 'none';
-        iconEl.style.display = 'flex';
+    if (urlPath && urlPath.trim() !== "") {
+        // ตรวจสอบว่ามี CONFIG.API_URL ซ้ำซ้อนไหม
+        let finalUrl = urlPath;
+        if (!urlPath.startsWith('http')) {
+            finalUrl = `${CONFIG.API_URL}${urlPath}`;
+        }
+
+        const token = localStorage.getItem("authToken");
+
+        try {
+            const response = await fetch(finalUrl, {
+                method: 'GET',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!response.ok) throw new Error("Fetch failed");
+
+            const blob = await response.blob();
+            const finalImageLink = URL.createObjectURL(blob);
+
+            imgEl.src = finalImageLink;
+            imgEl.onload = () => { // รอให้รูปโหลดเสร็จก่อนค่อยโชว์
+                imgEl.style.display = 'block';
+                iconEl.style.display = 'none';
+            };
+        } catch (error) {
+            console.error("โหลดรูปพลาด:", error);
+        }
     }
 }
