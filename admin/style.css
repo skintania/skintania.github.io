@@ -1,0 +1,473 @@
+/* =========================================
+   CORE VARIABLES (ชมพู-ฟ้า แบบขลังๆ)
+   ========================================= */
+:root {
+    --bg-body: #05070e; /* ดำลึกๆ อมน้ำเงิน */
+    --card-bg: #0b0f19;
+    --card-bg-light: #111726;
+    
+    /* ธีมสีชมพู-ฟ้า */
+    --accent-blue: #0ea5e9;
+    --accent-pink: #ec4899;
+    --accent-gradient: linear-gradient(135deg, var(--accent-blue), var(--accent-pink));
+    --accent-glow: rgba(236, 72, 153, 0.15);
+    
+    --text-main: #f8fafc;
+    --text-muted: #8b9bb4;
+    --border: rgba(255, 255, 255, 0.05);
+}
+
+body {
+    background-color: var(--bg-body);
+    font-family: 'Kanit', sans-serif;
+    color: var(--text-main);
+    margin: 0;
+}
+
+/* =========================================
+   LAYOUT & CONTAINERS
+   ========================================= */
+.settings-main-container {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 20px;
+    display: flex;
+    gap: 30px;
+}
+
+/* Sidebar */
+.settings-sidebar {
+    flex: 0 0 280px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 24px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4), 0 0 20px var(--accent-glow);
+    height: fit-content;
+}
+
+.sidebar-user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+/* กรอบรูป Profile แบบ Gradient */
+.avatar-wrapper {
+    width: 50px; height: 50px;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+    padding: 2px; /* สร้างขอบ Gradient */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.avatar-wrapper img {
+    width: 100%; height: 100%;
+    border-radius: 50%;
+    background: var(--card-bg); /* สีพื้นกันรูปใส */
+}
+
+/* เมนู Navigation */
+.sidebar-nav .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    color: var(--text-muted);
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: 0.3s all ease;
+    cursor: pointer;
+    margin-bottom: 6px;
+    border-left: 3px solid transparent;
+}
+
+.sidebar-nav .nav-item:hover {
+    color: var(--text-main);
+    background: rgba(255,255,255,0.03);
+}
+
+/* เมนูที่กำลังเลือก (Active) */
+.sidebar-nav .nav-item.active {
+    background: linear-gradient(90deg, rgba(14, 165, 233, 0.1), rgba(236, 72, 153, 0.05));
+    border-left: 3px solid var(--accent-pink);
+    color: #fff;
+    font-weight: 500;
+}
+
+/* =========================================
+   CONTENT PANELS (ซ่อน/แสดง)
+   ========================================= */
+.settings-content-panel {
+    flex: 1;
+}
+
+.content-section {
+    background: var(--card-bg);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 40px;
+    min-height: 500px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    
+    /* 🚩 สำคัญ: ระบบซ่อน/แสดง หน้าต่าง */
+    display: none; 
+    animation: fadeIn 0.4s ease;
+}
+
+/* หน้าต่างที่ถูกเลือกให้แสดง */
+.content-section.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* หัวข้อ Section */
+.content-section h2 {
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 1.8rem;
+    margin: 0 0 5px 0;
+}
+.content-section > p {
+    color: var(--text-muted);
+    margin-bottom: 30px;
+}
+
+/* =========================================
+   R2 STORAGE MANAGER (ชมพู-ฟ้า ขลังๆ)
+   ========================================= */
+.upload-zone {
+    border: 2px dashed var(--accent-blue);
+    background: rgba(14, 165, 233, 0.05); /* พื้นหลังฟ้าใสๆ */
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.upload-zone:hover {
+    border-color: var(--accent-pink);
+    background: rgba(236, 72, 153, 0.05);
+    box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.upload-zone i {
+    font-size: 3rem;
+    color: var(--accent-blue);
+    margin-bottom: 10px;
+    transition: 0.3s;
+}
+
+.upload-zone:hover i {
+    color: var(--accent-pink);
+    transform: translateY(-5px);
+}
+
+.text-pink {
+    color: var(--accent-pink);
+    font-weight: 500;
+}
+
+/* รายการไฟล์ R2 */
+.file-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg-light);
+    border: 1px solid var(--border);
+    padding: 12px 20px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: 0.2s;
+}
+
+.file-item:hover {
+    border-color: rgba(14, 165, 233, 0.3);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.file-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.file-info i { font-size: 1.5rem; }
+
+.file-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.file-name { color: var(--text-main); font-weight: 500; }
+.file-size { color: var(--text-muted); font-size: 0.8rem; }
+
+/* ปุ่ม Action วงกลมเล็กๆ */
+.btn-action {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    width: 35px; height: 35px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-action.delete-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center; /* จัดให้อยู่ตรงกลาง */
+}
+
+/* ปุ่มดูข้อมูล (ธีมฟ้าเข้ม) */
+.btn-toggle-detail {
+    background: rgba(56, 189, 248, 0.1);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-toggle-detail:hover {
+    background: rgba(56, 189, 248, 0.2);
+}
+
+/* ปุ่มจัดการ (ธีมส้ม/เหลือง) */
+.btn-manage {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-manage:hover {
+    background: rgba(245, 158, 11, 0.2);
+}
+
+/* =========================================
+   D1 DATABASE SQL EDITOR
+   ========================================= */
+.sql-editor-container textarea {
+    width: 100%;
+    height: 150px;
+    background: #000; /* ดำสนิทแบบ Terminal */
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px;
+    color: var(--accent-pink); /* ตัวอักษรสีชมพู Cyber */
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 15px;
+    transition: 0.3s;
+}
+
+.sql-editor-container textarea:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 15px rgba(14, 165, 233, 0.15);
+}
+
+/* =========================================
+   D1 SQL RESULT TABLE
+   ========================================= */
+.d1-result-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    background: var(--card-bg-light);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.d1-result-table th {
+    background: rgba(14, 165, 233, 0.1);
+    color: var(--accent-blue);
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+}
+
+.d1-result-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-main);
+    white-space: nowrap;
+}
+
+.d1-result-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.d1-result-table td i {
+    color: var(--text-muted); /* สำหรับค่า NULL */
+}
+
+/* =========================================
+   STATS GRID & LOG TERMINAL
+   ========================================= */
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: var(--card-bg-light);
+    border: 1px solid var(--border);
+    padding: 24px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.stat-card i.text-blue { color: var(--accent-blue); font-size: 2rem; }
+.stat-card i.text-pink { color: var(--accent-pink); font-size: 2rem; }
+
+.log-terminal {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px;
+    height: 350px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+.log-line { margin-bottom: 5px; padding-left: 10px; border-left: 2px solid transparent; }
+.log-line.info { color: var(--accent-blue); border-left-color: var(--accent-blue); }
+.log-line.success { color: #10b981; border-left-color: #10b981; }
+.log-line.warning { color: #f59e0b; border-left-color: #f59e0b; }
+.log-line.error { color: #ef4444; border-left-color: #ef4444; }
+
+/* ปุ่มจัดการในตาราง */
+.btn-small {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.8rem;
+    margin-right: 5px;
+}
+.btn-edit { background: rgba(14, 165, 233, 0.2); color: var(--accent-blue); }
+.btn-ban {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-ban:hover {
+    background: rgba(239, 68, 68, 0.25);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.5);
+}
+
+/* เส้นคั่นและพื้นที่ปุ่มด้านล่างกล่องรายละเอียด */
+.user-detail-footer {
+    grid-column: 1 / -1; /* ให้กว้างทะลุทุกคอลัมน์ใน Grid */
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* กล่องแสดงรายละเอียดผู้ใช้ */
+.user-detail-row {
+    /* ซ่อนขอบของแถวตอนที่เปิดลงมา */
+    background-color: transparent; 
+}
+
+.user-detail-card {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    /* เปลี่ยนเป็นสีดำโปร่งแสง แทนสีขาว */
+    background: rgba(0, 0, 0, 0.25); 
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    margin: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    color: #e2e8f0; /* ตัวหนังสือสีสว่าง */
+}
+
+.user-detail-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #1e293b;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.user-info-group p {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    color: #cbd5e1; /* สีเทาอ่อน */
+}
+
+.user-info-group strong {
+    color: #f8fafc; /* สีขาวชัดๆ สำหรับหัวข้อ */
+    margin-right: 0.5rem;
+}
+
+.user-info-group strong {
+    color: #1e293b;
+    margin-right: 0.5rem;
+}
+
+/* ปุ่มดูข้อมูล */
+.btn-toggle-detail {
+    background: #e0f2fe;
+    color: #0284c7;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-toggle-detail:hover {
+    background: #bae6fd;
+}

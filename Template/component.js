@@ -67,18 +67,18 @@ class SiteHeader extends HTMLElement {
                 });
             }
 
-            // 4. Logout Logic (เน้นจุดนี้)
+            // 4. Logout Logic
             const logoutBtn = this.querySelector('#logoutBtn');
             if (logoutBtn) {
                 logoutBtn.onclick = (e) => {
                     e.preventDefault();
-                    console.log("Logging out..."); // Debug
+                    console.log("Logging out...");
                     localStorage.removeItem('authToken');
                     window.location.href = '/login/';
                 };
             }
 
-            // 5. ดึงรูปโปรไฟล์
+            // 5. ดึงรูปโปรไฟล์ และเช็คสิทธิ์แอดมิน 🌟
             this.initProfile();
 
         } catch (e) { 
@@ -97,16 +97,36 @@ class SiteHeader extends HTMLElement {
             
             const data = await response.json();
 
-            // 🚩 จุดที่ต้องแก้: ข้อมูลจริงอยู่ใน data.user
             if (data.success && data.user) {
                 const user = data.user;
                 const imgEl = this.querySelector('#headerAvatarImg');
                 const iconEl = this.querySelector('#headerDefaultIcon');
 
-                // 🚩 ใช้ user.profile_url (ชื่อตัวแปรต้องตรงกับ JSON)
+                // จัดการเรื่องรูปโปรไฟล์
                 if (user.profile_url && imgEl && iconEl) {
-                    // เรียกใช้ฟังก์ชันดึงรูป (ตรวจสอบให้แน่ใจว่า fetchAndSetAvatar ประกอบ URL ถูกต้อง)
                     await fetchAndSetAvatar(imgEl, iconEl, user.profile_url);
+                }
+
+                // 🌟 6. ระบบแทรกเมนู Admin
+                // สมมติว่าใน API /user/profile มีการส่ง property user.role กลับมาด้วย
+                if (user.role === 'admin') {
+                    const menuCard = this.querySelector('.dropdown-menu-card');
+                    
+                    if (menuCard) {
+                        // สร้างปุ่มลิงก์ใหม่
+                        const adminLink = document.createElement('a');
+                        adminLink.href = '/admin/'; // ไปที่หน้า Admin ของคุณ
+                        adminLink.innerHTML = 'Admin Panel';
+                        adminLink.style.color = '#2d79cf'; // ทำให้ปุ่มดูเด่น (สีแดง)
+                        adminLink.style.fontWeight = 'bold';
+
+                        // แทรกไว้ก่อนหน้าปุ่ม Logout (insertBefore)
+                        // หาปุ่มตั้งค่าโปรไฟล์และแทรกหลังมัน เพื่อให้สวยงาม
+                        const hrElement = menuCard.querySelector('hr');
+                        if(hrElement) {
+                             menuCard.insertBefore(adminLink, hrElement);
+                        }
+                    }
                 }
             }
         } catch (e) {

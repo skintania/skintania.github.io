@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - SkIntania</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <script type="module" src="/Template/component.js"></script>
+</head>
+
+<body class="admin-theme" style="display: none;">
+
+  <site-header page-title="ศูนย์ควบคุมระบบ"
+    page-desc="จัดการผู้ใช้ ตรวจสอบ Log และดูแลความเรียบร้อยของระบบ"></site-header>
+
+  <div class="settings-main-container">
+
+    <aside class="settings-sidebar">
+      <div class="sidebar-user-info">
+        <div class="avatar-wrapper">
+          <img src="your-avatar.jpg" alt="Admin">
+        </div>
+        <div>
+          <strong style="color: white; font-size: 1.1rem;">Admin Panel</strong>
+          <div style="font-size: 0.8rem; color: var(--accent-pink);">🛡️ Root Access</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a class="nav-item active" data-section="overview"><i class="fa-solid fa-chart-pie"></i> ภาพรวมระบบ</a>
+        <a class="nav-item" data-section="users"><i class="fa-solid fa-users"></i> จัดการผู้ใช้</a>
+
+        <a class="nav-item" data-section="r2"><i class="fa-solid fa-cloud-arrow-up"></i> จัดการ R2 (Storage)</a>
+        <a class="nav-item" data-section="d1"><i class="fa-solid fa-database"></i> จัดการ D1 (Database)</a>
+
+        <a class="nav-item" data-section="logs"><i class="fa-solid fa-terminal"></i> System Logs</a>
+      </nav>
+    </aside>
+
+    <main class="settings-content-panel">
+
+      <section id="section-overview" class="content-section active">
+        <h2><i class="fa-solid fa-chart-pie"></i> ภาพรวมระบบ</h2>
+        <p>สถานะระบบปัจจุบัน และข้อมูลการใช้งาน</p>
+
+        <div class="admin-stats-grid">
+          <div class="stat-card">
+            <i class="fa-solid fa-users text-blue"></i>
+            <div class="stat-info">
+              <span class="stat-label">ผู้ใช้ทั้งหมด</span>
+              <span class="stat-value" id="stat-total-users">กำลังโหลด...</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-user-check text-pink"></i>
+            <div class="stat-info">
+              <span class="stat-label">ยืนยันตัวตนแล้ว</span>
+              <span class="stat-value" id="stat-verified-users">กำลังโหลด...</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <i class="fa-solid fa-database text-blue"></i>
+            <div class="stat-info">
+              <span class="stat-label">พื้นที่ Storage (R2)</span>
+              <span class="stat-value" id="stat-storage">กำลังโหลด...</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-users" class="content-section">
+        <h2><i class="fa-solid fa-users"></i> จัดการผู้ใช้</h2>
+        <p>รายชื่อผู้ใช้งานในระบบทั้งหมด</p>
+
+        <div style="overflow-x: auto;">
+          <table class="d1-result-table" id="usersTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>OSK Gen</th>
+                <th>สถานะ</th>
+                <th>จัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr>
+                <td colspan="6" style="text-align: center;">กำลังโหลดข้อมูล...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="section-logs" class="content-section">
+        <h2><i class="fa-solid fa-terminal"></i> System Logs</h2>
+        <p>บันทึกการทำงานของเซิร์ฟเวอร์แบบ Real-time</p>
+
+        <div class="log-terminal" id="logTerminal">
+          <div class="log-line info">[System] Initializing log viewer...</div>
+        </div>
+        <button class="btn-primary" id="refreshLogsBtn" style="margin-top: 15px;">
+          <i class="fa-solid fa-rotate-right"></i> รีเฟรช Logs
+        </button>
+      </section>
+
+      <section id="section-r2" class="content-section">
+        <h2><i class="fa-solid fa-cloud"></i> จัดการ R2 Storage</h2>
+        <p>อัปโหลด ลบ และจัดการไฟล์ใน Cloudflare R2 แบบ Manual</p>
+
+        <div class="upload-zone" id="r2UploadZone">
+          <i class="fa-solid fa-file-arrow-up"></i>
+          <p>ลากไฟล์มาวางที่นี่ หรือ <span class="text-pink">คลิกเพื่อเลือกไฟล์</span></p>
+          <input type="file" id="r2FileInput" hidden multiple>
+        </div>
+
+        <div class="file-list-container">
+          <div class="file-item">
+            <div class="file-info">
+              <i class="fa-regular fa-image" style="color: var(--accent-blue);"></i>
+              <div class="file-details">
+                <span class="file-name">avatar_user99.png</span>
+                <span class="file-size">1.2 MB</span>
+              </div>
+            </div>
+            <button class="btn-action delete-btn"><i class="fa-solid fa-trash"></i></button>
+          </div>
+
+          <div class="file-item">
+            <div class="file-info">
+              <i class="fa-solid fa-file-pdf" style="color: var(--accent-pink);"></i>
+              <div class="file-details">
+                <span class="file-name">document_report.pdf</span>
+                <span class="file-size">4.5 MB</span>
+              </div>
+            </div>
+            <button class="btn-action delete-btn"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="section-d1" class="content-section">
+        <h2><i class="fa-solid fa-database"></i> จัดการ D1 Database</h2>
+        <p>รันคำสั่ง SQL Query ลงฐานข้อมูลโดยตรง (ระวังด้วยนะ!)</p>
+
+        <div class="sql-editor-container">
+          <textarea id="sqlQueryInput" placeholder="SELECT * FROM users LIMIT 10;"></textarea>
+          <button class="btn-primary" id="runQueryBtn">
+            <i class="fa-solid fa-play"></i> Run Query
+          </button>
+        </div>
+
+        <div class="query-result-area" style="margin-top: 20px;">
+          <div
+            style="padding: 20px; text-align: center; color: var(--text-muted); border: 1px dashed var(--border); border-radius: 8px;">
+            ผลลัพธ์ Database จะแสดงที่นี่
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <div id="section-system-logs" class="content-section">
+    <div class="section-header">
+      <h2>System Logs</h2>
+      <p>ตรวจสอบกิจกรรมที่เกิดขึ้นในระบบ</p>
+    </div>
+    <div class="log-container">
+      <div class="log-header">
+        <span>Live Console</span>
+        <button class="btn-small" id="clearLogs">Clear</button>
+      </div>
+      <div class="log-content" id="logDisplay">
+        <div class="log-line info">[10:05:02] System initialized...</div>
+        <div class="log-line success">[10:05:10] Connection to D1 Database: OK</div>
+      </div>
+    </div>
+  </div>
+
+  </section>
+  </div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+
+</html>
