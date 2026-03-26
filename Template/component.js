@@ -4,7 +4,7 @@ import { CONFIG } from '/config.js';
 async function fetchAndSetAvatar(imgEl, iconEl, profilePath) {
     if (!profilePath || !imgEl || !iconEl) return;
     const token = localStorage.getItem("authToken");
-    const finalUrl = profilePath.startsWith('http') ? profilePath : `${CONFIG.API_URL}${profilePath}`;
+    const finalUrl = profilePath.startsWith('http') ? profilePath : `${CONFIG.API_URL}/${profilePath}`;
 
     try {
         const response = await fetch(finalUrl, {
@@ -94,14 +94,20 @@ class SiteHeader extends HTMLElement {
             const response = await fetch(`${CONFIG.API_URL}/user/profile`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            const data = await response.json();
             
-            // ต้องหา Element ภายใน Shadow/Component นี้เท่านั้น
-            const imgEl = this.querySelector('#headerAvatarImg');
-            const iconEl = this.querySelector('#headerDefaultIcon');
+            const data = await response.json();
 
-            if (data.profileUrl && imgEl && iconEl) {
-                await fetchAndSetAvatar(imgEl, iconEl, data.profileUrl);
+            // 🚩 จุดที่ต้องแก้: ข้อมูลจริงอยู่ใน data.user
+            if (data.success && data.user) {
+                const user = data.user;
+                const imgEl = this.querySelector('#headerAvatarImg');
+                const iconEl = this.querySelector('#headerDefaultIcon');
+
+                // 🚩 ใช้ user.profile_url (ชื่อตัวแปรต้องตรงกับ JSON)
+                if (user.profile_url && imgEl && iconEl) {
+                    // เรียกใช้ฟังก์ชันดึงรูป (ตรวจสอบให้แน่ใจว่า fetchAndSetAvatar ประกอบ URL ถูกต้อง)
+                    await fetchAndSetAvatar(imgEl, iconEl, user.profile_url);
+                }
             }
         } catch (e) {
             console.error("Profile init failed", e);

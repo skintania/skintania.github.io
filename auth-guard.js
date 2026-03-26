@@ -4,9 +4,15 @@
 import { CONFIG } from '/config.js';
 
 async function checkSecurityStatus() {
+  const token = localStorage.getItem("authToken");
   try {
     // 2. Use CONFIG.API_URL to make the fetch request
-    const response = await fetch(CONFIG.API_URL + '/auth/status');
+    const response = await fetch(CONFIG.API_URL + '/auth/status', {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '' 
+      }
+    });
+    
     const data = await response.json();
 
     if (data.requireAuth === false) {
@@ -15,14 +21,11 @@ async function checkSecurityStatus() {
       return; 
     }
 
-    // 3. If requireAuth is TRUE, check the token
-    const token = localStorage.getItem("authToken");
-
     if (!token) {
       window.location.replace("/login/");
       return;
     }
-
+    
     const decodedString = atob(token);
     const payload = JSON.parse(decodedString);
 
@@ -36,6 +39,7 @@ async function checkSecurityStatus() {
     document.body.style.display = "block";
 
   } catch (error) {
+    console.error("DEBUG ERROR:", error);
     console.error("⚠️ Could not reach server. Falling back to strict check.");
     
     // If the server is down, we still check if they have a token locally just in case
