@@ -21,7 +21,7 @@ async function checkSecurityStatus() {
       return; 
     }
 
-    if (!token) {
+    if (!token || data['role'] === 'banned') {
       window.location.replace("/login/");
       return;
     }

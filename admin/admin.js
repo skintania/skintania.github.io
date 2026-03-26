@@ -147,6 +147,13 @@ async function loadUsersList() {
                               border: 1px solid ${user.role === 'admin' ? 'rgba(224, 55, 196, 0.3)' : 'rgba(70, 211, 253, 0.9)'};">
                             ${user.role === 'admin' ? 'Admin' : 'User'}
                         </span>
+                        
+                        ${user.is_banned === 1 ? `
+                        <span style="margin-left: 8px; padding: 4px 8px; border-radius: 12px; font-size: 12px; 
+                              background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
+                            🚫 Banned
+                        </span>
+                        ` : ''}
                     </td>
                     <td>
                         <button class="btn-toggle-detail" onclick="toggleUserDetails(${user.id}, this)">
@@ -161,8 +168,12 @@ async function loadUsersList() {
                 detailTr.className = 'user-detail-row';
                 detailTr.style.display = 'none'; 
 
+                const defaultAvatar = `https://ui-avatars.com/api/?name=${user.username || 'U'}&background=random&color=fff&size=128`; 
+
+                let profileImg = defaultAvatar;
+
                 // เช็คการโหลดรูป Profile (ถ้าไม่มีให้ใช้ Default)
-                let profileImg = '/Assest/default-avatar.png'; 
+                profileImg = '/Assest/default-avatar.png'; 
                 if (user.profile_url) {
                     profileImg = user.profile_url.startsWith('http') 
                         ? user.profile_url 
@@ -173,7 +184,7 @@ async function loadUsersList() {
                     <td colspan="6" style="padding: 0; border: none; background: transparent;">
                         <div class="user-detail-card">
                             <div>
-                                <img src="${profileImg}" alt="Avatar" class="user-detail-avatar" onerror="this.src='/Assest/default-avatar.png'">
+                                <img src="${profileImg}" alt="Avatar" class="user-detail-avatar" onerror="this.src='${defaultAvatar}'">
                             </div>
                             <div class="user-info-group">
                                 <p><strong>ชื่อ-นามสกุล:</strong> ${user.firstname || '-'} ${user.lastname || '-'}</p>
@@ -191,9 +202,16 @@ async function loadUsersList() {
                             </div>
                             
                             <div class="user-detail-footer">
-                                <button class="btn-ban" onclick="banUser(${user.id}, '${user.username}')">
-                                    <i class="fa-solid fa-ban"></i> แบนผู้ใช้
-                                </button>
+                                ${user.is_banned === 1 ? `
+                                    <button class="btn-ban" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border-color: rgba(34, 197, 94, 0.3);" 
+                                            onclick="unbanUser(${user.id}, '${user.username}')">
+                                        <i class="fa-solid fa-check"></i> ปลดแบน
+                                    </button>
+                                ` : `
+                                    <button class="btn-ban" onclick="banUser(${user.id}, '${user.username}')">
+                                        <i class="fa-solid fa-ban"></i> แบนผู้ใช้
+                                    </button>
+                                `}
                             </div>
 
                         </div>
