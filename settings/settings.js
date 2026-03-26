@@ -124,34 +124,36 @@ async function loadUserData() {
             }
         });
 
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error);
+        const resData = await response.json(); // รับก้อน JSON ทั้งหมด
+        if (!response.ok) throw new Error(resData.error);
 
-        setInputValue('firstName', data.firstName);
-        setInputValue('lastName', data.lastName);
-        setInputValue('username', data.username);
-        setInputValue('email', data.email);
-        setInputValue('oskGen', data.oskGen);
-        setInputValue('oskNum', data.oskNum);
-        setInputValue('cuId', data.cuId);
+        // 🌟 1. ดึง Object "user" ออกมาตามโครงสร้างใหม่
+        const user = resData.user; 
+        if (!user) return;
 
-        // 🎯 1. ดึง URL มา และเอา CONFIG.API_URL ประกอบร่าง!
-        let fullProfileUrl = "";
-        if (data.profileUrl && data.profileUrl.trim() !== "") {
-            fullProfileUrl = `${CONFIG.API_URL}${data.profileUrl}`;
-        }
+        // 🌟 2. อัปเดตการ Map ค่าให้ตรงกับชื่อ Key ใน JSON (ตัวพิมพ์เล็กหมด)
+        setInputValue('firstName', user.firstname); // เปลี่ยนจาก firstName -> firstname
+        setInputValue('lastName', user.lastname);   // เปลี่ยนจาก lastName -> lastname
+        setInputValue('username', user.username);
+        setInputValue('email', user.email);
+        setInputValue('oskGen', user.osk_gen);      // เปลี่ยนจาก oskGen -> osk_gen
+        setInputValue('oskNum', user.osk_id);       // เปลี่ยนจาก oskNum -> osk_id
+        setInputValue('cuId', user.student_id);    // เปลี่ยนจาก cuId -> student_id
 
-        // 🎯 2. ส่ง fullProfileUrl (ที่ประกอบร่างแล้ว) ไปให้ฟังก์ชันอัปเดตหน้าจอ
-        const profilePath = data.profileUrl || ""; // เก็บแค่ /Profile-Picture/...
+        // 🎯 3. จัดการรูปโปรไฟล์
+        const profilePath = user.profile_url || ""; // เปลี่ยนจาก profileUrl -> profile_url
         updateAvatarDisplay('sidebarAvatar', 'sidebarIcon', profilePath);
         updateAvatarDisplay('imagePreview', 'mainIcon', profilePath);
 
+        // อัปเดตชื่อที่ Sidebar
         const sidebarName = document.getElementById('sidebarUsername');
-        if (sidebarName) sidebarName.innerText = data.username || 'User';
+        if (sidebarName) sidebarName.innerText = user.username || 'User';
 
+        // ตรวจสอบสถานะ Verification (is_verified)
         const unverifiedWarning = document.getElementById('unverifiedWarning');
         if (unverifiedWarning) {
-            unverifiedWarning.style.display = data.isEmailVerified ? 'none' : 'flex';
+            // ใน JSON คือ is_verified: 1 แปลว่า verified แล้ว
+            unverifiedWarning.style.display = user.is_verified ? 'none' : 'flex';
         }
 
         toggleEditMode(false);
@@ -252,8 +254,9 @@ async function updateAvatarDisplay(imgId, iconId, urlPath) {
     if (urlPath && urlPath.trim() !== "") {
         // ตรวจสอบว่ามี CONFIG.API_URL ซ้ำซ้อนไหม
         let finalUrl = urlPath;
+        
         if (!urlPath.startsWith('http')) {
-            finalUrl = `${CONFIG.API_URL}${urlPath}`;
+            finalUrl = `${CONFIG.API_URL}/${urlPath}`;
         }
 
         const token = localStorage.getItem("authToken");

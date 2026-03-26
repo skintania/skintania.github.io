@@ -53,13 +53,13 @@ async function handleChangePassword() {
         }
 
         const response = await fetch(`${CONFIG.API_URL}/user/change-password`, {
-            method: 'PUT', // หรือ POST ตามที่ Backend กำหนด
+            method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                currentPassword: currentPassword,
+                oldPassword: currentPassword,
                 newPassword: newPassword
             })
         });

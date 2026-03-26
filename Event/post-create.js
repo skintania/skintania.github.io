@@ -15,36 +15,20 @@ document.addEventListener('DOMContentLoaded', () => {
     closeBtn: document.getElementById('closeModalBtn')
   };
 
-  /**
-   * 🌟 การแก้ปัญหาแบบยั่งยืน: 
-   * ดักจับ Error ของ <img> ทั้งหน้าเว็บ (รวมถึงที่ถูกสร้างใหม่แบบ Dynamic)
-   * หากรูปใดโหลดไม่ขึ้น (404) ให้สั่งซ่อนตัวมันเองทันที
-   */
+  // ดักจับ Error ของรูปภาพ
   document.addEventListener('error', (e) => {
     if (e.target.tagName === 'IMG') {
       e.target.style.display = 'none';
-      e.target.classList.add('img-error'); // สำหรับให้ CSS จัดการต่อได้ถ้าต้องการ
     }
   }, true);
 
-  // --- 2. ฟังก์ชันหลักสำหรับจัดการ UI (UI Logic) ---
-
+  // --- 2. ฟังก์ชันหลักสำหรับจัดการ UI ---
   const toggleFormType = (type) => {
     const isPoll = type === 'Poll';
     UI.pollArea.style.display = isPoll ? 'block' : 'none';
     UI.standardArea.style.display = isPoll ? 'none' : 'block';
-
-    toggleInputsValidation(UI.pollArea, !isPoll);
-    toggleInputsValidation(UI.standardArea, isPoll);
-
+    
     if (isPoll) renderPollChoices(UI.pollCountSelect.value);
-  };
-
-  const toggleInputsValidation = (container, shouldDisable) => {
-    const inputs = container.querySelectorAll('input, textarea, select');
-    inputs.forEach(input => {
-      input.disabled = shouldDisable;
-    });
   };
 
   const renderPollChoices = (count) => {
@@ -65,103 +49,74 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // --- 3. ฟังก์ชันจัดการข้อมูล (Data Handling) ---
-
   const getFormData = () => {
-    const formData = new FormData();
+    const formData = new FormData(UI.form); // ใช้ FormData ตัวตั้งต้น
     const type = UI.typeSelect.value;
-
-    formData.append('type', type);
-    formData.append('header', UI.form.header.value);
 
     if (type === 'Poll') {
       const count = UI.pollCountSelect.value;
       let texts = [];
       for (let i = 1; i <= count; i++) {
-        texts.push(UI.form[`choiceText_${i}`].value);
-        const fileInput = UI.form[`choiceImage_${i}`];
-        if (fileInput && fileInput.files.length > 0) {
-          formData.append('images', fileInput.files[0]);
-        } else {
-          // ยังคงส่ง Blob ว่างเพื่อรักษา Index ให้ตรงกับ DB ในตาราง pollChoices
-          formData.append('images', new Blob());
-        }
+        const val = UI.form[`choiceText_${i}`].value;
+        texts.push(val);
       }
-      formData.append('choices', texts.join(','));
-    } else {
-        // 🌟 แก้ไขตรงนี้: ดึงค่าและจัดการเรื่องการขึ้นบรรทัดใหม่
-        let descValue = UI.form.description.value;
-
-        // Normalize: เปลี่ยนการเคาะ Enter ให้เป็นมาตรฐาน \n 
-        // และตัดช่องว่างหน้า/หลังที่ผู้ใช้อาจเผลอกดทิ้งไป
-        descValue = descValue.trim().replace(/\r\n/g, '\n');
-
-        formData.append('description', descValue);
-        
-        const fileInput = document.getElementById('singleImageInput');
-        if (fileInput && fileInput.files.length > 0) {
-            formData.append('images', fileInput.files[0]);
-        }
+      formData.set('choices', texts.join(',')); // ใช้ .set เพื่อทับค่าเดิม
     }
+    
+    // แนบ eventId ถ้าอยู่ในโหมดแก้ไข
+    if (window.editingEventId) {
+        formData.append('eventId', window.editingEventId);
+    }
+
     return formData;
   };
 
   // --- 4. การเชื่อมต่อ Event Listeners ---
-
   UI.openBtn.onclick = () => {
+    window.editingEventId = null; // ล้างค่าเผื่อค้างจากครั้งก่อน
+    UI.form.reset();
     UI.modal.style.display = 'flex';
-    UI.form.scrollTop = 0;
+    document.querySelector('.modal-header h2').innerText = 'สร้างกิจกรรมใหม่';
+    UI.submitBtn.innerText = 'โพสต์กิจกรรมเลย';
   };
 
-  UI.closeBtn.onclick = () => UI.modal.style.display = 'none';
-
-  window.onclick = (e) => {
-    if (e.target === UI.modal) UI.modal.style.display = 'none';
+  UI.closeBtn.onclick = () => {
+    UI.modal.style.display = 'none';
+    window.editingEventId = null;
   };
 
   UI.typeSelect.onchange = (e) => toggleFormType(e.target.value);
   UI.pollCountSelect.onchange = (e) => renderPollChoices(e.target.value);
 
-  // 🌟 จุดที่ปรับแก้: แยกแยะระหว่าง "สร้างใหม่" กับ "แก้ไข" 🌟
   UI.form.onsubmit = async (e) => {
     e.preventDefault();
     UI.submitBtn.disabled = true;
     
-    // เปลี่ยนข้อความปุ่มตามสถานะ
-    UI.submitBtn.innerText = window.editingEventId ? 'กำลังบันทึก...' : 'กำลังส่ง...';
+    const isEdit = !!window.editingEventId;
+    UI.submitBtn.innerText = isEdit ? 'กำลังบันทึก...' : 'กำลังส่ง...';
 
     const token = localStorage.getItem('authToken');
     const data = getFormData();
-
-    // 🔴 1. ตั้งค่า API ปลายทางเริ่มต้นเป็น "สร้างใหม่"
-    let apiUrl = `${CONFIG.API_URL}/event/create`;
-
-    // 🔴 2. ถ้ามี ID โพสต์ค้างอยู่ แสดงว่าเป็นการ "แก้ไข"
-    if (window.editingEventId) {
-        apiUrl = `${CONFIG.API_URL}/event/edit`; // เปลี่ยนไปยิง API สำหรับ Edit
-        data.append('eventId', window.editingEventId); // แนบ ID เข้าไปใน FormData เพื่อให้ Backend รู้
-    }
+    const apiUrl = isEdit ? `${CONFIG.API_URL}/event/edit` : `${CONFIG.API_URL}/event/create`;
 
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
-        body: data
+        body: data // ส่งเป็น FormData เสมอ
       });
 
       if (response.ok) {
-        // แจ้งเตือนตามสถานะ
-        alert(window.editingEventId ? 'อัปเดตโพสต์สำเร็จ! 🎉' : 'สร้างโพสต์สำเร็จ! 🎉');
-        window.editingEventId = null; // ล้างค่า ID หลังทำเสร็จ
+        alert(isEdit ? 'อัปเดตสำเร็จ! 🎉' : 'สร้างสำเร็จ! 🎉');
         location.reload();
       } else {
         const err = await response.json();
-        alert('Error: ' + (err.error || 'เกิดข้อผิดพลาดบางอย่าง'));
+        alert('Error: ' + (err.error || 'เกิดข้อผิดพลาด'));
       }
     } catch (err) {
       alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
     } finally {
       UI.submitBtn.disabled = false;
-      UI.submitBtn.innerText = 'โพสต์กิจกรรมเลย'; // คืนค่าข้อความปุ่ม
     }
   };
 

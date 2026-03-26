@@ -10,11 +10,22 @@ async function fetchEvents() {
                 'Authorization': `Bearer ${token}`
             }
         });
+        
         if (!response.ok) throw new Error('ไม่สามารถโหลดข้อมูลจาก API ได้');
-        return await response.json(); 
+        
+        const result = await response.json(); 
+        console.log("Raw API Result:", result);
+
+        // 🌟 วิธีแก้: แปลง Object ที่มีคีย์ "0", "1" ให้กลายเป็น Array []
+        // เราจะเอาเฉพาะค่า (Values) ของคีย์ที่เป็นตัวเลขเท่านั้น
+        const eventArray = Object.keys(result)
+            .filter(key => !isNaN(key)) // เอาเฉพาะคีย์ที่เป็นตัวเลข "0", "1", "2"
+            .map(key => result[key]);   // ดึงข้อมูลข้างในออกมาใส่ Array
+            
+        return eventArray; 
     } catch (err) {
         console.error('Error fetching data:', err);
-        return null; 
+        return []; // คืนค่า Array ว่างแทน null ป้องกันการพังในชั้นถัดไป
     }
 }
 
@@ -81,34 +92,42 @@ function openEditModal(eventItem) {
     if (modal) modal.style.display = 'flex'; 
 }
 
-async function loadImageWithAuth(url) {
+async function loadImageWithAuth(fileSelector) {
     const token = localStorage.getItem('authToken') || '';
-    if (!url || !url.includes('asset?file=')) return url; 
+    
+    // 1. ถ้าไม่มีชื่อไฟล์ หรือเป็น null ให้คืนค่า Placeholder
+    if (!fileSelector) return 'https://via.placeholder.com/300?text=No+Image';
+
+    // 2. สร้าง Full URL ให้ถูกต้อง (สมมติใช้ endpoint /asset หรือ /course)
+    // ตรวจสอบว่า CONFIG.API_URL ของคุณคือ https://skintania-api.skintania143.workers.dev
+    const fullUrl = `${CONFIG.API_URL}/asset?file=${encodeURIComponent(fileSelector)}`;
+
     try {
-        const response = await fetch(url, {
+        const response = await fetch(fullUrl, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
+
         if (!response.ok) throw new Error('Photo Load Failed');
+
+        // 3. แปลงไฟล์ที่ได้จาก R2 (Binary) ให้กลายเป็น URL ที่ Browser อ่านได้
         const blob = await response.blob();
         return URL.createObjectURL(blob); 
     } catch (err) {
         console.error("Image Auth Error:", err);
-        return 'https://via.placeholder.com/150?text=Error'; 
+        return 'https://via.placeholder.com/300?text=Error+Loading'; 
     }
 }
 
 // ==========================================
 // 2. ฟังก์ชันสำหรับสร้างโพสต์ลงหน้าเว็บ (UI)
 // ==========================================
-// ==========================================
-// 2. ฟังก์ชันสำหรับสร้างโพสต์ลงหน้าเว็บ (UI)
-// ==========================================
+
 async function renderEvents(data, gridElement) {
     gridElement.innerHTML = '';
 
-    if (!data || Object.keys(data).length === 0) {
-        gridElement.innerHTML = '<p style="color:red; text-align:center; grid-column: 1/-1;">ไม่สามารถโหลดข้อมูลกิจกรรมได้</p>';
+    if (!data || !Array.isArray(data) || data.length === 0) {
+        gridElement.innerHTML = '<p style="color:#94a3b8; text-align:center; grid-column: 1/-1;">ยังไม่มีกิจกรรมในขณะนี้</p>';
         return;
     }
 
@@ -180,6 +199,13 @@ async function renderEvents(data, gridElement) {
                 row.style.cssText = 'display: flex; align-items: center; gap: 15px; margin-bottom: 15px;';
 
                 const img = document.createElement('img');
+                const currentImgPath = eventItem.imgLink[i]; // ดึงตาม index ได้เลย เพราะเราเรียงมาให้แล้วจาก Backend
+
+                if (currentImgPath) {
+                    img.src = await loadImageWithAuth(currentImgPath);
+                } else {
+                    img.src = 'https://via.placeholder.com/200?text=No+Photo';
+                }
                 const rawImgUrl = Array.isArray(eventItem.imgLink) ? (eventItem.imgLink[i] || eventItem.imgLink[0]) : eventItem.imgLink;
                 img.src = await loadImageWithAuth(rawImgUrl); 
                 img.style.cssText = 'width: 200px; max-height: 500px; border-radius: 8px; object-fit: contain; flex-shrink: 0; background: rgba(0,0,0,0.1);';
