@@ -67,7 +67,6 @@ async function checkAdminAccess() {
    ========================================== */
 function setupNavigation() {
     const navItems = document.querySelectorAll('.nav-item[data-section]');
-    const contentSections = document.querySelectorAll('.content-section');
 
     navItems.forEach(item => {
         item.addEventListener('click', function (e) {
@@ -76,13 +75,47 @@ function setupNavigation() {
             const targetSection = document.getElementById(targetSectionId);
 
             if (targetSection) {
-                // ล้างคลาส active ออกจากเมนูและเนื้อหาทั้งหมด
+                // Clear active class from all menu items
                 navItems.forEach(nav => nav.classList.remove('active'));
-                contentSections.forEach(section => section.classList.remove('active'));
 
-                // ใส่คลาส active ให้ตัวที่ถูกคลิก
+                // Add active class to clicked item
                 this.classList.add('active');
-                targetSection.classList.add('active');
+
+                // Smooth scroll to the target section
+                targetSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+
+    // Add scroll spy to highlight active section
+    setupScrollSpy();
+
+    // Trigger initial scroll spy to highlight the current section
+    window.dispatchEvent(new Event('scroll'));
+}
+
+function setupScrollSpy() {
+    const navItems = document.querySelectorAll('.nav-item[data-section]');
+    const sections = document.querySelectorAll('.content-section');
+
+    window.addEventListener('scroll', () => {
+        let current = '';
+
+        sections.forEach(section => {
+            const sectionTop = section.offsetTop;
+            const sectionHeight = section.clientHeight;
+            if (pageYOffset >= sectionTop - sectionHeight / 3) {
+                current = section.getAttribute('id').replace('section-', '');
+            }
+        });
+
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('data-section') === current) {
+                item.classList.add('active');
             }
         });
     });
@@ -141,18 +174,12 @@ async function loadUsersList() {
                     <td>${user.email}</td>
                     <td>${user.osk_gen || '-'}</td>
                     <td>
-                        <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; 
-                              background: ${user.role === 'admin' ? 'rgba(239, 68, 188, 0.2)' : 'rgba(87, 194, 243, 0.6)'}; 
-                              color: ${user.role === 'admin' ? '#fca5a5' : '#cbd5e1'}; 
-                              border: 1px solid ${user.role === 'admin' ? 'rgba(224, 55, 196, 0.3)' : 'rgba(70, 211, 253, 0.9)'};">
-                            ${user.role === 'admin' ? 'Admin' : 'User'}
+                        <span class="role-badge ${user.role === 'admin' ? 'admin' : 'user'}">
+                            ${user.role === 'admin' ? '👑 Admin' : '👤 User'}
                         </span>
                         
                         ${user.is_banned === 1 ? `
-                        <span style="margin-left: 8px; padding: 4px 8px; border-radius: 12px; font-size: 12px; 
-                              background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                            🚫 Banned
-                        </span>
+                        <span class="ban-status">🚫 Banned</span>
                         ` : ''}
                     </td>
                     <td>
@@ -203,8 +230,7 @@ async function loadUsersList() {
                             
                             <div class="user-detail-footer">
                                 ${user.is_banned === 1 ? `
-                                    <button class="btn-ban" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border-color: rgba(34, 197, 94, 0.3);" 
-                                            onclick="unbanUser(${user.id}, '${user.username}')">
+                                    <button class="btn-ban unban" onclick="unbanUser(${user.id}, '${user.username}')">
                                         <i class="fa-solid fa-check"></i> ปลดแบน
                                     </button>
                                 ` : `
@@ -233,15 +259,11 @@ window.toggleUserDetails = function(userId, btnElement) {
     if (detailRow.style.display === 'none') {
         detailRow.style.display = 'table-row';
         btnElement.innerHTML = '▲ ปิด';
-        btnElement.style.background = 'rgba(255, 255, 255, 0.1)';
-        btnElement.style.color = '#e2e8f0';
-        btnElement.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+        btnElement.classList.add('active');
     } else {
         detailRow.style.display = 'none';
         btnElement.innerHTML = '▼ ข้อมูล';
-        btnElement.style.background = 'rgba(56, 189, 248, 0.1)';
-        btnElement.style.color = '#38bdf8';
-        btnElement.style.borderColor = 'rgba(56, 189, 248, 0.2)';
+        btnElement.classList.remove('active');
     }
 }
 
@@ -378,6 +400,9 @@ function setupR2Manager() {
         await uploadToR2(files[0]);
         fileInput.value = ''; // รีเซ็ตค่า Input
     });
+
+    // โหลดรายการไฟล์เมื่อเปิดหน้า
+    loadR2Files();
 }
 
 async function uploadToR2(file) {
@@ -400,7 +425,7 @@ async function uploadToR2(file) {
         if (!response.ok) throw new Error(data.error || "Upload failed");
 
         alert(`✅ อัปโหลดไฟล์ ${file.name} สำเร็จ!`);
-        // TODO: เรียกฟังก์ชันรีเฟรชรายการไฟล์ R2 (ถ้ามี)
+        loadR2Files(); // รีเฟรชรายการไฟล์หลังอัปโหลด
 
     } catch (error) {
         alert("❌ อัปโหลดล้มเหลว: " + error.message);
@@ -410,6 +435,92 @@ async function uploadToR2(file) {
         if (uploadIcon) uploadIcon.className = "fa-solid fa-file-arrow-up";
     }
 }
+
+async function loadR2Files() {
+    const container = document.querySelector('.file-list-container');
+    if (!container) return;
+
+    container.innerHTML = '<div style="text-align:center; color: var(--accent-blue);">กำลังโหลดไฟล์...</div>';
+
+    try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${CONFIG.API_URL}/admin/r2/files`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to load files");
+        const data = await response.json();
+        const files = data.files || [];
+
+        container.innerHTML = ''; // ล้างของเก่า
+
+        if (files.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 20px; background: var(--glass-bg); border-radius: 12px; border: 1px dashed var(--border);"><i class="fa-solid fa-folder-open" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i><p>ยังไม่มีไฟล์ใน Storage</p></div>';
+            return;
+        }
+
+        files.forEach(file => {
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+
+            // กำหนดไอคอนตามประเภทไฟล์
+            let iconClass = 'fa-regular fa-file';
+            if (file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+                iconClass = 'fa-regular fa-image';
+            } else if (file.name.match(/\.(pdf)$/i)) {
+                iconClass = 'fa-solid fa-file-pdf';
+            } else if (file.name.match(/\.(mp4|avi|mkv)$/i)) {
+                iconClass = 'fa-solid fa-file-video';
+            }
+
+            fileItem.innerHTML = `
+                <div class="file-info">
+                    <i class="${iconClass}" style="color: var(--accent-blue);"></i>
+                    <div class="file-details">
+                        <span class="file-name">${file.name}</span>
+                        <span class="file-size">${file.size || 'Unknown size'}</span>
+                    </div>
+                </div>
+                <button class="btn-action delete-btn" onclick="deleteR2File('${file.name}')">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            `;
+
+            container.appendChild(fileItem);
+        });
+
+    } catch (error) {
+        container.innerHTML = `<div style="color: #ef4444; text-align: center;">❌ เกิดข้อผิดพลาด: ${error.message}</div>`;
+    }
+}
+
+async function deleteR2File(filename) {
+    if (!confirm(`⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์: ${filename} ?`)) return;
+
+    try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${CONFIG.API_URL}/admin/r2/delete`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ filename: filename })
+        });
+
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "Delete failed");
+
+        alert(`✅ ลบไฟล์ ${filename} สำเร็จ!`);
+        loadR2Files(); // รีเฟรชรายการไฟล์หลังลบ
+
+    } catch (error) {
+        alert("❌ ลบไฟล์ล้มเหลว: " + error.message);
+    }
+}
+
+// เปิดฟังก์ชัน deleteR2File ให้เรียกจาก HTML ได้
+window.deleteR2File = deleteR2File;
 
 /* ==========================================
    6. D1 DATABASE MANAGER (รันคำสั่ง SQL)
