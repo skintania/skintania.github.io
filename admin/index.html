@@ -113,6 +113,15 @@
         <h2><i class="fa-solid fa-cloud"></i> จัดการ R2 Storage</h2>
         <p>อัปโหลด ลบ และจัดการไฟล์ใน Cloudflare R2 แบบ Manual</p>
 
+        <div class="storage-controls">
+          <div class="bucket-selector">
+            <label for="r2BucketSelect">เลือก Bucket:</label>
+            <select id="r2BucketSelect" class="bucket-dropdown">
+              <option value="">กำลังโหลด buckets...</option>
+            </select>
+          </div>
+        </div>
+
         <div class="upload-zone" id="r2UploadZone">
           <i class="fa-solid fa-file-arrow-up"></i>
           <p>ลากไฟล์มาวางที่นี่ หรือ <span class="text-pink">คลิกเพื่อเลือกไฟล์</span></p>
@@ -127,6 +136,15 @@
       <section id="section-d1" class="content-section">
         <h2><i class="fa-solid fa-database"></i> จัดการ D1 Database</h2>
         <p>รันคำสั่ง SQL Query ลงฐานข้อมูลโดยตรง (ระวังด้วยนะ!)</p>
+
+        <div class="database-info">
+          <div class="tables-overview">
+            <h3>ตารางในฐานข้อมูล</h3>
+            <div id="tablesList" class="tables-grid">
+              <!-- ตารางจะถูกโหลดและแสดงที่นี่ -->
+            </div>
+          </div>
+        </div>
 
         <div class="sql-editor-container">
           <textarea id="sqlQueryInput" placeholder="SELECT * FROM users LIMIT 10;"></textarea>

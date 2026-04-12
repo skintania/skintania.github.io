@@ -333,6 +333,9 @@ Returns system logs (Admin only).
 ### POST /admin/r2/upload
 Upload file to R2 storage (Admin only).
 
+**Query Parameters:**
+- `bucket` (required): The R2 bucket name (e.g., "avatars", "documents", "videos")
+
 **Content-Type:** multipart/form-data
 **Body:** FormData with 'file' field
 
@@ -340,21 +343,27 @@ Upload file to R2 storage (Admin only).
 ```json
 {
   "success": true,
-  "message": "File uploaded successfully"
+  "message": "File uploaded successfully",
+  "bucket": "avatars"
 }
 ```
 
 ### GET /admin/r2/files
 List files in R2 storage (Admin only).
 
+**Query Parameters:**
+- `bucket` (required): The R2 bucket name (e.g., "avatars", "documents", "videos")
+
 **Success Response (200):**
 ```json
 {
+  "bucket": "avatars",
   "files": [
     {
       "name": "avatar_user99.png",
       "size": "1.2 MB",
-      "url": "https://storage.example.com/avatar_user99.png"
+      "url": "https://storage.example.com/avatar_user99.png",
+      "lastModified": "2024-01-15T10:30:00Z"
     }
   ]
 }
@@ -366,6 +375,7 @@ Delete file from R2 storage (Admin only).
 **Request Body:**
 ```json
 {
+  "bucket": "avatars",
   "filename": "avatar_user99.png"
 }
 ```
@@ -374,7 +384,31 @@ Delete file from R2 storage (Admin only).
 ```json
 {
   "success": true,
-  "message": "File deleted successfully"
+  "message": "File deleted successfully",
+  "bucket": "avatars"
+}
+```
+
+### GET /admin/r2/buckets
+List all available R2 buckets (Admin only).
+
+**Success Response (200):**
+```json
+{
+  "buckets": [
+    {
+      "name": "avatars",
+      "description": "User profile pictures"
+    },
+    {
+      "name": "documents",
+      "description": "User uploaded documents"
+    },
+    {
+      "name": "videos",
+      "description": "Course videos and media"
+    }
+  ]
 }
 ```
 
@@ -408,6 +442,34 @@ Execute SQL query on D1 database (Admin only).
 ```json
 {
   "error": "SQL syntax error"
+}
+```
+
+### GET /admin/d1/tables
+List all tables in D1 database (Admin only).
+
+**Success Response (200):**
+```json
+{
+  "tables": [
+    {
+      "name": "users",
+      "rowCount": 1250,
+      "columns": [
+        {"name": "id", "type": "INTEGER", "nullable": false},
+        {"name": "username", "type": "TEXT", "nullable": false},
+        {"name": "email", "type": "TEXT", "nullable": false}
+      ]
+    },
+    {
+      "name": "courses",
+      "rowCount": 45,
+      "columns": [
+        {"name": "id", "type": "INTEGER", "nullable": false},
+        {"name": "title", "type": "TEXT", "nullable": false}
+      ]
+    }
+  ]
 }
 ```
 

@@ -386,26 +386,57 @@ async function loadSystemLogs() {
 function setupR2Manager() {
     const uploadZone = document.getElementById('r2UploadZone');
     const fileInput = document.getElementById('r2FileInput');
+    const bucketSelect = document.getElementById('r2BucketSelect');
 
-    if (!uploadZone || !fileInput) return;
+    if (!uploadZone || !fileInput || !bucketSelect) return;
+
+    // โหลดรายการ buckets ก่อน
+    loadR2Buckets();
+
+    // เมื่อเลือก bucket เปลี่ยน -> โหลดไฟล์ใหม่
+    bucketSelect.addEventListener('change', () => {
+        const selectedBucket = bucketSelect.value;
+        if (selectedBucket) {
+            loadR2Files(selectedBucket);
+        } else {
+            // ถ้าไม่ได้เลือก bucket ให้แสดงข้อความ
+            const container = document.querySelector('.file-list-container');
+            if (container) {
+                container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 20px; background: var(--glass-bg); border-radius: 12px; border: 1px dashed var(--border);"><i class="fa-solid fa-hand-pointer" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i><p>กรุณาเลือก Bucket ก่อน</p></div>';
+            }
+        }
+    });
 
     // กดที่กล่องเพื่อเลือกไฟล์
-    uploadZone.addEventListener('click', () => fileInput.click());
+    uploadZone.addEventListener('click', () => {
+        const selectedBucket = bucketSelect.value;
+        if (!selectedBucket) {
+            alert('⚠️ กรุณาเลือก Bucket ก่อนอัปโหลดไฟล์');
+            return;
+        }
+        fileInput.click();
+    });
 
     // เมื่อเลือกไฟล์เสร็จ -> ทำการอัปโหลด
     fileInput.addEventListener('change', async (e) => {
-        const files = e.target.files;
+        const files = Array.from(e.target.files || []);
         if (files.length === 0) return;
 
-        await uploadToR2(files[0]);
-        fileInput.value = ''; // รีเซ็ตค่า Input
-    });
+        const selectedBucket = bucketSelect.value;
+        if (!selectedBucket) {
+            alert('⚠️ กรุณาเลือก Bucket ก่อนอัปโหลดไฟล์');
+            return;
+        }
 
-    // โหลดรายการไฟล์เมื่อเปิดหน้า
-    loadR2Files();
+        for (const file of files) {
+            await uploadToR2(file, selectedBucket);
+        }
+
+        fileInput.value = ''; // รีเฟร็ตค่า Input
+    });
 }
 
-async function uploadToR2(file) {
+async function uploadToR2(file, bucket) {
     try {
         const token = localStorage.getItem("authToken");
         const formData = new FormData();
@@ -415,7 +446,7 @@ async function uploadToR2(file) {
         const uploadIcon = document.querySelector('#r2UploadZone i');
         if (uploadIcon) uploadIcon.className = "fa-solid fa-spinner fa-spin text-pink";
 
-        const response = await fetch(`${CONFIG.API_URL}/admin/r2/upload`, {
+        const response = await fetch(`${CONFIG.API_URL}/admin/r2/upload?bucket=${encodeURIComponent(bucket)}`, {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${token}` },
             body: formData
@@ -425,7 +456,7 @@ async function uploadToR2(file) {
         if (!response.ok) throw new Error(data.error || "Upload failed");
 
         alert(`✅ อัปโหลดไฟล์ ${file.name} สำเร็จ!`);
-        loadR2Files(); // รีเฟรชรายการไฟล์หลังอัปโหลด
+        loadR2Files(bucket); // รีเฟรชรายการไฟล์หลังอัปโหลด
 
     } catch (error) {
         alert("❌ อัปโหลดล้มเหลว: " + error.message);
@@ -436,15 +467,20 @@ async function uploadToR2(file) {
     }
 }
 
-async function loadR2Files() {
+async function loadR2Files(bucket) {
     const container = document.querySelector('.file-list-container');
     if (!container) return;
+
+    if (!bucket) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 20px; background: var(--glass-bg); border-radius: 12px; border: 1px dashed var(--border);"><i class="fa-solid fa-hand-pointer" style="font-size: 3rem; margin-bottom: 16px; opacity: 0.5;"></i><p>กรุณาเลือก Bucket ก่อน</p></div>';
+        return;
+    }
 
     container.innerHTML = '<div style="text-align:center; color: var(--accent-blue);">กำลังโหลดไฟล์...</div>';
 
     try {
         const token = localStorage.getItem("authToken");
-        const response = await fetch(`${CONFIG.API_URL}/admin/r2/files`, {
+        const response = await fetch(`${CONFIG.API_URL}/admin/r2/files?bucket=${encodeURIComponent(bucket)}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -481,7 +517,7 @@ async function loadR2Files() {
                         <span class="file-size">${file.size || 'Unknown size'}</span>
                     </div>
                 </div>
-                <button class="btn-action delete-btn" onclick="deleteR2File('${file.name}')">
+                <button class="btn-action delete-btn" onclick="deleteR2File('${bucket}', '${file.name}')">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             `;
@@ -494,7 +530,40 @@ async function loadR2Files() {
     }
 }
 
-async function deleteR2File(filename) {
+async function loadR2Buckets() {
+    const bucketSelect = document.getElementById('r2BucketSelect');
+    if (!bucketSelect) return;
+
+    try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${CONFIG.API_URL}/admin/r2/buckets`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to load buckets");
+        const data = await response.json();
+        const buckets = data.buckets || [];
+
+        bucketSelect.innerHTML = '<option value="">เลือก Bucket...</option>';
+        buckets.forEach(bucket => {
+            const option = document.createElement('option');
+            option.value = bucket.name;
+            option.textContent = `${bucket.name} - ${bucket.description}`;
+            bucketSelect.appendChild(option);
+        });
+
+        if (buckets.length === 1) {
+            bucketSelect.value = buckets[0].name;
+            loadR2Files(buckets[0].name);
+        }
+
+    } catch (error) {
+        console.error("Load buckets error:", error);
+        bucketSelect.innerHTML = '<option value="">❌ โหลด buckets ไม่ได้</option>';
+    }
+}
+
+async function deleteR2File(bucket, filename) {
     if (!confirm(`⚠️ คุณแน่ใจหรือไม่ว่าต้องการลบไฟล์: ${filename} ?`)) return;
 
     try {
@@ -505,14 +574,14 @@ async function deleteR2File(filename) {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ filename: filename })
+            body: JSON.stringify({ bucket: bucket, filename: filename })
         });
 
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "Delete failed");
 
         alert(`✅ ลบไฟล์ ${filename} สำเร็จ!`);
-        loadR2Files(); // รีเฟรชรายการไฟล์หลังลบ
+        loadR2Files(bucket); // รีเฟรชรายการไฟล์หลังลบ
 
     } catch (error) {
         alert("❌ ลบไฟล์ล้มเหลว: " + error.message);
@@ -531,6 +600,9 @@ function setupD1Manager() {
     const resultArea = document.querySelector('.query-result-area');
 
     if (!runBtn || !queryInput) return;
+
+    // โหลดข้อมูลตารางเมื่อเปิดหน้า
+    loadD1Tables();
 
     runBtn.addEventListener('click', async () => {
         const query = queryInput.value.trim();
@@ -574,6 +646,66 @@ function setupD1Manager() {
         }
     });
 }
+
+async function loadD1Tables() {
+    const tablesContainer = document.getElementById('tablesList');
+    if (!tablesContainer) return;
+
+    tablesContainer.innerHTML = '<div style="text-align:center; color: var(--accent-blue);">กำลังโหลดตาราง...</div>';
+
+    try {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${CONFIG.API_URL}/admin/d1/tables`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error("Failed to load tables");
+        const data = await response.json();
+        const tables = data.tables || [];
+
+        tablesContainer.innerHTML = '';
+
+        if (tables.length === 0) {
+            tablesContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">ไม่พบตารางในฐานข้อมูล</div>';
+            return;
+        }
+
+        tables.forEach(table => {
+            const tableCard = document.createElement('div');
+            tableCard.className = 'table-card';
+            tableCard.innerHTML = `
+                <div class="table-header">
+                    <i class="fa-solid fa-table" style="color: var(--accent-blue);"></i>
+                    <span class="table-name">${table.name}</span>
+                    <span class="table-rows">${table.rowCount} rows</span>
+                </div>
+                <div class="table-columns">
+                    ${table.columns.map(col => `
+                        <span class="column-tag" title="${col.type}${col.nullable ? ' (nullable)' : ''}">
+                            ${col.name}
+                        </span>
+                    `).join('')}
+                </div>
+                <button class="btn-small" onclick="selectTable('${table.name}')">
+                    <i class="fa-solid fa-play"></i> Query
+                </button>
+            `;
+            tablesContainer.appendChild(tableCard);
+        });
+
+    } catch (error) {
+        tablesContainer.innerHTML = `<div style="color: #ef4444; text-align: center;">❌ เกิดข้อผิดพลาด: ${error.message}</div>`;
+    }
+}
+
+// เปิดฟังก์ชัน selectTable ให้เรียกจาก HTML ได้
+window.selectTable = function(tableName) {
+    const queryInput = document.getElementById('sqlQueryInput');
+    if (queryInput) {
+        queryInput.value = `SELECT * FROM ${tableName} LIMIT 10;`;
+        queryInput.focus();
+    }
+};
 
 function renderSQLResults(results, container) {
     if (!Array.isArray(results) || results.length === 0) {

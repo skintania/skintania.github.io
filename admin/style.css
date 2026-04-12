@@ -185,7 +185,7 @@ body {
     left: 0;
     opacity: 0.2;
 }
-}
+
 
 /* =========================================
    CONTENT PANELS (Modern Glassmorphism)
@@ -373,6 +373,52 @@ body {
     min-height: 200px;
 }
 
+.storage-controls {
+    display: flex;
+    justify-content: flex-start;
+    margin-bottom: 20px;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.bucket-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 320px;
+    color: var(--text-main);
+}
+
+.bucket-selector label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-subtle);
+}
+
+.bucket-dropdown {
+    width: 100%;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: rgba(11, 15, 25, 0.8);
+    border: 1px solid var(--glass-border);
+    color: var(--text-main);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.bucket-dropdown option {
+    background: var(--card-bg);
+    color: var(--text-main);
+}
+
+.bucket-dropdown:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+    background: rgba(0, 0, 0, 0.6);
+}
+
 /* Empty state styling */
 .file-list-container .empty-state {
     text-align: center;
@@ -381,6 +427,93 @@ body {
     background: var(--glass-bg);
     border-radius: 12px;
     border: 1px dashed var(--border);
+}
+
+.table-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.table-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(14, 165, 233, 0.3);
+}
+
+.tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.table-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.table-name {
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.table-rows {
+    font-size: 0.9rem;
+    color: var(--text-subtle);
+    background: rgba(14, 165, 233, 0.12);
+    padding: 6px 10px;
+    border-radius: 999px;
+}
+
+.table-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.column-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-subtle);
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+}
+
+.btn-action {
+    border: none;
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    padding: 12px 14px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-action:hover {
+    background: rgba(239, 68, 68, 0.22);
+    transform: translateY(-1px);
+}
+
+.delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
 }
 
 .file-list-container .empty-state i {
