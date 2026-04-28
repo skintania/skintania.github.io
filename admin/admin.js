@@ -204,7 +204,7 @@ async function loadUsersList() {
                 if (user.profile_url) {
                     profileImg = user.profile_url.startsWith('http')
                         ? user.profile_url
-                        : `${CONFIG.API_URL}/${user.profile_url}`;
+                        : `${CONFIG.API_URL}/assets/${user.profile_url}`;
                 }
 
                 detailTr.innerHTML = `

@@ -4,7 +4,7 @@ import { CONFIG } from '/config.js';
 async function fetchAndSetAvatar(imgEl, iconEl, profilePath) {
     if (!profilePath || !imgEl || !iconEl) return;
     const token = localStorage.getItem("authToken");
-    const finalUrl = profilePath.startsWith('http') ? profilePath : `${CONFIG.API_URL}/${profilePath}`;
+    const finalUrl = profilePath.startsWith('http') ? profilePath : `${CONFIG.API_URL}/assets/${profilePath}`;
 
     try {
         const response = await fetch(finalUrl, {
@@ -91,7 +91,7 @@ class SiteHeader extends HTMLElement {
         if (!token) return;
 
         try {
-            const response = await fetch(`${CONFIG.API_URL}/user/profile`, {
+            const response = await fetch(`${CONFIG.API_URL}/auth/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             

@@ -63,20 +63,18 @@ form.addEventListener('submit', async function(e) {
 
   // รวบรวมข้อมูลจากฟอร์ม
   const formData = {
-    firstname: document.getElementById('firstname').value.trim(),
-    lastname: document.getElementById('lastname').value.trim(),
+    name: document.getElementById('firstname').value.trim(),
+    surname: document.getElementById('lastname').value.trim(),
     username: username.value.trim(),
-    osk_gen: parseInt(document.getElementById('osk_gen').value.trim()), // แปลงเป็นตัวเลข
-    osk_id: document.getElementById('osk_id').value.trim(),
-    student_id: document.getElementById('student_id').value.trim(),
+    OSK_gen: parseInt(document.getElementById('osk_gen').value.trim()),
+    OSK_number: document.getElementById('osk_id').value.trim(),
+    CU_number: document.getElementById('student_id').value.trim(),
     email: document.getElementById('email').value.trim(),
-    password: password.value // รหัสผ่านไม่ต้อง trim
+    password: password.value
   };
 
   try {
-    // ⚠️ อย่าลืมเปลี่ยน URL ตรงนี้ให้เป็นของ Worker คุณจริงๆ นะครับ!
-    
-    const response = await fetch(`${CONFIG.API_URL}/auth/register`, {
+    const response = await fetch(`${CONFIG.API_URL}/users/register/osk`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData)

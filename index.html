@@ -3,117 +3,20 @@
 
 <head>
   <meta charset="utf-8">
+  <meta name="description" content="เว็บไซต์สำหรับ OSK CU Intania — คอร์สเรียน สื่อการเรียน กิจกรรม และเครื่องมือต่างๆ">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Skintania</title>
 
-  <style>body{display: none}</style>
+  <style>body{display:none}</style>
 
   <script type="module" src="/auth-guard.js"></script>
 
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap');
-
-    :root {
-      --bg: #0f1724;
-      --card: #0b1220;
-      --accent: #3b82f6;
-      --muted: #9aa4b2
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Sukhumvit Set', 'Kanit', sans-serif, -apple-system, Segoe UI, Roboto, "Noto Sans", Arial;
-      background: linear-gradient(180deg, #071029 0%, var(--bg) 100%);
-      color: #e6eef8
-    }
-
-    .wrap {
-      max-width: 1100px;
-      margin: 48px auto;
-      padding: 24px
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 1.6rem
-    }
-
-    .banner {
-      width: 100%;
-      height: auto;
-      max-height: 300px;
-      object-fit: cover;
-      border-radius: 12px;
-      margin-bottom: 24px;
-      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    /* สไตล์ปุ่มและการ์ด */
-    .btn {
-      display: block;
-      text-align: center;
-      margin-top: 12px;
-      padding: 8px 12px;
-      border-radius: 8px;
-      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-      color: #fff;
-      text-decoration: none;
-      font-weight: 600;
-      transition: transform 0.2s;
-    }
-
-    .btn:hover {
-      transform: scale(1.05);
-    }
-
-    p.lead {
-      margin: 6px 0 0;
-      color: var(--muted)
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 18px;
-      margin-top: 28px
-    }
-
-    .card {
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.06));
-      padding: 18px;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.03);
-      transition: transform .18s, box-shadow .18s
-    }
-
-    .card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 20px 40px rgba(2, 6, 23, 0.7)
-    }
-
-    .card h2 {
-      margin: 0 0 6px;
-      font-size: 1.05rem
-    }
-
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 0.95rem
-    }
-
-    footer {
-      margin-top: 40px;
-      color: var(--muted);
-      font-size: 0.9rem
-    }
-  </style>
-
-  <link rel="stylesheet" href="/Assest/cmt.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/Template/style.css">
   <link rel="stylesheet" href="/style.css">
-  <script src="/Assest/cmt.js" defer></script>
   <link rel="icon" href="/Assest/sk-cu.png">
 
   <script type="module" src="/Template/component.js" defer></script>
@@ -127,7 +30,7 @@
   <main class="wrap">
     <img
       src="https://scontent.fbkk9-2.fna.fbcdn.net/v/t1.6435-9/76948988_2237161509746072_4194807550555717632_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=f798df&_nc_ohc=i28II4h4BMYQ7kNvwGH7UiC&_nc_oc=AdlmMGcYnNuF5MFDEtiHVqgebqjztKrtam18lD19tQocAeBnJW4MOYaYYP7rPm5xXPEAabfYeb2Hj0OQpDfJUP5L&_nc_zt=23&_nc_ht=scontent.fbkk9-2.fna&_nc_gid=QWERT6qcDKa2bwL63M6NLA&_nc_ss=8&oh=00_AfwMRQcF_eERVjJzv7t2TIFadhFy0AOlPmIzt8_cpLk8pQ&oe=69E20ED0"
-      alt="SkIntania Banner" class="banner">
+      alt="SkIntania Banner" class="banner" fetchpriority="high">
 
     <site-header page-title="Home" page-desc="หน้าแรก">
     </site-header>
@@ -140,12 +43,12 @@
           <p>เว็บไซต์สำหรับนักเรียนในเครือสวนกุหลาบที่ได้เข้าเรียนที่ คณะวิศวกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย
             เพื่อให้มีความพร้อมก่อนที่จะเข้าเรียนจริงๆ</p>
           <div>
-            <a href="/" class="btn" style="display: inline-block;">ไปที่หน้าแรก</a>
+            <a href="/" class="btn">ไปที่หน้าแรก</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop"
-            alt="University Campus">
+            alt="University Campus" loading="lazy">
         </div>
       </article>
 
@@ -155,12 +58,12 @@
           <p>สถานที่ที่เก็บรวบรวมคลิปการสอนในรายวิชาต่างๆ ให้วัยรุ่น OSK CU Intania ได้มาเรียนเตรียมความพร้อมก่อนสอบกัน
           </p>
           <div>
-            <a href="/Course/" class="btn" style="display: inline-block;">ไปที่คอร์สเรียน</a>
+            <a href="/Course/" class="btn">ไปที่คอร์สเรียน</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop"
-            alt="Online Course">
+            alt="Online Course" loading="lazy">
         </div>
       </article>
 
@@ -169,12 +72,12 @@
           <h2>สื่อการเรียน</h2>
           <p>สถานที่ที่จัดเก็บรวบรวมไฟล์การเรียนต่างๆของพี่ๆ ไว้ให้มาโหลด แล้วไปเรียนกันก่อน</p>
           <div>
-            <a href="/CourseMaterial/" class="btn" style="display: inline-block;">ไปที่ SK Drive</a>
+            <a href="/CourseMaterial/" class="btn">ไปที่ SK Drive</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=800&auto=format&fit=crop"
-            alt="Study Materials">
+            alt="Study Materials" loading="lazy">
         </div>
       </article>
 
@@ -184,12 +87,12 @@
           <p>เครื่องคำนวณเกรด เพื่อหาแต้มและความเป็นไปได้ของการเข้าภาควิชาต่างๆ โดยเฉพาะเด็กภาครวม ปี 1 ที่ได้ใช้แน่ๆ
           </p>
           <div>
-            <a href="/Calculator/" class="btn" style="display: inline-block;">ไปคำนวณ</a>
+            <a href="/Calculator/" class="btn">ไปคำนวณ</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop"
-            alt="Calculator and Grades">
+            alt="Calculator and Grades" loading="lazy">
         </div>
       </article>
 
@@ -198,12 +101,12 @@
           <h2>คำแนะนำรายวิชา</h2>
           <p>คำแนะนำที่พี่ต้องการจะบอกกับน้องว่าต้องระวังเรื่องอะไรบ้าง และมีคะแนนมิดเทอมของปีก่อนๆ</p>
           <div>
-            <a href="/Advice/" class="btn" style="display: inline-block;">รับคำแนะนำ</a>
+            <a href="/Advice/" class="btn">รับคำแนะนำ</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop"
-            alt="Advice and Planning">
+            alt="Advice and Planning" loading="lazy">
         </div>
       </article>
 
@@ -213,12 +116,12 @@
           <p>ไทม์ไลน์กิจกรรมสำหรับปี 1 คณะวิศวกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย หรือจะมีกิจกรรมอื่นๆนอกคณะที่น่าสนใจ
             หรือกิจกรรมที่สาวๆเยอะ</p>
           <div>
-            <a href="/Activity/" class="btn" style="display: inline-block;">ไปดูกิจกรรม</a>
+            <a href="/Activity/" class="btn">ไปดูกิจกรรม</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=800&auto=format&fit=crop"
-            alt="University Activities and Events">
+            alt="University Activities and Events" loading="lazy">
         </div>
       </article>
 
@@ -228,12 +131,12 @@
           <p>หากเหงาหรือต้องการจะร่วมกิจกรรมของ OSK CU Intania สามารถไปลงทะเบียนได้ที่นี่
             หรือร่วมสนุกโหวตโพลที่กำลังเป็นประเด็นอยู่ ณ ตอนนี้</p>
           <div>
-            <a href="/Event/" class="btn" style="display: inline-block;">ไปร่วมสนุก</a>
+            <a href="/Event/" class="btn">ไปร่วมสนุก</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=800&auto=format&fit=crop"
-            alt="Meeting and Events">
+            alt="Meeting and Events" loading="lazy">
         </div>
       </article>
 
@@ -242,19 +145,19 @@
           <h2>เกี่ยวกับเรา</h2>
           <p>อยากรู้ตำนาน OSK143 ไหม ถ้าอยากรู้ก็ลองมาอ่านได้ที่นี่ และมาสานต่อตำนานไปด้วยกัน!</p>
           <div>
-            <a href="/AboutUs/" class="btn" style="display: inline-block;">อ่านตำนาน</a>
+            <a href="/AboutUs/" class="btn">อ่านตำนาน</a>
           </div>
         </div>
         <div class="fade-card-image-wrapper">
           <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=800&auto=format&fit=crop"
-            alt="Brotherhood and History">
+            alt="Brotherhood and History" loading="lazy">
         </div>
       </article>
     </section>
 
     <footer>
       <p>เรื่องแจ้ง น่ารู้</p>
-      <ul style="color:var(--muted)">
+      <ul>
         <li>วิชา Material ลงครบทุกคลิป update ล่าสุดแล้ว กำลังทำ streaming ให้ดีอยู่</li>
         <li>วิชา Physics กำลังลง file การเรียน</li>
       </ul>

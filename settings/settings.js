@@ -116,20 +116,18 @@ async function loadUserData() {
         const token = localStorage.getItem("authToken");
         if (!token) return;
 
-        const response = await fetch(`${CONFIG.API_URL}/user/profile`, {
+        const response = await fetch(`${CONFIG.API_URL}/auth/me`, {
             method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
         const resData = await response.json(); // รับก้อน JSON ทั้งหมด
         if (!response.ok) throw new Error(resData.error);
 
         // 🌟 1. ดึง Object "user" ออกมาตามโครงสร้างใหม่
-        const user = resData.user; 
+        const user = resData.user;
         if (!user) return;
+        localStorage.setItem('userId', user.id ?? '');
 
         // 🌟 2. อัปเดตการ Map ค่าให้ตรงกับชื่อ Key ใน JSON (ตัวพิมพ์เล็กหมด)
         setInputValue('firstName', user.firstname); // เปลี่ยนจาก firstName -> firstname
@@ -173,40 +171,39 @@ async function updateUserData() {
         saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...';
 
         const token = localStorage.getItem("authToken");
+        const userId = localStorage.getItem("userId");
+        if (!userId) throw new Error("ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่");
         const imageUpload = document.getElementById('imageUpload');
 
-        // 📦 ใช้ FormData เพื่อรองรับไฟล์ภาพ
-        const formData = new FormData();
-        formData.append('firstName', document.getElementById('firstName').value);
-        formData.append('lastName', document.getElementById('lastName').value);
-        formData.append('username', document.getElementById('username').value);
-        formData.append('email', document.getElementById('email').value);
-        formData.append('oskGen', document.getElementById('oskGen').value);
-        formData.append('oskNum', document.getElementById('oskNum').value);
-        formData.append('cuId', document.getElementById('cuId').value);
-
-        if (imageUpload.files[0]) {
-            formData.append('profileImage', imageUpload.files[0]);
-        }
-
-        const response = await fetch(`${CONFIG.API_URL}/user/profile`, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${token}`
-                // ห้ามใส่ Content-Type: application/json
-            },
-            body: formData
+        // Update text fields via PATCH
+        const patchBody = {
+            firstname: document.getElementById('firstName').value.trim(),
+            lastname: document.getElementById('lastName').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            student_id: document.getElementById('cuId').value.trim(),
+        };
+        const patchRes = await fetch(`${CONFIG.API_URL}/users/${userId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(patchBody),
         });
+        const patchResult = await patchRes.json();
+        if (!patchRes.ok) throw new Error(patchResult.error || "บันทึกล้มเหลว");
 
-        const result = await response.json();
-
-        if (response.ok) {
-            alert("✅ บันทึกข้อมูลสำเร็จ!");
-            toggleEditMode(false);
-            loadUserData();
-        } else {
-            throw new Error(result.error || "บันทึกล้มเหลว");
+        // Upload avatar separately if a new image was selected
+        const avatarFile = imageUpload?.files?.[0];
+        if (avatarFile) {
+            const avatarRes = await fetch(`${CONFIG.API_URL}/users/${userId}/avatar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': avatarFile.type, 'Authorization': `Bearer ${token}` },
+                body: avatarFile,
+            });
+            if (!avatarRes.ok) throw new Error("อัปโหลดรูปโปรไฟล์ไม่สำเร็จ");
         }
+
+        alert("✅ บันทึกข้อมูลสำเร็จ!");
+        toggleEditMode(false);
+        loadUserData();
     } catch (error) {
         alert("⚠️ " + error.message);
     } finally {
@@ -256,7 +253,7 @@ async function updateAvatarDisplay(imgId, iconId, urlPath) {
         let finalUrl = urlPath;
         
         if (!urlPath.startsWith('http')) {
-            finalUrl = `${CONFIG.API_URL}/${urlPath}`;
+            finalUrl = `${CONFIG.API_URL}/assets/${urlPath}`;
         }
 
         const token = localStorage.getItem("authToken");
@@ -336,13 +333,11 @@ async function processDeleteAccount(password) {
         const token = localStorage.getItem("authToken");
         
         // ส่งรหัสผ่านไปเช็คที่ Backend ก่อนลบ
-        const response = await fetch(`${CONFIG.API_URL}/user/delete-account`, {
+        const userId = localStorage.getItem("userId");
+        if (!userId) throw new Error("ไม่พบข้อมูลผู้ใช้");
+        const response = await fetch(`${CONFIG.API_URL}/users/${userId}`, {
             method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ password: password })
+            headers: { 'Authorization': `Bearer ${token}` },
         });
 
         const result = await response.json();

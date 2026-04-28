@@ -52,14 +52,20 @@ async function handleChangePassword() {
             return;
         }
 
-        const response = await fetch(`${CONFIG.API_URL}/user/change-password`, {
-            method: 'POST',
+        const userId = localStorage.getItem("userId");
+        if (!userId) {
+            alert("❌ ไม่พบข้อมูลผู้ใช้ กรุณาเข้าสู่ระบบใหม่");
+            window.location.href = '/login/';
+            return;
+        }
+        const response = await fetch(`${CONFIG.API_URL}/users/${userId}/password`, {
+            method: 'PATCH',
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                oldPassword: currentPassword,
+                currentPassword: currentPassword,
                 newPassword: newPassword
             })
         });

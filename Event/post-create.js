@@ -1,124 +1,146 @@
 import { CONFIG } from '/config.js';
 
+const getToken = () => localStorage.getItem('authToken') || '';
+
+async function uploadImage(url, file) {
+    await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type, 'Authorization': `Bearer ${getToken()}` },
+        body: file,
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  // --- 1. การตั้งค่าตัวแปร (Configuration & Elements) ---
-  const UI = {
-    modal: document.getElementById('postModal'),
-    form: document.getElementById('createPostForm'),
-    typeSelect: document.getElementById('typeSelect'),
-    standardArea: document.getElementById('standardArea'),
-    pollArea: document.getElementById('pollArea'),
-    pollCountSelect: document.getElementById('pollCountSelect'),
-    pollChoicesContainer: document.getElementById('pollChoicesContainer'),
-    submitBtn: document.getElementById('submitBtn'),
-    openBtn: document.getElementById('openModalBtn'),
-    closeBtn: document.getElementById('closeModalBtn')
-  };
+    const UI = {
+        form: document.getElementById('createPostForm'),
+        typeSelect: document.getElementById('typeSelect'),
+        standardArea: document.getElementById('standardArea'),
+        pollArea: document.getElementById('pollArea'),
+        pollCountSelect: document.getElementById('pollCountSelect'),
+        pollChoicesContainer: document.getElementById('pollChoicesContainer'),
+        submitBtn: document.getElementById('submitBtn'),
+    };
 
-  // ดักจับ Error ของรูปภาพ
-  document.addEventListener('error', (e) => {
-    if (e.target.tagName === 'IMG') {
-      e.target.style.display = 'none';
-    }
-  }, true);
+    document.addEventListener('error', e => { if (e.target.tagName === 'IMG') e.target.style.display = 'none'; }, true);
 
-  // --- 2. ฟังก์ชันหลักสำหรับจัดการ UI ---
-  const toggleFormType = (type) => {
-    const isPoll = type === 'Poll';
-    UI.pollArea.style.display = isPoll ? 'block' : 'none';
-    UI.standardArea.style.display = isPoll ? 'none' : 'block';
-    
-    if (isPoll) renderPollChoices(UI.pollCountSelect.value);
-  };
+    const toggleFormType = type => {
+        const isPoll = type === 'Poll';
+        UI.pollArea.style.display = isPoll ? 'block' : 'none';
+        UI.standardArea.style.display = isPoll ? 'none' : 'block';
+        if (isPoll) renderPollChoices(UI.pollCountSelect.value);
+    };
 
-  const renderPollChoices = (count) => {
-    UI.pollChoicesContainer.innerHTML = '';
-    for (let i = 1; i <= count; i++) {
-      const div = document.createElement('div');
-      div.className = 'choice-item';
-      div.innerHTML = `
-                <label style="color: #3b82f6; font-size: 0.85rem; font-weight: 500; margin-bottom: 8px; display: block;">ตัวเลือกที่ ${i}</label>
+    const renderPollChoices = count => {
+        UI.pollChoicesContainer.innerHTML = '';
+        for (let i = 1; i <= count; i++) {
+            const div = document.createElement('div');
+            div.className = 'choice-item';
+            div.innerHTML = `
+                <label style="color:#3b82f6;font-size:.85rem;font-weight:500;margin-bottom:8px;display:block;">ตัวเลือกที่ ${i}</label>
                 <input type="text" name="choiceText_${i}" placeholder="ระบุข้อความ..." required>
                 <div class="file-upload-wrapper">
-                    <label style="font-size: 0.75rem; color: #9aa4b2;">รูปภาพสำหรับตัวเลือกนี้ (ถ้ามี)</label>
+                    <label style="font-size:.75rem;color:#9aa4b2;">รูปภาพสำหรับตัวเลือกนี้ (ถ้ามี)</label>
                     <input type="file" name="choiceImage_${i}" accept="image/*">
                 </div>
             `;
-      UI.pollChoicesContainer.appendChild(div);
-    }
-  };
+            UI.pollChoicesContainer.appendChild(div);
+        }
+    };
 
-  // --- 3. ฟังก์ชันจัดการข้อมูล (Data Handling) ---
-  const getFormData = () => {
-    const formData = new FormData(UI.form); // ใช้ FormData ตัวตั้งต้น
-    const type = UI.typeSelect.value;
+    UI.typeSelect.onchange = e => toggleFormType(e.target.value);
+    UI.pollCountSelect.onchange = e => renderPollChoices(e.target.value);
 
-    if (type === 'Poll') {
-      const count = UI.pollCountSelect.value;
-      let texts = [];
-      for (let i = 1; i <= count; i++) {
-        const val = UI.form[`choiceText_${i}`].value;
-        texts.push(val);
-      }
-      formData.set('choices', texts.join(',')); // ใช้ .set เพื่อทับค่าเดิม
-    }
-    
-    // แนบ eventId ถ้าอยู่ในโหมดแก้ไข
-    if (window.editingEventId) {
-        formData.append('eventId', window.editingEventId);
-    }
+    UI.form.onsubmit = async e => {
+        e.preventDefault();
+        UI.submitBtn.disabled = true;
+        const isEdit = !!window.editingEventId;
+        UI.submitBtn.innerText = isEdit ? 'กำลังบันทึก...' : 'กำลังส่ง...';
 
-    return formData;
-  };
+        const token = getToken();
+        const type = UI.typeSelect.value;
+        const header = UI.form.querySelector('input[name="header"]').value.trim();
+        const description = UI.form.querySelector('textarea[name="description"]')?.value.trim() ?? '';
+        const singleImageFile = UI.form.querySelector('#singleImageInput')?.files?.[0] ?? null;
 
-  // --- 4. การเชื่อมต่อ Event Listeners ---
-  UI.openBtn.onclick = () => {
-    window.editingEventId = null; // ล้างค่าเผื่อค้างจากครั้งก่อน
-    UI.form.reset();
-    UI.modal.style.display = 'flex';
-    document.querySelector('.modal-header h2').innerText = 'สร้างกิจกรรมใหม่';
-    UI.submitBtn.innerText = 'โพสต์กิจกรรมเลย';
-  };
+        try {
+            let eventId;
 
-  UI.closeBtn.onclick = () => {
-    UI.modal.style.display = 'none';
-    window.editingEventId = null;
-  };
+            if (isEdit) {
+                const res = await fetch(`${CONFIG.API_URL}/events/${window.editingEventId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ header, description }),
+                });
+                const result = await res.json();
+                if (!result.success) throw result;
+                eventId = window.editingEventId;
+            } else {
+                let body, endpoint;
+                if (type === 'Poll') {
+                    const count = parseInt(UI.pollCountSelect.value);
+                    const choices = [];
+                    for (let i = 1; i <= count; i++) {
+                        const text = UI.form.querySelector(`input[name="choiceText_${i}"]`)?.value.trim();
+                        if (text) choices.push({ choiceText: text, imgLink: null });
+                    }
+                    body = { header, choices };
+                    endpoint = 'poll';
+                } else if (type === 'Activity') {
+                    body = { header, description };
+                    endpoint = 'activity';
+                } else {
+                    body = { header, description };
+                    endpoint = 'announcement';
+                }
 
-  UI.typeSelect.onchange = (e) => toggleFormType(e.target.value);
-  UI.pollCountSelect.onchange = (e) => renderPollChoices(e.target.value);
+                const res = await fetch(`${CONFIG.API_URL}/events/${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body),
+                });
+                const result = await res.json();
+                if (!result.success) throw result;
+                eventId = result.id;
+            }
 
-  UI.form.onsubmit = async (e) => {
-    e.preventDefault();
-    UI.submitBtn.disabled = true;
-    
-    const isEdit = !!window.editingEventId;
-    UI.submitBtn.innerText = isEdit ? 'กำลังบันทึก...' : 'กำลังส่ง...';
+            // Upload main image if provided
+            if (singleImageFile && eventId) {
+                await uploadImage(`${CONFIG.API_URL}/events/${eventId}/image`, singleImageFile);
+            }
 
-    const token = localStorage.getItem('authToken');
-    const data = getFormData();
-    const apiUrl = isEdit ? `${CONFIG.API_URL}/event/edit` : `${CONFIG.API_URL}/event/create`;
+            // Upload poll choice images (new events only — edit doesn't re-upload choices)
+            if (!isEdit && type === 'Poll') {
+                const count = parseInt(UI.pollCountSelect.value);
+                const choiceFiles = Array.from({ length: count }, (_, i) =>
+                    UI.form.querySelector(`input[name="choiceImage_${i + 1}"]`)?.files?.[0] ?? null
+                );
+                if (choiceFiles.some(Boolean)) {
+                    const detailRes = await fetch(`${CONFIG.API_URL}/events/${eventId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` },
+                    });
+                    if (detailRes.ok) {
+                        const detail = await detailRes.json();
+                        const serverChoices = detail.event?.choices ?? [];
+                        for (let i = 0; i < serverChoices.length; i++) {
+                            if (choiceFiles[i] && serverChoices[i]) {
+                                await uploadImage(
+                                    `${CONFIG.API_URL}/events/${eventId}/choices/${serverChoices[i].id}/image`,
+                                    choiceFiles[i]
+                                );
+                            }
+                        }
+                    }
+                }
+            }
 
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: data // ส่งเป็น FormData เสมอ
-      });
+            alert(isEdit ? 'อัปเดตสำเร็จ!' : 'สร้างสำเร็จ!');
+            location.reload();
+        } catch (err) {
+            alert('Error: ' + (err?.error || 'เกิดข้อผิดพลาด'));
+            UI.submitBtn.disabled = false;
+            UI.submitBtn.innerText = isEdit ? 'บันทึกการแก้ไข' : 'โพสต์กิจกรรมเลย';
+        }
+    };
 
-      if (response.ok) {
-        alert(isEdit ? 'อัปเดตสำเร็จ! 🎉' : 'สร้างสำเร็จ! 🎉');
-        location.reload();
-      } else {
-        const err = await response.json();
-        alert('Error: ' + (err.error || 'เกิดข้อผิดพลาด'));
-      }
-    } catch (err) {
-      alert('ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้');
-    } finally {
-      UI.submitBtn.disabled = false;
-    }
-  };
-
-  toggleFormType(UI.typeSelect.value);
+    toggleFormType(UI.typeSelect.value);
 });
