@@ -197,21 +197,13 @@ async function loadUsersList() {
 
                 const defaultAvatar = `https://ui-avatars.com/api/?name=${user.username || 'U'}&background=random&color=fff&size=128`;
 
-                let profileImg = defaultAvatar;
-
-                // เช็คการโหลดรูป Profile (ถ้าไม่มีให้ใช้ Default)
-                profileImg = '/Assest/default-avatar.png';
-                if (user.profile_url) {
-                    profileImg = user.profile_url.startsWith('http')
-                        ? user.profile_url
-                        : `${CONFIG.API_URL}/assets/${user.profile_url}`;
-                }
-
                 detailTr.innerHTML = `
                     <td colspan="6" style="padding: 0; border: none; background: transparent;">
                         <div class="user-detail-card">
                             <div>
-                                <img src="${profileImg}" alt="Avatar" class="user-detail-avatar" onerror="this.src='${defaultAvatar}'">
+                                <img src="${defaultAvatar}" alt="Avatar" class="user-detail-avatar"
+                                    ${user.profile_url ? `data-userid="${user.id}"` : ''}
+                                    onerror="this.src='${defaultAvatar}'">
                             </div>
                             <div class="user-info-group">
                                 <p><strong>ชื่อ-นามสกุล:</strong> ${user.firstname || '-'} ${user.lastname || '-'}</p>
@@ -246,6 +238,18 @@ async function loadUsersList() {
 
                 tbody.appendChild(tr);
                 tbody.appendChild(detailTr);
+
+                // Load avatar with auth if user has one
+                if (user.profile_url) {
+                    const avatarImg = detailTr.querySelector(`img[data-userid="${user.id}"]`);
+                    if (avatarImg) {
+                        fetch(`${CONFIG.API_URL}/users/${user.id}/avatar`, {
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('authToken')}` }
+                        }).then(r => r.ok ? r.blob() : null)
+                          .then(blob => { if (blob) avatarImg.src = URL.createObjectURL(blob); })
+                          .catch(() => {});
+                    }
+                }
             });
         }
     } catch (error) {

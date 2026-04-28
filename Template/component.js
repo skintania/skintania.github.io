@@ -1,24 +1,29 @@
 import { CONFIG } from '/config.js';
 
 // --- ฟังก์ชันช่วยโหลดรูปโปรไฟล์ผ่าน API (Shared Function) ---
-async function fetchAndSetAvatar(imgEl, iconEl, profilePath) {
-    if (!profilePath || !imgEl || !iconEl) return;
+async function fetchAndSetAvatar(imgEl, iconEl, userId) {
+    if (!userId || !imgEl || !iconEl) return;
     const token = localStorage.getItem("authToken");
-    const finalUrl = profilePath.startsWith('http') ? profilePath : `${CONFIG.API_URL}/assets/${profilePath}`;
+    if (!token) {
+        console.warn("fetchAndSetAvatar: no authToken in localStorage");
+        return;
+    }
 
     try {
-        const response = await fetch(finalUrl, {
-            method: 'GET',
+        const response = await fetch(`${CONFIG.API_URL}/users/${userId}/avatar`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!response.ok) throw new Error("API failed");
+        if (!response.ok) {
+            console.warn(`Avatar fetch failed: ${response.status}`, await response.text());
+            iconEl.style.display = 'flex';
+            return;
+        }
         const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        imgEl.src = objectUrl;
+        imgEl.src = URL.createObjectURL(blob);
         imgEl.style.display = 'block';
         iconEl.style.display = 'none';
     } catch (e) {
-        imgEl.style.display = 'none';
+        console.error("fetchAndSetAvatar error:", e);
         iconEl.style.display = 'flex';
     }
 }
@@ -91,20 +96,20 @@ class SiteHeader extends HTMLElement {
         if (!token) return;
 
         try {
-            const response = await fetch(`${CONFIG.API_URL}/auth/me`, {
+            const response = await fetch(`${CONFIG.API_URL}/users/me`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
-            
+            if (!response.ok) return;
             const data = await response.json();
 
             if (data.success && data.user) {
                 const user = data.user;
+                localStorage.setItem('userId', user.id ?? '');
                 const imgEl = this.querySelector('#headerAvatarImg');
                 const iconEl = this.querySelector('#headerDefaultIcon');
 
-                // จัดการเรื่องรูปโปรไฟล์
                 if (user.profile_url && imgEl && iconEl) {
-                    await fetchAndSetAvatar(imgEl, iconEl, user.profile_url);
+                    await fetchAndSetAvatar(imgEl, iconEl, user.id);
                 }
 
                 // 🌟 6. ระบบแทรกเมนู Admin

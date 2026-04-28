@@ -116,7 +116,7 @@ async function loadUserData() {
         const token = localStorage.getItem("authToken");
         if (!token) return;
 
-        const response = await fetch(`${CONFIG.API_URL}/auth/me`, {
+        const response = await fetch(`${CONFIG.API_URL}/users/me`, {
             method: 'GET',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -138,10 +138,11 @@ async function loadUserData() {
         setInputValue('oskNum', user.osk_id);       // เปลี่ยนจาก oskNum -> osk_id
         setInputValue('cuId', user.student_id);    // เปลี่ยนจาก cuId -> student_id
 
-        // 🎯 3. จัดการรูปโปรไฟล์
-        const profilePath = user.profile_url || ""; // เปลี่ยนจาก profileUrl -> profile_url
-        updateAvatarDisplay('sidebarAvatar', 'sidebarIcon', profilePath);
-        updateAvatarDisplay('imagePreview', 'mainIcon', profilePath);
+        // แสดงรูปโปรไฟล์ถ้ามี
+        if (user.profile_url) {
+            updateAvatarDisplay('sidebarAvatar', 'sidebarIcon', user.id);
+            updateAvatarDisplay('imagePreview', 'mainIcon', user.id);
+        }
 
         // อัปเดตชื่อที่ Sidebar
         const sidebarName = document.getElementById('sidebarUsername');
@@ -243,40 +244,22 @@ function toggleEditMode(isEditing) {
     if (saveBtn) saveBtn.style.display = isEditing ? 'inline-flex' : 'none';
 }
 
-async function updateAvatarDisplay(imgId, iconId, urlPath) {
+async function updateAvatarDisplay(imgId, iconId, userId) {
     const imgEl = document.getElementById(imgId);
     const iconEl = document.getElementById(iconId);
-    if (!imgEl || !iconEl) return;
+    if (!imgEl || !iconEl || !userId) return;
 
-    if (urlPath && urlPath.trim() !== "") {
-        // ตรวจสอบว่ามี CONFIG.API_URL ซ้ำซ้อนไหม
-        let finalUrl = urlPath;
-        
-        if (!urlPath.startsWith('http')) {
-            finalUrl = `${CONFIG.API_URL}/assets/${urlPath}`;
-        }
-
-        const token = localStorage.getItem("authToken");
-
-        try {
-            const response = await fetch(finalUrl, {
-                method: 'GET',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!response.ok) throw new Error("Fetch failed");
-
-            const blob = await response.blob();
-            const finalImageLink = URL.createObjectURL(blob);
-
-            imgEl.src = finalImageLink;
-            imgEl.onload = () => { // รอให้รูปโหลดเสร็จก่อนค่อยโชว์
-                imgEl.style.display = 'block';
-                iconEl.style.display = 'none';
-            };
-        } catch (error) {
-            console.error("โหลดรูปพลาด:", error);
-        }
+    try {
+        const response = await fetch(`${CONFIG.API_URL}/users/${userId}/avatar`, {
+            headers: { 'Authorization': `Bearer ${localStorage.getItem("authToken")}` }
+        });
+        if (!response.ok) throw new Error("no avatar");
+        const blob = await response.blob();
+        imgEl.src = URL.createObjectURL(blob);
+        imgEl.style.display = 'block';
+        iconEl.style.display = 'none';
+    } catch {
+        // no avatar set — leave default icon visible
     }
 }
 

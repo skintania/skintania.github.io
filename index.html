@@ -28,9 +28,7 @@
   <comment-widget></comment-widget>
 
   <main class="wrap">
-    <img
-      src="https://scontent.fbkk9-2.fna.fbcdn.net/v/t1.6435-9/76948988_2237161509746072_4194807550555717632_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=f798df&_nc_ohc=i28II4h4BMYQ7kNvwGH7UiC&_nc_oc=AdlmMGcYnNuF5MFDEtiHVqgebqjztKrtam18lD19tQocAeBnJW4MOYaYYP7rPm5xXPEAabfYeb2Hj0OQpDfJUP5L&_nc_zt=23&_nc_ht=scontent.fbkk9-2.fna&_nc_gid=QWERT6qcDKa2bwL63M6NLA&_nc_ss=8&oh=00_AfwMRQcF_eERVjJzv7t2TIFadhFy0AOlPmIzt8_cpLk8pQ&oe=69E20ED0"
-      alt="SkIntania Banner" class="banner" fetchpriority="high">
+    <img id="siteBanner" alt="SkIntania Banner" class="banner" fetchpriority="high" style="display:none">
 
     <site-header page-title="Home" page-desc="หน้าแรก">
     </site-header>
@@ -163,6 +161,23 @@
       </ul>
     </footer>
   </main>
+
+  <script type="module">
+    import { CONFIG } from '/config.js';
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      fetch(`${CONFIG.API_URL}/assets/banner.jpg`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      }).then(r => r.ok ? r.blob() : null)
+        .then(blob => {
+          if (!blob) return;
+          const img = document.getElementById('siteBanner');
+          img.src = URL.createObjectURL(blob);
+          img.style.display = '';
+        })
+        .catch(() => {});
+    }
+  </script>
 </body>
 
 </html>
