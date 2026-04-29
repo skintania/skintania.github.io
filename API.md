@@ -66,6 +66,9 @@
   - [DELETE /courses/:courseId/files/:fileId](#delete-coursescourseidfilesfileid)
 - [Assets](#assets)
 - [SKDrive](#skdrive)
+- [Calculator](#calculator)
+  - [POST /calculator](#post-calculator)
+  - [GET /calculator/grades](#get-calculatorgrades)
 - [Rate Limiting](#rate-limiting)
 - [HTTP Status Codes](#http-status-codes)
 
@@ -961,6 +964,70 @@ Max size: **100MB**
 
 ### DELETE /skdrive/*
 Delete a file by key. **Admin only.**
+
+---
+
+## Calculator
+
+GPA/admission-chance calculator. Loads weights and historical data from R2 (`Calculator/weight.json` and `Calculator/data.json`). Saves the user's grade selections to D1 so they persist across sessions.
+
+**Auth:** Bearer token required for both endpoints.
+
+---
+
+### POST /calculator
+Submit grades for a department. Runs the weighted GPA calculation, returns the result and an all-department comparison table, and persists the grades to D1.
+
+**Request body**
+```json
+{
+  "department": "CPE",
+  "grades": [
+    { "subject": "General Physics 1", "grade": 3.5 },
+    { "subject": "Calculus 1", "grade": 4.0 }
+  ]
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "department": "CPE",
+  "gpax": 3.72,
+  "weightedScore": 44.6,
+  "fullScore": 60.0,
+  "chancePercent": 65.00,
+  "allDepartments": [
+    { "department": "CPE", "name": "Computer Engineering", "minScore": 280.5, "maxScore": 310.0, "chance": 65.00 },
+    { "department": "EE",  "name": "Electrical Engineering", "minScore": 260.0, "maxScore": 295.0, "chance": 55.00 }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `gpax` | Weighted GPA for the selected department |
+| `weightedScore` | Raw weighted score (`sum(grade × weight)`) |
+| `fullScore` | Maximum possible score (`totalWeight × 4`) |
+| `chancePercent` | Estimated admission chance (0–100.00), or `null` if no history data |
+| `allDepartments` | Chance for every department in `weight.json`, sorted by code. `minScore`/`maxScore` from most recent history year. |
+
+---
+
+### GET /calculator/grades
+Retrieve the current user's last saved grade selections.
+
+**Response**
+```json
+{
+  "success": true,
+  "grades": [
+    { "subject": "General Physics 1", "grade": 3.5 },
+    { "subject": "Calculus 1", "grade": 4.0 }
+  ]
+}
+```
 
 ---
 
