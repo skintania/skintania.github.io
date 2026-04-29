@@ -1067,3 +1067,4 @@ Defaults: **100 requests per 60 seconds** per IP. Tunable via `PATCH /admin/conf
 | 429 | Rate limit exceeded |
 | 500 | Internal server error |
 | 503 | Server under maintenance |
+
