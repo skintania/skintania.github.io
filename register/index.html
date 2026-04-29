@@ -19,8 +19,13 @@
       <h1>สร้างบัญชีใหม่</h1>
       <p class="lead">เข้าร่วมเป็นส่วนหนึ่งของ OSK CU Intania</p>
 
-      <form id="registerForm" method="POST">
+      <div class="tab-group">
+        <button class="tab-btn active" data-tab="osk">OSK</button>
+        <button class="tab-btn" data-tab="member">สมาชิกทั่วไป</button>
+      </div>
 
+      <!-- OSK Form -->
+      <form id="oskForm" method="POST">
         <div class="row">
           <div class="form-group">
             <label for="firstname">ชื่อจริง</label>
@@ -53,8 +58,7 @@
         <div class="row">
           <div class="form-group">
             <label for="student_id">รหัสนิสิต (CU)</label>
-            <input type="text" id="student_id" name="student_id" class="form-control" placeholder="ex. 683xxxxx21"
-              required>
+            <input type="text" id="student_id" name="student_id" class="form-control" placeholder="ex. 683xxxxx21" required>
           </div>
           <div class="form-group">
             <label for="email">อีเมล</label>
@@ -75,7 +79,52 @@
           </div>
         </div>
 
-        <button type="submit" class="btn">ลงทะเบียน</button>
+        <button type="submit" class="btn">ลงทะเบียน (OSK)</button>
+      </form>
+
+      <!-- Member Form -->
+      <form id="memberForm" method="POST" style="display:none;">
+        <div class="row">
+          <div class="form-group">
+            <label for="m-firstname">ชื่อจริง</label>
+            <input type="text" id="m-firstname" class="form-control" placeholder="ชื่อ" required>
+          </div>
+          <div class="form-group">
+            <label for="m-lastname">นามสกุล</label>
+            <input type="text" id="m-lastname" class="form-control" placeholder="นามสกุล" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="m-username">ชื่อผู้ใช้ (Username)</label>
+          <input type="text" id="m-username" class="form-control" placeholder="A-Z, a-z, 0-9 เท่านั้น"
+            minlength="4" maxlength="20" pattern="[a-zA-Z0-9]+" title="กรุณาใช้เฉพาะตัวอักษรภาษาอังกฤษและตัวเลขเท่านั้น"
+            required>
+        </div>
+
+        <div class="row">
+          <div class="form-group">
+            <label for="m-student_id">รหัสนิสิต (CU)</label>
+            <input type="text" id="m-student_id" class="form-control" placeholder="ex. 683xxxxx21" required>
+          </div>
+          <div class="form-group">
+            <label for="m-email">อีเมล</label>
+            <input type="email" id="m-email" class="form-control" placeholder="example@email.com" required>
+          </div>
+        </div>
+
+        <div class="row align-bottom">
+          <div class="form-group">
+            <label for="m-password">รหัสผ่าน <span class="help-text">(อย่างน้อย 8 ตัว)</span></label>
+            <input type="password" id="m-password" class="form-control" placeholder="••••••••" minlength="8" required>
+          </div>
+          <div class="form-group">
+            <label for="m-confirm_password">ยืนยันรหัสผ่าน</label>
+            <input type="password" id="m-confirm_password" class="form-control" placeholder="••••••••" minlength="8" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn">ลงทะเบียน (สมาชิก)</button>
       </form>
 
       <a href="/login/" class="auth-link">มีบัญชีอยู่แล้วใช่ไหม? เข้าสู่ระบบที่นี่</a>

@@ -38,10 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         // 🚨 กรณีพิเศษ: ถ้ายังไม่ได้ยืนยัน OTP (Error 403 ที่เราเขียนไว้ใน Worker)
         if (response.status === 403) {
-          alert(result.error);
-          // ฝากอีเมลไว้ใน sessionStorage เพื่อให้หน้า verify-email ใช้งานได้
-          sessionStorage.setItem("pendingVerificationEmail", emailOrUser);
-          window.location.href = "/register/verify-email.html";
+          const emailForVerify = result.email || emailOrUser;
+          window.location.href = `/register/verify-email.html?email=${encodeURIComponent(emailForVerify)}`;
         } else {
           alert("ผิดพลาด: " + (result.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง"));
         }

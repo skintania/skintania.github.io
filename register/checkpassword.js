@@ -1,80 +1,51 @@
 import { CONFIG } from '/config.js';
 
-const form = document.getElementById('registerForm');
-const username = document.getElementById('username');
-const password = document.getElementById('password');
-const confirmPassword = document.getElementById('confirm_password');
+// --- Tab switching ---
+const tabBtns = document.querySelectorAll('.tab-btn');
+const oskForm = document.getElementById('oskForm');
+const memberForm = document.getElementById('memberForm');
 
-// 1. ฟังก์ชันเช็คการพิมพ์รหัสผ่านแบบ Real-time
-function validatePassword() {
-  if (confirmPassword.value !== password.value) {
-    confirmPassword.setCustomValidity("รหัสผ่านไม่ตรงกันครับ");
-  } else {
-    confirmPassword.setCustomValidity(""); 
-  }
-}
-
-password.addEventListener('input', validatePassword);
-confirmPassword.addEventListener('input', validatePassword);
-
-// 2. ดักจับตอนกดปุ่ม Submit (เพิ่ม async เข้าไปเพื่อให้ใช้ await fetch ได้)
-form.addEventListener('submit', async function(e) {
-  // หยุดการส่งฟอร์มแบบปกติไว้ก่อน เพื่อให้ JS ตรวจสอบให้เสร็จ
-  e.preventDefault(); 
-
-  // --- A. เช็คว่าทุกช่องต้องกรอกข้อมูล (ห้ามมีแต่ช่องว่าง) ---
-  const inputs = form.querySelectorAll('input[required]'); 
-  let isAllFilled = true;
-
-  inputs.forEach(input => {
-    if (input.value.trim() === '') {
-      isAllFilled = false;
-      input.focus(); 
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    tabBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    if (btn.dataset.tab === 'osk') {
+      oskForm.style.display = '';
+      memberForm.style.display = 'none';
+    } else {
+      oskForm.style.display = 'none';
+      memberForm.style.display = '';
     }
   });
+});
 
-  if (!isAllFilled) {
-    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง (ห้ามพิมพ์แค่ช่องว่าง) ครับ');
-    return; 
+// --- Shared helpers ---
+const usernameRegex = /^[a-zA-Z0-9]+$/;
+
+function validatePasswordMatch(passwordEl, confirmEl) {
+  confirmEl.setCustomValidity(
+    confirmEl.value && confirmEl.value !== passwordEl.value ? "รหัสผ่านไม่ตรงกันครับ" : ""
+  );
+}
+
+function checkAllFilled(form) {
+  const inputs = form.querySelectorAll('input[required]');
+  for (const input of inputs) {
+    if (input.value.trim() === '') {
+      input.focus();
+      return false;
+    }
   }
+  return true;
+}
 
-  // --- B. เช็ค Username ว่าถูกต้องไหม (อังกฤษ/ตัวเลข เท่านั้น) ---
-  const usernameRegex = /^[a-zA-Z0-9]+$/;
-  if (!usernameRegex.test(username.value)) {
-    alert('ชื่อผู้ใช้ต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้นครับ');
-    username.focus();
-    return;
-  }
-
-  // --- C. เช็ครหัสผ่านว่าตรงกันไหม ---
-  if (password.value !== confirmPassword.value) {
-    alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกันครับ');
-    confirmPassword.focus();
-    return;
-  }
-
-  // --- D. ถ้าผ่านด่านทั้งหมด ให้รวบรวมข้อมูลยิงไปที่ API ---
-  
-  // ปรับปุ่มให้เป็นสถานะกำลังโหลด (ป้องกันคนกดรัวๆ)
-  const submitBtn = form.querySelector('button[type="submit"]');
-  const originalBtnText = submitBtn.innerText;
+async function submitRegistration(endpoint, formData, submitBtn) {
+  const originalText = submitBtn.innerText;
   submitBtn.innerText = "กำลังลงทะเบียน...";
   submitBtn.disabled = true;
 
-  // รวบรวมข้อมูลจากฟอร์ม
-  const formData = {
-    name: document.getElementById('firstname').value.trim(),
-    surname: document.getElementById('lastname').value.trim(),
-    username: username.value.trim(),
-    OSK_gen: parseInt(document.getElementById('osk_gen').value.trim()),
-    OSK_number: document.getElementById('osk_id').value.trim(),
-    CU_number: document.getElementById('student_id').value.trim(),
-    email: document.getElementById('email').value.trim(),
-    password: password.value
-  };
-
   try {
-    const response = await fetch(`${CONFIG.API_URL}/users/register/osk`, {
+    const response = await fetch(`${CONFIG.API_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData)
@@ -83,27 +54,94 @@ form.addEventListener('submit', async function(e) {
     const result = await response.json();
 
     if (response.ok && result.success) {
-      // 🌟 สมัครสำเร็จ! ฝากอีเมลไว้ใน sessionStorage (วิธีที่ 2)
-      sessionStorage.setItem("pendingVerificationEmail", formData.email);
-      
-      // เปลี่ยนหน้าไปยืนยันอีเมล
-      window.location.replace("verify-email.html"); 
+      window.location.replace(`verify-email.html?email=${encodeURIComponent(formData.email)}`);
     } else {
-      // กรณี Error จากฝั่ง API (เช่น อีเมลซ้ำ, Username ซ้ำ)
       alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถลงทะเบียนได้"));
-      
-      // คืนค่าปุ่มกลับมาให้กดใหม่ได้
-      submitBtn.innerText = originalBtnText;
+      submitBtn.innerText = originalText;
       submitBtn.disabled = false;
     }
-
   } catch (error) {
-    // กรณีเน็ตหลุด หรือ API ล่ม
     alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง");
     console.error(error);
-    
-    // คืนค่าปุ่ม
-    submitBtn.innerText = originalBtnText;
+    submitBtn.innerText = originalText;
     submitBtn.disabled = false;
   }
+}
+
+// --- OSK Form ---
+const oskPassword = document.getElementById('password');
+const oskConfirm = document.getElementById('confirm_password');
+
+oskPassword.addEventListener('input', () => validatePasswordMatch(oskPassword, oskConfirm));
+oskConfirm.addEventListener('input', () => validatePasswordMatch(oskPassword, oskConfirm));
+
+oskForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!checkAllFilled(oskForm)) {
+    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง (ห้ามพิมพ์แค่ช่องว่าง) ครับ');
+    return;
+  }
+
+  const username = document.getElementById('username');
+  if (!usernameRegex.test(username.value)) {
+    alert('ชื่อผู้ใช้ต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้นครับ');
+    username.focus();
+    return;
+  }
+
+  if (oskPassword.value !== oskConfirm.value) {
+    alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกันครับ');
+    oskConfirm.focus();
+    return;
+  }
+
+  await submitRegistration('/users/register/osk', {
+    name: document.getElementById('firstname').value.trim(),
+    surname: document.getElementById('lastname').value.trim(),
+    username: username.value.trim(),
+    OSK_gen: parseInt(document.getElementById('osk_gen').value.trim()),
+    OSK_number: document.getElementById('osk_id').value.trim(),
+    CU_number: document.getElementById('student_id').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    password: oskPassword.value
+  }, oskForm.querySelector('button[type="submit"]'));
+});
+
+// --- Member Form ---
+const memberPassword = document.getElementById('m-password');
+const memberConfirm = document.getElementById('m-confirm_password');
+
+memberPassword.addEventListener('input', () => validatePasswordMatch(memberPassword, memberConfirm));
+memberConfirm.addEventListener('input', () => validatePasswordMatch(memberPassword, memberConfirm));
+
+memberForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  if (!checkAllFilled(memberForm)) {
+    alert('กรุณากรอกข้อมูลให้ครบทุกช่อง (ห้ามพิมพ์แค่ช่องว่าง) ครับ');
+    return;
+  }
+
+  const username = document.getElementById('m-username');
+  if (!usernameRegex.test(username.value)) {
+    alert('ชื่อผู้ใช้ต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้นครับ');
+    username.focus();
+    return;
+  }
+
+  if (memberPassword.value !== memberConfirm.value) {
+    alert('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกันครับ');
+    memberConfirm.focus();
+    return;
+  }
+
+  await submitRegistration('/users/register/member', {
+    name: document.getElementById('m-firstname').value.trim(),
+    surname: document.getElementById('m-lastname').value.trim(),
+    username: username.value.trim(),
+    CU_number: document.getElementById('m-student_id').value.trim(),
+    email: document.getElementById('m-email').value.trim(),
+    password: memberPassword.value
+  }, memberForm.querySelector('button[type="submit"]'));
 });
