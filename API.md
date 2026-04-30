@@ -686,6 +686,7 @@ Update one or more runtime config values. Changes are persisted to D1 and take e
 | `RATE_LIMIT_ENABLED` | boolean | `true` | Enable or disable IP-based rate limiting. |
 | `RATE_LIMIT_REQUESTS` | number | `100` | Max requests per IP per window. |
 | `RATE_LIMIT_WINDOW_SECONDS` | number | `60` | Rolling window size in seconds. |
+| `SKDRIVE_MAX_DOWNLOAD_MB` | number | `50` | Max total file size (MB) allowed for bulk SKDrive download. |
 
 **Response 200**
 ```json
@@ -966,6 +967,58 @@ Max size: **100MB**
 
 ### DELETE /skdrive/*
 Delete a file by key. **Admin only.**
+
+---
+
+### POST /skdrive/bulk-delete
+Delete multiple files or entire folders. **Admin only.**
+
+Accepts the same body as `POST /skdrive/download` — `keys`, `prefix`, `prefixes`, or any combination.
+
+**Body**
+```json
+{ "prefixes": ["Engineering Materials/", "Calculus 1/"], "keys": ["Other/extra.pdf"] }
+```
+
+**Response 200**
+```json
+{ "success": true, "message": "Deleted 12 file(s)", "deleted": 12 }
+```
+
+---
+
+### POST /skdrive/download
+Download multiple files or an entire folder as a ZIP. **Auth required.**
+
+Send any combination of `keys`, `prefix`, and `prefixes` — at least one is required.
+
+**Body — specific files**
+```json
+{ "keys": ["Engineering Materials/file1.pdf", "Engineering Materials/file2.pdf"] }
+```
+
+**Body — single folder**
+```json
+{ "prefix": "Engineering Materials/" }
+```
+
+**Body — multiple folders**
+```json
+{ "prefixes": ["Engineering Materials/", "Calculus 1/"] }
+```
+
+**Body — multiple folders + extra files combined**
+```json
+{ "prefixes": ["Engineering Materials/", "Calculus 1/"], "keys": ["Other/extra.pdf"] }
+```
+
+**Response** — ZIP file stream.
+```
+Content-Type: application/zip
+Content-Disposition: attachment; filename="Engineering Materials.zip"
+```
+
+> Returns 400 if the total size exceeds `SKDRIVE_MAX_DOWNLOAD_MB` (default 50MB, configurable by admin via `PATCH /admin/config`).
 
 ---
 

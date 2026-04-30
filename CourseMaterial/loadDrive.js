@@ -9,10 +9,11 @@ const State = {
     folderHistory: [],
     pathNames: ["Home"],
     currentItems: [],
-    viewMode: 'grid', // 'grid' หรือ 'list'
+    viewMode: 'grid',
     isSelectMode: false,
     selectedFiles: new Set(),
-    pdfJS: null
+    pdfJS: null,
+    userRole: null
 };
 
 /**
@@ -53,21 +54,46 @@ const DriveAPI = {
         return [...folders, ...files];
     },
 
-    async getDeepFiles(apiPath, zipPrefix) {
-        const items = await this.fetchItems(apiPath);
-        let files = [];
+    async bulkDownload(keys, prefixes) {
+        const token = localStorage.getItem("authToken");
+        const body = {};
+        if (keys.length) body.keys = keys;
+        if (prefixes.length) body.prefixes = prefixes;
 
-        for (const item of items) {
-            const itemPath = `${zipPrefix}/${item.name}`;
-            if (item.type === 'file') {
-                files.push({ link: item.link, zipPath: itemPath });
-            } else {
-                const subPath = apiPath ? `${apiPath}/${item.name}` : item.name;
-                const subFiles = await this.getDeepFiles(subPath, itemPath);
-                files.push(...subFiles);
-            }
+        const response = await fetch(`${CONFIG.API_URL}/skdrive/download`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || `HTTP ${response.status}`);
         }
-        return files;
+        return response.blob();
+    },
+
+    async bulkDelete(keys, prefixes) {
+        const token = localStorage.getItem("authToken");
+        const body = {};
+        if (keys.length) body.keys = keys;
+        if (prefixes.length) body.prefixes = prefixes;
+
+        const response = await fetch(`${CONFIG.API_URL}/skdrive/bulk-delete`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || `HTTP ${response.status}`);
+        return data;
     }
 };
 
@@ -80,7 +106,9 @@ const UI = {
     backBtn: document.getElementById('backBtn'),
     pathText: document.getElementById('currentPathText'),
     downloadBtn: document.getElementById('downloadBtn'),
+    deleteBtn: document.getElementById('deleteBtn'),
     countSpan: document.getElementById('selectedCount'),
+    deleteCountSpan: document.getElementById('deleteCount'),
 
     render() {
         if (!this.grid) return;
@@ -202,14 +230,19 @@ const UI = {
             cardElement.classList.remove('selected');
             checkbox.checked = false;
         }
-        this.updateDownloadUI();
+        this.updateSelectionUI();
     },
 
-    updateDownloadUI() {
-        if (!this.downloadBtn) return;
+    updateSelectionUI() {
         const count = State.selectedFiles.size;
-        this.countSpan.textContent = count;
-        this.downloadBtn.style.display = count > 0 ? 'flex' : 'none';
+        if (this.downloadBtn) {
+            this.countSpan.textContent = count;
+            this.downloadBtn.style.display = count > 0 ? 'flex' : 'none';
+        }
+        if (this.deleteBtn) {
+            this.deleteCountSpan.textContent = count;
+            this.deleteBtn.style.display = (count > 0 && State.userRole === 'admin') ? 'flex' : 'none';
+        }
     },
 
     navigateForward(item) {
@@ -245,49 +278,78 @@ const Actions = {
         }
     },
 
-    async handleDownload() {
-        if (typeof JSZip === 'undefined') {
-            alert("JSZip library not found!");
-            return;
+    getSelectedPayload() {
+        const keys = [], prefixes = [];
+        for (const json of State.selectedFiles) {
+            const item = JSON.parse(json);
+            if (item.type === 'folder') prefixes.push(item.key);
+            else keys.push(item.key);
         }
-        const zip = new JSZip();
+        return { keys, prefixes };
+    },
+
+    async handleDownload() {
         UI.downloadBtn.disabled = true;
-        const originalText = UI.downloadBtn.innerHTML;
+        const originalHTML = UI.downloadBtn.innerHTML;
         UI.downloadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Preparing...';
-
         try {
-            let files = [];
-            for (let json of State.selectedFiles) {
-                const item = JSON.parse(json);
-                if (item.type === 'folder') {
-                    files.push(...(await DriveAPI.getDeepFiles(item.fullPath, item.name)));
-                } else {
-                    files.push({ link: item.link, zipPath: item.name });
-                }
-            }
-
-            UI.downloadBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Downloading ${files.length} files...`;
-
-            const token = localStorage.getItem("authToken");
-            await Promise.all(files.map(async f => {
-                const res = await fetch(f.link, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const blob = await res.blob();
-                zip.file(f.zipPath, blob);
-            }));
-
-            const content = await zip.generateAsync({ type: "blob" });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(content);
-            link.download = `Skintania_Archive_${Date.now()}.zip`;
-            link.click();
+            const { keys, prefixes } = Actions.getSelectedPayload();
+            const blob = await DriveAPI.bulkDownload(keys, prefixes);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Skintania_${Date.now()}.zip`;
+            a.click();
         } catch (e) {
             alert("Download failed: " + e.message);
         } finally {
             UI.downloadBtn.disabled = false;
-            UI.downloadBtn.innerHTML = originalText;
+            UI.downloadBtn.innerHTML = originalHTML;
         }
+    },
+
+    handleDelete() {
+        const items = [...State.selectedFiles].map(j => JSON.parse(j));
+
+        // Populate modal
+        const desc = document.getElementById('confirmDeleteDesc');
+        const list = document.getElementById('confirmDeleteList');
+        desc.textContent = `You are about to delete ${items.length} item(s):`;
+        list.innerHTML = items.map(item => {
+            const icon = item.type === 'folder' ? 'fa-folder' : 'fa-file';
+            return `<li><i class="fa-solid ${icon}"></i>${item.name}</li>`;
+        }).join('');
+
+        const modal = document.getElementById('deleteConfirmModal');
+        modal.style.display = 'flex';
+
+        // Wire up buttons (replace each time to avoid duplicate listeners)
+        const cancelBtn = document.getElementById('confirmCancelBtn');
+        const deleteBtn = document.getElementById('confirmDeleteBtn');
+
+        const close = () => { modal.style.display = 'none'; };
+
+        cancelBtn.onclick = close;
+        modal.querySelector('.confirm-modal-backdrop').onclick = close;
+
+        deleteBtn.onclick = async () => {
+            deleteBtn.disabled = true;
+            deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+            try {
+                const { keys, prefixes } = Actions.getSelectedPayload();
+                await DriveAPI.bulkDelete(keys, prefixes);
+                close();
+                State.selectedFiles.clear();
+                State.isSelectMode = false;
+                document.getElementById('selectBtn').innerHTML =
+                    '<i class="fa-solid fa-check-double"></i> <span>Select</span>';
+                UI.updateSelectionUI();
+                await Actions.loadCurrentPath();
+            } catch (e) {
+                alert("Delete failed: " + e.message);
+                deleteBtn.disabled = false;
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Delete';
+            }
+        };
     },
     async previewFile(fileUrl, fileName) {
         const modal = document.getElementById('filePreviewModal');
@@ -331,7 +393,7 @@ const Actions = {
                 body.appendChild(img);
             } else if (ext === 'pdf') {
                 const iframe = document.createElement('iframe');
-                iframe.src = blobUrl;
+                iframe.src = blobUrl + '#toolbar=0';
                 iframe.className = 'preview-iframe';
                 body.appendChild(iframe);
             } else {
@@ -447,7 +509,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     }
 
-    // 2. โหลดไอคอนวิชา
+    // 2. Fetch user role (for delete button visibility)
+    try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(`${CONFIG.API_URL}/auth/me`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.success) State.userRole = data.user.role;
+    } catch (e) { /* non-critical */ }
+
+    // 3. โหลดไอคอนวิชา
     try {
         const iconRes = await fetch('icons.json');
         if (iconRes.ok) State.subjectIcons = await iconRes.json();
@@ -460,9 +532,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.key === 'Escape') Actions.closePreview();
     });
 
-    // 4. ผูกปุ่มต่างๆ กับฟังก์ชัน
+    // 5. ผูกปุ่มต่างๆ กับฟังก์ชัน
     if (UI.backBtn) UI.backBtn.onclick = () => UI.navigateBackTo(State.pathNames.length - 2);
     if (UI.downloadBtn) UI.downloadBtn.onclick = () => Actions.handleDownload();
+    if (UI.deleteBtn) UI.deleteBtn.onclick = () => Actions.handleDelete();
 
     const viewBtn = document.getElementById('viewToggleBtn');
     if (viewBtn) {
@@ -484,7 +557,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : '<i class="fa-solid fa-check-double"></i> <span>Select</span>';
             if (!State.isSelectMode) State.selectedFiles.clear();
             UI.render();
-            UI.updateDownloadUI();
+            UI.updateSelectionUI();
         };
     }
 
