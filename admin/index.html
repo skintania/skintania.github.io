@@ -100,6 +100,35 @@
             </div>
           </div>
         </div>
+
+        <!-- Worker Stats -->
+        <div class="worker-stats-bar">
+          <h3><i class="fa-solid fa-microchip"></i> Worker Stats</h3>
+          <input type="date" id="workerStatsDate" class="worker-date-input">
+        </div>
+        <div class="worker-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="--c:#0ea5e9"><i class="fa-solid fa-arrow-right-to-bracket"></i></div>
+            <div class="stat-body">
+              <div class="stat-value" id="ws-requests">—</div>
+              <div class="stat-label">Requests</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="--c:#ef4444"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div class="stat-body">
+              <div class="stat-value" id="ws-errors">—</div>
+              <div class="stat-label">Errors</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="--c:#8b5cf6"><i class="fa-solid fa-code-branch"></i></div>
+            <div class="stat-body">
+              <div class="stat-value" id="ws-subrequests">—</div>
+              <div class="stat-label">Subrequests</div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- 3. SERVER CONFIG -->
@@ -267,6 +296,20 @@
             </div>
           </div>
 
+          <div class="config-card">
+            <div class="config-card-top">
+              <div class="config-icon red"><i class="fa-solid fa-calendar-xmark"></i></div>
+              <div class="config-info">
+                <div class="config-title">Request Limit Per Day</div>
+                <div class="config-desc">ปิดเซิร์ฟเวอร์เมื่อถึงขีดจำกัด (0 = ไม่จำกัด)</div>
+              </div>
+            </div>
+            <div class="config-input-row">
+              <input type="number" id="cfg-req-limit-day" min="0" value="0" class="config-input">
+              <span class="config-unit">req/day</span>
+            </div>
+          </div>
+
         </div>
 
         <div class="config-actions">
@@ -322,7 +365,7 @@
             <select id="logLevelFilter">
               <option value="">All Levels</option>
               <option value="error">Error</option>
-              <option value="warn">Warning</option>
+              <option value="warning">Warning</option>
               <option value="info">Info</option>
             </select>
           </div>

@@ -11,10 +11,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     setupNavigation();
     loadAdminStats();
+    loadWorkerStats();
     loadConfig();
     loadAuditLog();
     loadServerLogs();
 
+    document.getElementById('workerStatsDate')?.addEventListener('change', e => loadWorkerStats(e.target.value));
     document.getElementById('saveConfigBtn')?.addEventListener('click', saveConfig);
     document.getElementById('reloadConfigBtn')?.addEventListener('click', loadConfig);
     document.getElementById('refreshLogsBtn')?.addEventListener('click', () => loadServerLogs());
@@ -85,6 +87,35 @@ async function loadAdminStats() {
     }
 }
 
+// ─── WORKER STATS ────────────────────────────────────────────────────────────
+async function loadWorkerStats(date = null) {
+    const wsIds = ['ws-requests', 'ws-errors', 'ws-subrequests'];
+
+    const dateInput = document.getElementById('workerStatsDate');
+    if (!date) {
+        date = new Date().toISOString().split('T')[0];
+        if (dateInput) dateInput.value = date;
+    }
+
+    wsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '...'; });
+
+    try {
+        const token = localStorage.getItem("authToken");
+        const res = await fetch(`${CONFIG.API_URL}/admin/stats/worker?date=${date}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+
+        document.getElementById('ws-requests').textContent    = data.requests    != null ? data.requests.toLocaleString()    : '—';
+        document.getElementById('ws-errors').textContent      = data.errors      != null ? data.errors.toLocaleString()      : '—';
+        document.getElementById('ws-subrequests').textContent = data.subrequests != null ? data.subrequests.toLocaleString() : '—';
+    } catch (err) {
+        console.error('Worker stats error:', err.message);
+        wsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'N/A'; });
+    }
+}
+
 // ─── SERVER CONFIG ────────────────────────────────────────────────────────────
 const TOGGLE_FIELDS = [
     { id: 'cfg-server-close', key: 'SERVER_CLOSE' },
@@ -99,8 +130,26 @@ const NUMBER_FIELDS = [
     { id: 'cfg-jwt-days',       key: 'JWT_EXPIRES_DAYS' },
     { id: 'cfg-rl-requests',    key: 'RATE_LIMIT_REQUESTS' },
     { id: 'cfg-rl-window',      key: 'RATE_LIMIT_WINDOW_SECONDS' },
-    { id: 'cfg-skdrive-max-dl', key: 'SKDRIVE_MAX_DOWNLOAD_MB' },
+    { id: 'cfg-skdrive-max-dl',    key: 'SKDRIVE_MAX_DOWNLOAD_MB' },
+    { id: 'cfg-req-limit-day',    key: 'REQUEST_LIMIT_PERDAY' },
 ];
+
+const CONFIG_LABELS = {
+    SERVER_CLOSE:                'Server Close',
+    REGISTRATION_OPEN:           'Registration Open',
+    ENABLE_TOKEN_CHECK:          'Token Check',
+    RATE_LIMIT_ENABLED:          'Rate Limiting',
+    MAX_REGISTRATIONS:           'Max Registrations',
+    OTP_EXPIRES_MINUTES:         'OTP Expiry',
+    OTP_RESEND_COOLDOWN_SECONDS: 'OTP Resend Cooldown',
+    JWT_EXPIRES_DAYS:            'JWT Expiry',
+    RATE_LIMIT_REQUESTS:         'Rate Limit Requests',
+    RATE_LIMIT_WINDOW_SECONDS:   'Rate Limit Window',
+    SKDRIVE_MAX_DOWNLOAD_MB:     'SKDrive Max Download',
+    REQUEST_LIMIT_PERDAY:        'Request Limit Per Day',
+};
+
+let lastSavedConfig = {};
 
 async function loadConfig() {
     try {
@@ -111,6 +160,8 @@ async function loadConfig() {
         if (!res.ok) throw new Error();
         const data = await res.json();
         const cfg = data.config || data;
+
+        lastSavedConfig = { ...cfg };
 
         TOGGLE_FIELDS.forEach(({ id, key }) => {
             const el = document.getElementById(id);
@@ -125,10 +176,7 @@ async function loadConfig() {
     }
 }
 
-async function saveConfig() {
-    const btn = document.getElementById('saveConfigBtn');
-    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; }
-
+function buildPayload() {
     const payload = {};
     TOGGLE_FIELDS.forEach(({ id, key }) => {
         const el = document.getElementById(id);
@@ -138,6 +186,83 @@ async function saveConfig() {
         const el = document.getElementById(id);
         if (el) payload[key] = Number(el.value);
     });
+    return payload;
+}
+
+function buildDiff(payload) {
+    return Object.entries(payload).filter(([key, newVal]) => {
+        const oldVal = lastSavedConfig[key];
+        return oldVal !== undefined && String(oldVal) !== String(newVal);
+    }).map(([key, newVal]) => ({
+        key,
+        label: CONFIG_LABELS[key] || key,
+        from: lastSavedConfig[key],
+        to: newVal,
+    }));
+}
+
+function formatVal(key, val) {
+    const isToggle = TOGGLE_FIELDS.some(f => f.key === key);
+    if (isToggle) return val ? 'ON' : 'OFF';
+    const units = {
+        OTP_EXPIRES_MINUTES: 'min', OTP_RESEND_COOLDOWN_SECONDS: 's',
+        JWT_EXPIRES_DAYS: 'days', RATE_LIMIT_WINDOW_SECONDS: 's',
+        SKDRIVE_MAX_DOWNLOAD_MB: 'MB',
+        REQUEST_LIMIT_PERDAY:    'req/day',
+    };
+    return units[key] ? `${val} ${units[key]}` : String(val);
+}
+
+function saveConfig() {
+    const payload = buildPayload();
+    const diff    = buildDiff(payload);
+
+    if (diff.length === 0) {
+        const btn = document.getElementById('saveConfigBtn');
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> No Changes';
+            setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes'; }, 1500);
+        }
+        return;
+    }
+
+    const serverCloseOn = diff.some(d => d.key === 'SERVER_CLOSE' && d.to === true);
+
+    // populate modal
+    const list = document.getElementById('cfgDiffList');
+    list.innerHTML = diff.map(d => `
+        <li class="cfg-diff-item${d.key === 'SERVER_CLOSE' && d.to ? ' danger' : ''}">
+            <span class="cfg-diff-label">${d.label}</span>
+            <span class="cfg-diff-arrow">
+                <span class="cfg-diff-from">${formatVal(d.key, d.from)}</span>
+                <i class="fa-solid fa-arrow-right"></i>
+                <span class="cfg-diff-to${d.to === false || d.to === 0 ? ' off' : ' on'}">${formatVal(d.key, d.to)}</span>
+            </span>
+        </li>`).join('');
+
+    const banner = document.getElementById('cfgDangerBanner');
+    const icon   = document.getElementById('cfgModalIcon');
+    banner.style.display = serverCloseOn ? 'flex' : 'none';
+    icon.className = serverCloseOn ? 'cfg-modal-icon danger' : 'cfg-modal-icon warning';
+
+    const modal = document.getElementById('configConfirmModal');
+    modal.style.display = 'flex';
+
+    // wire buttons (replace to avoid duplicate listeners)
+    const confirmBtn = document.getElementById('cfgConfirmBtn');
+    const cancelBtn  = document.getElementById('cfgCancelBtn');
+    const backdrop   = document.getElementById('cfgModalBackdrop');
+
+    const close = () => { modal.style.display = 'none'; };
+
+    cancelBtn.onclick  = close;
+    backdrop.onclick   = close;
+    confirmBtn.onclick = () => { close(); applyConfigSave(payload); };
+}
+
+async function applyConfigSave(payload) {
+    const btn = document.getElementById('saveConfigBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; }
 
     try {
         const token = localStorage.getItem("authToken");
@@ -148,6 +273,7 @@ async function saveConfig() {
         });
         const data = await res.json();
         if (res.ok && data.success) {
+            lastSavedConfig = { ...(data.config || payload) };
             if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
             setTimeout(() => {
                 if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes'; }
@@ -249,7 +375,7 @@ async function loadServerLogs(cursor = null, targetPage = 1) {
 
     try {
         const token = localStorage.getItem("authToken");
-        let url = `${CONFIG.API_URL}/admin/logs?limit=${LOG_PER_PAGE}`;
+        let url = `${CONFIG.API_URL}/admin/server-logs?limit=${LOG_PER_PAGE}`;
         if (cursor) url += `&cursor=${cursor}`;
         if (level)  url += `&level=${level}`;
 
@@ -279,14 +405,14 @@ function renderServerLogs() {
         terminal.innerHTML = '<div class="log-line info">ไม่มี Log ในช่วงเวลานี้</div>';
     } else {
         allServerLogs.forEach(log => {
-            const level = (log.level || 'info').toLowerCase();
-            const time  = log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : '';
-            const ip    = log.ip ? ` [${log.ip}]` : '';
-            const msg   = log.message || '-';
+            const level  = (log.level || 'info').toLowerCase();
+            const time   = log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : '';
+            const msg    = log.message || '-';
+            const detail = log.detail ? ` <span class="log-detail">${escapeHtml(JSON.stringify(log.detail))}</span>` : '';
 
             const div = document.createElement('div');
-            div.className = `log-line ${level === 'warn' ? 'warning' : level}`;
-            div.innerHTML = `<span class="log-time">${time}${ip}</span> <span class="log-level">${level.toUpperCase()}</span> ${escapeHtml(msg)}`;
+            div.className = `log-line ${level}`;
+            div.innerHTML = `<span class="log-time">${time}</span> <span class="log-level">${level.toUpperCase()}</span> ${escapeHtml(msg)}${detail}`;
             terminal.appendChild(div);
         });
         terminal.scrollTop = terminal.scrollHeight;

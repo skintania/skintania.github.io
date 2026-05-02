@@ -42,6 +42,7 @@
   - [POST /events/:id/join](#post-eventsidjoin)
 - [Admin](#admin)
   - [GET /admin/stats](#get-adminstats)
+  - [GET /admin/stats/worker](#get-adminstatsworker)
   - [GET /admin/users](#get-adminuserslimit20cursorroleisverifiedisbanned)
   - [GET /admin/users/search](#get-adminuserssearchqlimit20offset0)
   - [GET /admin/users/:id](#get-adminusersid)
@@ -50,6 +51,7 @@
   - [GET /admin/config](#get-adminconfig)
   - [PATCH /admin/config](#patch-adminconfig)
   - [GET /admin/audit](#get-adminaudit)
+  - [GET /admin/server-logs](#get-adminserver-logs)
 - [Courses](#courses)
   - [GET /courses](#get-courses)
   - [POST /courses](#post-courses)
@@ -74,6 +76,9 @@
 
 ---
 
+- [Status](#status)
+  - [GET /status](#get-status)
+
 Base URL: `https://skintania-api.skintania143.workers.dev/`
 
 All responses are JSON. Successful responses include `"success": true`. Failed responses include `"success": false` and `"error": "..."`.
@@ -82,6 +87,26 @@ Authentication uses **Bearer token** in the `Authorization` header:
 ```
 Authorization: Bearer <token>
 ```
+
+---
+
+## Status
+
+### GET /status
+Public health check — no auth required.
+
+**Response 200**
+```json
+{
+  "success": true,
+  "status": "ok",
+  "timestamp": "2026-05-01T10:00:00.000Z",
+  "services": { "database": "ok" },
+  "config": { "registration_open": true }
+}
+```
+
+> `status` is `"maintenance"` when `SERVER_CLOSE` is enabled. `services.database` is `"error"` if D1 is unreachable.
 
 ---
 
@@ -580,6 +605,29 @@ Get system-wide statistics.
 
 ---
 
+### GET /admin/stats/worker
+Get real Worker request stats from the Cloudflare Analytics API. Requires `CF_API_TOKEN` and `CF_ACCOUNT_ID` secrets. Optionally add `CF_SCRIPT_NAME` to filter to a specific Worker.
+
+| Query param | Type | Description |
+|-------------|------|-------------|
+| `date` | `YYYY-MM-DD` | Date to query (default: today UTC) |
+
+**Response 200**
+```json
+{
+  "success": true,
+  "date": "2026-05-02",
+  "scriptName": "skintania-api",
+  "requests": 12345,
+  "errors": 5,
+  "subrequests": 89
+}
+```
+
+> Data has a ~2–5 minute lag from Cloudflare's Analytics pipeline.
+
+---
+
 ### GET /admin/users?limit=20&cursor=&role=&is_verified=&is_banned=
 List all users with full details (newest first).
 
@@ -648,7 +696,9 @@ Get the current runtime configuration.
     "JWT_EXPIRES_DAYS": 7,
     "RATE_LIMIT_ENABLED": true,
     "RATE_LIMIT_REQUESTS": 100,
-    "RATE_LIMIT_WINDOW_SECONDS": 60
+    "RATE_LIMIT_WINDOW_SECONDS": 60,
+    "SKDRIVE_MAX_DOWNLOAD_MB": 50,
+    "REQUEST_LIMIT_PERDAY": 90000
   }
 }
 ```
@@ -670,7 +720,9 @@ Update one or more runtime config values. Changes are persisted to D1 and take e
   "JWT_EXPIRES_DAYS": 7,
   "RATE_LIMIT_ENABLED": true,
   "RATE_LIMIT_REQUESTS": 100,
-  "RATE_LIMIT_WINDOW_SECONDS": 60
+  "RATE_LIMIT_WINDOW_SECONDS": 60,
+  "SKDRIVE_MAX_DOWNLOAD_MB": 50,
+  "REQUEST_LIMIT_PERDAY": 90000
 }
 ```
 
@@ -687,10 +739,49 @@ Update one or more runtime config values. Changes are persisted to D1 and take e
 | `RATE_LIMIT_REQUESTS` | number | `100` | Max requests per IP per window. |
 | `RATE_LIMIT_WINDOW_SECONDS` | number | `60` | Rolling window size in seconds. |
 | `SKDRIVE_MAX_DOWNLOAD_MB` | number | `50` | Max total file size (MB) allowed for bulk SKDrive download. |
+| `REQUEST_LIMIT_PERDAY` | number | `90000` | Daily request threshold. Server auto-closes when this is reached; reopens at midnight via cron. |
 
 **Response 200**
 ```json
 { "success": true, "message": "Config updated", "config": { ... } }
+```
+
+---
+
+### GET /admin/server-logs
+Get system-level server logs. **Admin only.**
+
+| Query param | Type | Description |
+|-------------|------|-------------|
+| `level` | string | Filter: `error`, `warning`, `info` |
+| `from` | ISO string | Filter entries on or after this timestamp |
+| `to` | ISO string | Filter entries on or before this timestamp |
+| `limit` | number | Page size (default 50) |
+| `cursor` | number | Last `id` from previous page |
+
+**Logged events**
+
+| Level | Message | Trigger |
+|-------|---------|---------|
+| `error` | `Internal server error` | Uncaught exception or 500 response |
+| `warning` | `Rate limit exceeded` | IP hits the rate limit |
+| `info` | `User logged in` | Successful login |
+| `info` | `New member registered` | Member registration succeeds |
+| `info` | `New OSK user registered` | OSK registration succeeds |
+| `info` | `User email verified` | OTP verified successfully |
+| `info` | `Server maintenance enabled/disabled` | Admin toggles `SERVER_CLOSE` |
+| `warning` | `Server auto-closed: daily request limit reached` | Daily request count hits `REQUEST_LIMIT_PERDAY` |
+| `info` | `Server auto-reopened: new day started` | Midnight cron reopens server after an auto-close |
+
+**Response 200**
+```json
+{
+  "success": true,
+  "logs": [
+    { "id": 1, "level": "info", "message": "User logged in", "detail": { "username": "beam", "role": "admin" }, "created_at": "2026-05-01T10:00:00.000Z" }
+  ],
+  "nextCursor": null
+}
 ```
 
 ---

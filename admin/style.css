@@ -36,6 +36,7 @@ body {
     margin: 0;
     min-height: 100vh;
     line-height: 1.6;
+    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
 }
 
@@ -212,6 +213,55 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-top: 4px;
+}
+
+/* ─── WORKER STATS ───────────────────────────────────────────────────────────── */
+.worker-stats-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 28px;
+    margin-bottom: 16px;
+}
+
+.worker-stats-bar h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.worker-stats-bar h3 i {
+    color: var(--accent-blue);
+}
+
+.worker-date-input {
+    background: var(--glass-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-size: 0.88rem;
+    font-family: inherit;
+    padding: 7px 12px;
+    transition: border-color 0.2s;
+    cursor: pointer;
+    color-scheme: dark;
+}
+
+.worker-date-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.worker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
 }
 
 /* ─── TABLE ─────────────────────────────────────────────────────────────────── */
@@ -554,6 +604,13 @@ body {
 .log-line.success { color: #86efac; }
 .log-line.success .log-level { background: rgba(34,197,94,.15);   color: #22c55e; }
 
+.log-detail {
+    color: var(--text-subtle);
+    font-size: 0.75rem;
+    margin-left: 6px;
+    opacity: 0.75;
+}
+
 .log-terminal::-webkit-scrollbar { width: 6px; }
 .log-terminal::-webkit-scrollbar-track { background: transparent; }
 .log-terminal::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 3px; }
@@ -567,6 +624,184 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* ─── CONFIG CONFIRM MODAL ───────────────────────────────────────────────────── */
+.cfg-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cfg-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.65);
+    backdrop-filter: blur(4px);
+}
+
+.cfg-modal-box {
+    position: relative;
+    z-index: 1;
+    background: var(--card-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
+    padding: 36px 32px 28px;
+    width: 100%;
+    max-width: 460px;
+    box-shadow: var(--shadow-xl), var(--shadow-glow);
+    animation: slideInUp 0.2s ease;
+}
+
+.cfg-modal-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin: 0 auto 16px;
+}
+
+.cfg-modal-icon.warning {
+    background: rgba(234,179,8,.15);
+    color: #eab308;
+    border: 1px solid rgba(234,179,8,.3);
+}
+
+.cfg-modal-icon.danger {
+    background: rgba(239,68,68,.15);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,.3);
+}
+
+.cfg-modal-title {
+    text-align: center;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0 0 6px;
+}
+
+.cfg-modal-subtitle {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin: 0 0 20px;
+}
+
+.cfg-diff-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cfg-diff-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--glass-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 0.88rem;
+}
+
+.cfg-diff-item.danger {
+    background: rgba(239,68,68,.08);
+    border-color: rgba(239,68,68,.25);
+}
+
+.cfg-diff-label {
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.cfg-diff-arrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+}
+
+.cfg-diff-arrow i {
+    color: var(--text-subtle);
+    font-size: 0.7rem;
+}
+
+.cfg-diff-from {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.cfg-diff-to.on  { color: #22c55e; font-weight: 700; }
+.cfg-diff-to.off { color: #ef4444; font-weight: 700; }
+
+.cfg-danger-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(239,68,68,.12);
+    border: 1px solid rgba(239,68,68,.3);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: #fca5a5;
+    font-size: 0.84rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+}
+
+.cfg-danger-banner i { color: #ef4444; font-size: 1rem; flex-shrink: 0; }
+
+.cfg-modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.cfg-btn-cancel {
+    flex: 1;
+    padding: 11px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--glass-bg);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cfg-btn-cancel:hover {
+    border-color: var(--border-hover);
+    color: var(--text-main);
+}
+
+.cfg-btn-confirm {
+    flex: 1;
+    padding: 11px;
+    border-radius: 10px;
+    border: none;
+    background: var(--accent-gradient);
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(236,72,153,.3);
+}
+
+.cfg-btn-confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(236,72,153,.4);
 }
 
 /* ─── SCROLLBAR ─────────────────────────────────────────────────────────────── */
