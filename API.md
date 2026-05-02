@@ -821,6 +821,7 @@ Get the audit log of admin actions. **Admin only.**
     {
       "id": 12,
       "actor_id": 3,
+      "actor_username": "beams",
       "actor_role": "admin",
       "action": "change_role",
       "target_type": "user",

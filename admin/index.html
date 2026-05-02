@@ -333,16 +333,17 @@
           <table class="admin-table">
             <thead>
               <tr>
+                <th>ID</th>
                 <th>Time</th>
                 <th>Admin</th>
                 <th>Action</th>
                 <th>Target</th>
-                <th>Detail</th>
+                <th></th>
               </tr>
             </thead>
             <tbody id="auditTableBody">
               <tr>
-                <td colspan="5" class="table-empty">
+                <td colspan="6" class="table-empty">
                   <i class="fa-solid fa-spinner fa-spin"></i> Loading...
                 </td>
               </tr>
@@ -409,6 +410,24 @@
         </button>
         <button class="cfg-btn-confirm" id="cfgConfirmBtn">
           <i class="fa-solid fa-check"></i> Apply Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audit Detail Modal -->
+  <div id="auditDetailModal" class="cfg-modal" style="display:none" role="dialog" aria-modal="true">
+    <div class="cfg-modal-backdrop" id="auditModalBackdrop"></div>
+    <div class="cfg-modal-box">
+      <div class="audit-modal-icon" id="auditModalIcon">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+      </div>
+      <h3 class="cfg-modal-title" id="auditModalTitle">Audit Detail</h3>
+      <p class="cfg-modal-subtitle" id="auditModalTime"></p>
+      <div id="auditDetailRows" class="audit-detail-rows"></div>
+      <div class="cfg-modal-actions">
+        <button class="cfg-btn-cancel" id="auditModalCloseBtn">
+          <i class="fa-solid fa-xmark"></i> Close
         </button>
       </div>
     </div>

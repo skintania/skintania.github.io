@@ -295,7 +295,7 @@ let auditNextCursor = null;
 async function loadAuditLog(cursor = null, targetPage = 1) {
     const tbody = document.getElementById('auditTableBody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="5" class="table-empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</td></tr>';
     try {
         const token = localStorage.getItem("authToken");
         let url = `${CONFIG.API_URL}/admin/audit?limit=${AUDIT_PER_PAGE}`;
@@ -312,8 +312,19 @@ async function loadAuditLog(cursor = null, targetPage = 1) {
 
         renderAuditTable();
     } catch {
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="table-empty">ไม่สามารถโหลด Audit Log ได้</td></tr>';
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="table-empty">ไม่สามารถโหลด Audit Log ได้</td></tr>';
     }
+}
+
+function formatAuditTarget(log) {
+    const type = log.target_type;
+    const id   = log.target_id ?? '';
+    if (!type) return '-';
+    if (type === 'user')   return `<a class="audit-detail-link" href="/profile/?id=${id}" target="_blank">User #${id}</a>`;
+    if (type === 'event')  return `Event #${id}`;
+    if (type === 'config') return 'Config';
+    if (type === 'skdrive') return `<span title="${escapeHtml(id)}">SKDrive</span>`;
+    return `${type} #${id}`;
 }
 
 function renderAuditTable() {
@@ -323,19 +334,21 @@ function renderAuditTable() {
 
     tbody.innerHTML = '';
     if (allAuditLogs.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" class="table-empty">ไม่มีข้อมูล</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="table-empty">ไม่มีข้อมูล</td></tr>';
     } else {
         allAuditLogs.forEach(log => {
-            const detail = log.detail ? JSON.stringify(log.detail) : '-';
-            const target = log.target_type ? `${log.target_type} #${log.target_id ?? ''}` : '-';
+            const actionKey  = (log.action || '').split('_')[0];
             const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
             tr.innerHTML = `
+                <td class="audit-id-cell">#${log.id ?? '-'}</td>
                 <td>${log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : '-'}</td>
-                <td>Admin #${log.actor_id ?? '-'}</td>
-                <td>${log.action || '-'}</td>
-                <td>${target}</td>
-                <td class="audit-detail">${detail}</td>
+                <td>@${log.actor_username ?? log.actor_id ?? '-'}</td>
+                <td><span class="audit-action-badge audit-action-${actionKey}">${log.action || '-'}</span></td>
+                <td>${formatAuditTarget(log)}</td>
+                <td class="audit-view-cell"><i class="fa-solid fa-eye"></i></td>
             `;
+            tr.addEventListener('click', () => openAuditDetail(log));
             tbody.appendChild(tr);
         });
     }
@@ -358,6 +371,121 @@ function renderAuditTable() {
 window.goAuditPage = function(page) {
     loadAuditLog(auditCursorMap[page] ?? null, page);
 };
+
+function auditFormatKey(k) {
+    return k.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function auditFormatVal(v) {
+    if (typeof v === 'boolean') return v ? 'ON' : 'OFF';
+    if (v === null || v === '') return '—';
+    return String(v);
+}
+
+function auditRenderRow(label, value, rawHtml = null) {
+    if (rawHtml !== null) return `
+        <div class="audit-detail-row">
+            <span class="audit-detail-label">${escapeHtml(label)}</span>
+            <span class="audit-detail-value">${rawHtml}</span>
+        </div>`;
+    if (Array.isArray(value)) {
+        const chips = value.length
+            ? value.map(item => `<span class="audit-detail-chip">${escapeHtml(auditFormatKey(String(item)))}</span>`).join('')
+            : '<span class="audit-detail-chip">—</span>';
+        return `
+        <div class="audit-detail-row audit-detail-row-stack">
+            <span class="audit-detail-label">${escapeHtml(label)}</span>
+            <div class="audit-detail-chips">${chips}</div>
+        </div>`;
+    }
+    return `
+        <div class="audit-detail-row">
+            <span class="audit-detail-label">${escapeHtml(label)}</span>
+            <span class="audit-detail-value">${escapeHtml(auditFormatVal(value))}</span>
+        </div>`;
+}
+
+function renderModalTarget(log) {
+    const type = log.target_type;
+    const id   = log.target_id ?? '';
+    if (!type) return auditRenderRow('Target', '-');
+
+    if (type === 'user') {
+        const link = id
+            ? `<a class="audit-detail-link" href="/profile/?id=${id}" target="_blank">User #${escapeHtml(id)}</a>`
+            : 'User';
+        return auditRenderRow('Target', null, link);
+    }
+    if (type === 'config') return auditRenderRow('Target', 'Config');
+    if (type === 'event')  return auditRenderRow('Target', `Event #${id}`);
+    if (type === 'skdrive') {
+        const paths = id.split(',').map(p => p.trim()).filter(Boolean);
+        const chips = paths.length
+            ? paths.map(p => `<span class="audit-detail-chip audit-detail-chip-path" title="${escapeHtml(p)}">${escapeHtml(p)}</span>`).join('')
+            : '<span class="audit-detail-chip">—</span>';
+        return `
+        <div class="audit-detail-row audit-detail-row-stack">
+            <span class="audit-detail-label">Target</span>
+            <div class="audit-detail-chips">${chips}</div>
+        </div>`;
+    }
+    return auditRenderRow('Target', `${type} #${id}`);
+}
+
+function openAuditDetail(log) {
+    const ACTION_LABELS = {
+        ban_user:       'Ban User',
+        unban_user:     'Unban User',
+        delete_user:    'Delete User',
+        change_role:    'Change Role',
+        delete_event:   'Delete Event',
+        config_update:  'Config Update',
+        skdrive_upload: 'SKDrive Upload',
+        skdrive_delete: 'SKDrive Delete',
+    };
+    const ACTION_ICONS = {
+        ban_user:       'fa-ban',
+        unban_user:     'fa-circle-check',
+        delete_user:    'fa-user-minus',
+        change_role:    'fa-user-gear',
+        delete_event:   'fa-calendar-xmark',
+        config_update:  'fa-sliders',
+        skdrive_upload: 'fa-upload',
+        skdrive_delete: 'fa-trash',
+    };
+
+    const action    = log.action || '';
+    const actionKey = action.split('_')[0];
+
+    const iconEl = document.getElementById('auditModalIcon');
+    iconEl.className = `audit-modal-icon audit-action-${actionKey}`;
+    iconEl.innerHTML = `<i class="fa-solid ${ACTION_ICONS[action] || 'fa-clock-rotate-left'}"></i>`;
+
+    document.getElementById('auditModalTitle').textContent = ACTION_LABELS[action] || action || '-';
+    document.getElementById('auditModalTime').textContent  = log.created_at
+        ? new Date(log.created_at).toLocaleString('th-TH') : '-';
+
+    const adminLink = log.actor_id
+        ? `<a class="audit-detail-link" href="/profile/?id=${log.actor_id}" target="_blank">@${escapeHtml(log.actor_username ?? String(log.actor_id))}</a>`
+        : '—';
+
+    const detailRows = log.detail && typeof log.detail === 'object'
+        ? Object.entries(log.detail).map(([k, v]) => [auditFormatKey(k), v])
+        : [];
+
+    document.getElementById('auditDetailRows').innerHTML = [
+        auditRenderRow('Admin',  null, adminLink),
+        renderModalTarget(log),
+        ...detailRows.map(([k, v]) => auditRenderRow(k, v)),
+    ].join('');
+
+    const modal = document.getElementById('auditDetailModal');
+    modal.style.display = 'flex';
+
+    const close = () => { modal.style.display = 'none'; };
+    document.getElementById('auditModalBackdrop').onclick = close;
+    document.getElementById('auditModalCloseBtn').onclick = close;
+}
 
 // ─── SERVER LOG ───────────────────────────────────────────────────────────────
 const LOG_PER_PAGE = 50;
