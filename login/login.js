@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: emailOrUser, // ใน Worker เราใช้ชื่อฟิลด์ email
+          identifier: emailOrUser,
           password: password
         })
       });
@@ -28,20 +28,22 @@ document.addEventListener("DOMContentLoaded", () => {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        // 1. เก็บ Token และข้อมูลผู้ใช้ลง localStorage
         localStorage.setItem("authToken", result.token);
-        localStorage.setItem("username", result.username);
-        localStorage.setItem("role", result.role);
+        localStorage.setItem("userId", result.user?.id ?? "");
+        localStorage.setItem("username", result.user?.username ?? "");
+        localStorage.setItem("role", result.user?.role ?? "");
 
         // 2. ส่งไปหน้า Dashboard หรือหน้าแรก (แก้ path ตามต้องการ)
         window.location.replace("/");
       } else {
         // 🚨 กรณีพิเศษ: ถ้ายังไม่ได้ยืนยัน OTP (Error 403 ที่เราเขียนไว้ใน Worker)
-        if (response.status === 403) {
-          alert(result.error);
-          // ฝากอีเมลไว้ใน sessionStorage เพื่อให้หน้า verify-email ใช้งานได้
-          sessionStorage.setItem("pendingVerificationEmail", emailOrUser);
-          window.location.href = "/verify-email/"; // ส่งไปหน้ากรอก OTP
+        const needsVerify = response.status === 403 ||
+          (result.error && result.error.toLowerCase().includes('verif'));
+
+        if (needsVerify) {
+          const params = new URLSearchParams({ identifier: emailOrUser, from: 'login' });
+          if (result.email) params.set('email', result.email);
+          window.location.href = `/register/verify-email.html?${params}`;
         } else {
           alert("ผิดพลาด: " + (result.error || "อีเมลหรือรหัสผ่านไม่ถูกต้อง"));
         }
