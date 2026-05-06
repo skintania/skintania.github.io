@@ -68,6 +68,13 @@
   - [DELETE /courses/:courseId/files/:fileId](#delete-coursescourseidfilesfileid)
 - [Assets](#assets)
 - [SKDrive](#skdrive)
+- [Exercises](#exercises)
+  - [GET /courses/:courseId/exercises](#get-coursescourseidexercises)
+  - [POST /courses/:courseId/exercises](#post-coursescourseidexercises)
+  - [GET /courses/:courseId/exercises/:exerciseId](#get-coursescourseidexercisesexerciseid)
+  - [PATCH /courses/:courseId/exercises/:exerciseId](#patch-coursescourseidexercisesexerciseid)
+  - [DELETE /courses/:courseId/exercises/:exerciseId](#delete-coursescourseidexercisesexerciseid)
+  - [POST /courses/:courseId/exercises/:exerciseId/submit](#post-coursescourseidexercisesexerciseidsubmit)
 - [Comments](#comments)
   - [GET /courses/:courseId/comments](#get-coursescourseidcomments)
   - [POST /courses/:courseId/comments](#post-coursescourseidcomments)
@@ -868,7 +875,7 @@ List all courses.
 {
   "success": true,
   "courses": [
-    { "id": 1, "title": "Introduction to Skin Care", "description": "...", "createdAt": "..." }
+    { "id": 1, "type": "video", "title": "Introduction to Skin Care", "description": "...", "createdAt": "..." }
   ]
 }
 ```
@@ -880,10 +887,15 @@ Create a new course. **Admin only.**
 
 **Body**
 ```json
-{ "folder": "intro-skin-care", "title": "Course Title", "description": "Optional description" }
+{ "folder": "intro-skin-care", "title": "Course Title", "description": "Optional description", "type": "video" }
 ```
 
-> `folder` is required and is used as the R2 key prefix for all clips and files belonging to this course.
+| Field | Required | Description |
+|-------|----------|-------------|
+| `folder` | yes | R2 key prefix for clips and files |
+| `title` | yes | Display name |
+| `description` | no | Optional description |
+| `type` | no | `"video"` (default) or `"exercise"` |
 
 **Response 201**
 ```json
@@ -897,7 +909,7 @@ Get a single course by ID.
 
 **Response 200**
 ```json
-{ "success": true, "course": { "id": 1, "folder": "intro-skin-care", "title": "...", "description": "...", "createdAt": "...", "updatedAt": "..." } }
+{ "success": true, "course": { "id": 1, "type": "video", "folder": "intro-skin-care", "title": "...", "description": "...", "createdAt": "...", "updatedAt": "..." } }
 ```
 
 ---
@@ -907,7 +919,7 @@ Update a course. **Admin only.**
 
 **Body** (all optional)
 ```json
-{ "title": "New Title", "description": "New description" }
+{ "title": "New Title", "description": "New description", "type": "exercise" }
 ```
 
 ---
@@ -1127,6 +1139,136 @@ Content-Disposition: attachment; filename="Engineering Materials.zip"
 ```
 
 > Returns 400 if the total size exceeds `SKDRIVE_MAX_DOWNLOAD_MB` (default 50MB, configurable by admin via `PATCH /admin/config`).
+
+---
+
+## Exercises
+
+Available only on courses with `type: "exercise"`. The correct `answer` is **never returned** in GET responses — only revealed after a submit call.
+
+- **Read / Submit** — any authenticated user
+- **Write** — admin only
+
+### GET /courses/:courseId/exercises
+
+List all exercises for a course, ordered by `sort_order`.
+
+**Auth required**
+
+**Response 200**
+```json
+{
+  "success": true,
+  "exercises": [
+    {
+      "id": 1, "course_id": 1, "title": "Kinematics Q1", "sort_order": 0,
+      "type": "multiple_choice",
+      "question": "A 5kg object has F = 30N applied. Find acceleration.",
+      "question_math": "F = ma",
+      "choices": [
+        { "text": "6 m/s²",   "latex": "a = 6 \\ ms^{-2}" },
+        { "text": "3 m/s²",   "latex": "a = 3 \\ ms^{-2}" },
+        { "text": "150 m/s²", "latex": "a = 150 \\ ms^{-2}" }
+      ],
+      "solution": null, "solution_math": null,
+      "created_at": "...", "updated_at": "..."
+    }
+  ]
+}
+```
+
+> `answer` is omitted from all list and detail responses.
+
+---
+
+### POST /courses/:courseId/exercises
+
+Create an exercise. **Admin only.**
+
+**Body**
+```json
+{
+  "title": "Kinematics Q1",
+  "type": "multiple_choice",
+  "question": "A 5kg object has F = 30N applied. Find acceleration.",
+  "question_math": "F = ma",
+  "choices": [
+    { "text": "6 m/s²",   "latex": "a = 6 \\ ms^{-2}" },
+    { "text": "3 m/s²",   "latex": "a = 3 \\ ms^{-2}" },
+    { "text": "150 m/s²", "latex": "a = 150 \\ ms^{-2}" }
+  ],
+  "answer": "0",
+  "solution": "Rearrange F = ma to solve for a.",
+  "solution_math": "a = \\frac{F}{m} = \\frac{30}{5} = 6 \\ ms^{-2}",
+  "sort_order": 0
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | yes | Exercise title |
+| `type` | string | yes | `multiple_choice`, `fill_blank`, or `free_response` |
+| `question` | string | yes | Question text |
+| `question_math` | string | no | LaTeX for math in the question |
+| `choices` | array | if `multiple_choice` | Array of `{ text, latex }` objects |
+| `answer` | string | if `multiple_choice` or `fill_blank` | Correct choice index (`"0"`) or expected text |
+| `solution` | string | no | Explanation text shown after submission |
+| `solution_math` | string | no | LaTeX for the solution working |
+| `sort_order` | number | no | Display order (default 0) |
+
+**Response 201**
+```json
+{ "success": true, "message": "Exercise created", "id": 1 }
+```
+
+---
+
+### GET /courses/:courseId/exercises/:exerciseId
+
+Get a single exercise (without answer).
+
+---
+
+### PATCH /courses/:courseId/exercises/:exerciseId
+
+Update an exercise. **Admin only.** All fields optional.
+
+---
+
+### DELETE /courses/:courseId/exercises/:exerciseId
+
+Delete an exercise. **Admin only.**
+
+---
+
+### POST /courses/:courseId/exercises/:exerciseId/submit
+
+Submit an answer. For `free_response`, no answer is needed — the solution is always revealed.
+
+**Body**
+```json
+{ "answer": "0" }
+```
+
+**Response 200 — multiple_choice / fill_blank**
+```json
+{
+  "success": true,
+  "correct": true,
+  "solution": "Rearrange F = ma to solve for a.",
+  "solution_math": "a = \\frac{F}{m} = \\frac{30}{5} = 6 \\ ms^{-2}"
+}
+```
+
+**Response 200 — free_response**
+```json
+{
+  "success": true,
+  "result": "revealed",
+  "solution": "...",
+  "solution_math": "..."
+}
+```
 
 ---
 

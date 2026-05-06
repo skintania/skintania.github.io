@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>จัดการแบบฝึกหัด — Skintania</title>
+
+  <style>body { display: none }</style>
+
+  <script type="module" src="/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/Template/style.css">
+  <link rel="stylesheet" href="/Course/exercise/manage/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script type="module" src="/Template/component.js" defer></script>
+  <script type="module" src="/Course/exercise/manage/loadManage.js" defer></script>
+</head>
+
+<body>
+  <comment-widget></comment-widget>
+
+  <main class="wrap">
+    <a id="backLink" class="manage-back-link" href="#">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+      กลับไปหน้าแบบฝึกหัด
+    </a>
+
+    <site-header page-title="จัดการแบบฝึกหัด" page-desc="กำลังโหลด..."></site-header>
+
+    <div class="manage-layout">
+
+      <!-- ── Left: exercise list ── -->
+      <aside class="manage-sidebar">
+        <div class="manage-sidebar-header">
+          <span class="manage-sidebar-title">รายการข้อ</span>
+          <span class="manage-exercise-count" id="exerciseCount">0 ข้อ</span>
+        </div>
+
+        <ul class="manage-list" id="manageList">
+          <li class="manage-list-skeleton"></li>
+          <li class="manage-list-skeleton"></li>
+          <li class="manage-list-skeleton"></li>
+        </ul>
+
+        <button class="btn manage-add-btn" id="addExerciseBtn">+ เพิ่มข้อใหม่</button>
+      </aside>
+
+      <!-- ── Right: form panel ── -->
+      <div class="manage-form-panel" id="formPanel">
+
+        <!-- Empty state -->
+        <div class="form-empty-state" id="formEmptyState">
+          <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1" opacity="0.18">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+          </svg>
+          <p>เลือกข้อจากรายการเพื่อแก้ไข<br>หรือกด "+ เพิ่มข้อใหม่"</p>
+        </div>
+
+        <!-- Form -->
+        <form class="manage-form" id="manageForm" hidden>
+
+          <div class="form-section-header" id="formSectionHeader">สร้างข้อใหม่</div>
+
+          <!-- Title + sort order -->
+          <div class="form-row-2">
+            <label class="form-label">
+              ชื่อข้อ / หัวข้อ <span class="req">*</span>
+              <input class="form-input" type="text" id="fTitle" placeholder="เช่น แรงสัมผัส ข้อ 1" required>
+            </label>
+            <label class="form-label form-label-narrow">
+              ลำดับ
+              <input class="form-input" type="number" id="fSortOrder" value="0" min="0">
+            </label>
+          </div>
+
+          <!-- Type -->
+          <label class="form-label">
+            ประเภทข้อ <span class="req">*</span>
+            <select class="form-input" id="fType">
+              <option value="multiple_choice">🔘 ปรนัย (Multiple Choice)</option>
+              <option value="fill_blank">✏️ เติมคำ (Fill in the Blank)</option>
+              <option value="free_response">📝 อัตนัย (Free Response)</option>
+            </select>
+          </label>
+
+          <!-- Question -->
+          <label class="form-label">
+            โจทย์ <span class="req">*</span>
+            <textarea class="form-input form-textarea" id="fQuestion" rows="3"
+              placeholder="พิมพ์ข้อความโจทย์..."></textarea>
+          </label>
+
+          <!-- Question LaTeX -->
+          <div class="latex-field">
+            <label class="form-label">
+              โจทย์ — LaTeX
+              <textarea class="form-input form-textarea font-mono" id="fQuestionMath" rows="2"
+                placeholder="เช่น  F = ma  หรือ  \frac{F}{m} = a"></textarea>
+            </label>
+            <div class="latex-preview">
+              <span class="latex-preview-label">Preview</span>
+              <div class="latex-preview-render" id="renderQuestionMath"></div>
+            </div>
+          </div>
+
+          <!-- ── Choices (multiple_choice) ── -->
+          <div id="choicesSection">
+            <div class="form-label-row">
+              <span class="form-label-text">ตัวเลือก <span class="req">*</span></span>
+              <button type="button" class="btn-sm" id="addChoiceBtn">+ เพิ่มตัวเลือก</button>
+            </div>
+            <div id="choicesList" class="choices-list"></div>
+
+            <label class="form-label" style="margin-top:14px">
+              เฉลย — เลือกข้อที่ถูกต้อง
+              <span class="form-hint" id="answerHint"></span>
+              <div class="answer-radios" id="answerRadios"></div>
+            </label>
+          </div>
+
+          <!-- ── Answer (fill_blank) ── -->
+          <div id="fillAnswerSection">
+            <label class="form-label">
+              เฉลย <span class="req" id="fillAnswerReq">*</span>
+              <input class="form-input" type="text" id="fFillAnswer"
+                placeholder="คำตอบที่ถูกต้อง (ตรวจแบบ case-insensitive)">
+              <span class="form-hint" id="fillAnswerHint"></span>
+            </label>
+          </div>
+
+          <div class="form-divider"></div>
+          <p class="form-section-label">เฉลยแบบละเอียด <span class="form-hint">(แสดงหลังส่งคำตอบ)</span></p>
+
+          <!-- Solution text -->
+          <label class="form-label">
+            คำอธิบาย
+            <textarea class="form-input form-textarea" id="fSolution" rows="3"
+              placeholder="อธิบายแนวทางการแก้โจทย์..."></textarea>
+          </label>
+
+          <!-- Solution LaTeX -->
+          <div class="latex-field">
+            <label class="form-label">
+              วิธีทำ — LaTeX
+              <textarea class="form-input form-textarea font-mono" id="fSolutionMath" rows="2"
+                placeholder="เช่น  a = \frac{F}{m} = \frac{30}{5} = 6 \ ms^{-2}"></textarea>
+            </label>
+            <div class="latex-preview">
+              <span class="latex-preview-label">Preview</span>
+              <div class="latex-preview-render" id="renderSolutionMath"></div>
+            </div>
+          </div>
+
+          <p class="form-error" id="formError" hidden></p>
+
+          <div class="form-actions">
+            <button type="button" class="btn-ghost" id="cancelFormBtn">ยกเลิก</button>
+            <button type="submit" class="btn" id="saveBtn">บันทึก</button>
+          </div>
+
+        </form>
+      </div>
+
+    </div>
+  </main>
+</body>
+
+</html>

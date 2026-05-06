@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Skintania — Exercise</title>
+
+  <style>body { display: none }</style>
+
+  <script type="module" src="/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/Template/style.css">
+  <link rel="stylesheet" href="/Course/view/style.css">
+  <link rel="stylesheet" href="/Course/exercise/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script type="module" src="/Template/component.js" defer></script>
+  <script type="module" src="/Course/exercise/loadExercise.js" defer></script>
+</head>
+
+<body>
+  <comment-widget></comment-widget>
+
+  <main class="wrap view-wrap">
+    <site-header page-title="Exercise" page-desc="กำลังโหลด..."></site-header>
+
+    <div class="view-layout">
+
+      <!-- ── Left: exercise content ── -->
+      <div class="player-col">
+
+        <!-- Exercise card -->
+        <div class="exercise-card" id="exerciseCard">
+          <div class="exercise-card-header">
+            <span class="exercise-num-badge" id="exerciseNum">ข้อ 1 / 1</span>
+            <span class="exercise-type-badge" id="exerciseTypeBadge">ปรนัย</span>
+          </div>
+          <p class="exercise-question" id="exerciseQuestion">กำลังโหลด...</p>
+          <div class="question-math-wrap" id="questionMathWrap"></div>
+          <div class="exercise-body" id="exerciseBody"></div>
+          <div class="exercise-feedback" id="exerciseFeedback" hidden>
+            <div class="feedback-result" id="feedbackResult"></div>
+            <p class="feedback-explanation" id="feedbackExplanation"></p>
+          </div>
+          <div class="exercise-actions">
+            <button class="btn check-btn" id="checkBtn">ตรวจคำตอบ</button>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="exercise-nav" id="exerciseNav">
+          <button class="exercise-nav-btn" id="prevBtn" disabled>← ก่อนหน้า</button>
+          <span class="exercise-score-display" id="scoreDisplay"></span>
+          <button class="exercise-nav-btn" id="nextBtn">ถัดไป →</button>
+        </div>
+
+        <!-- Summary (shown when finished) -->
+        <div class="exercise-summary" id="exerciseSummary" hidden>
+          <div class="summary-icon" id="summaryIcon">🎉</div>
+          <h2 class="summary-title">ผลการทำแบบฝึกหัด</h2>
+          <div class="summary-score-row" id="summaryScore"></div>
+          <p class="summary-desc" id="summaryDesc"></p>
+          <button class="btn" id="retryBtn">ทำใหม่อีกครั้ง</button>
+        </div>
+
+        <!-- Course info -->
+        <div class="video-info">
+          <h1 class="video-title" id="courseTitle">—</h1>
+          <div class="video-meta-row">
+            <div class="channel-block">
+              <div class="channel-avatar">SK</div>
+              <div class="channel-text">
+                <span class="channel-name">Skintania</span>
+                <span class="channel-sub" id="courseNameSub"></span>
+              </div>
+            </div>
+            <p class="video-date" id="courseMeta"></p>
+          </div>
+          <p class="video-desc" id="courseDesc"></p>
+        </div>
+
+      </div><!-- /player-col -->
+
+      <!-- ── Right: exercise list + other courses ── -->
+      <div class="sidebar-col">
+
+        <aside class="playlist-col">
+          <div class="playlist-header" id="playlistHeader">
+            <div class="playlist-header-inner">
+              <p class="playlist-label">รายการข้อ</p>
+              <h2 class="playlist-title" id="playlistTitle">—</h2>
+              <p class="playlist-sub" id="playlistSub"></p>
+              <a id="manageExerciseLink" class="manage-exercise-link" href="#" hidden>⚙ จัดการ</a>
+            </div>
+          </div>
+          <ul id="exerciseList" class="clip-list">
+            <li class="clip-skeleton"></li>
+            <li class="clip-skeleton"></li>
+            <li class="clip-skeleton"></li>
+            <li class="clip-skeleton"></li>
+          </ul>
+        </aside>
+
+        <div class="other-courses-col" id="otherCoursesCol" hidden>
+          <p class="other-courses-label">คอร์สอื่นๆ</p>
+          <div id="otherCoursesList" class="other-courses-list"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</body>
+
+</html>
