@@ -155,9 +155,17 @@ function _processLatex(text, container) {
       }
       if (j < text.length && j > i + 1) {
         flush();
-        const el = document.createElement('span'); el.className = 'math-inline';
-        _katex(text.slice(i + 1, j), false, el);
-        container.appendChild(el); i = j + 1; continue;
+        const inner = text.slice(i + 1, j);
+        if (inner.includes('&') || inner.includes('\\\\')) {
+          const el = document.createElement('div'); el.className = 'math-block';
+          _katex(`\\begin{aligned}${inner}\\end{aligned}`, true, el);
+          container.appendChild(el);
+        } else {
+          const el = document.createElement('span'); el.className = 'math-inline';
+          _katex(inner, false, el);
+          container.appendChild(el);
+        }
+        i = j + 1; continue;
       }
     }
     const cmd = _matchTextCmd(text, i);

@@ -902,6 +902,7 @@ Create a new course. **Admin only.**
 | `title` | yes | Display name |
 | `description` | no | Optional description |
 | `type` | no | `"video"` (default) or `"exercise"` |
+| `youtube_url` | no | Comma-separated YouTube playlist IDs. If set, the frontend uses YouTube instead of R2 clips. |
 
 **Response 201**
 ```json
@@ -915,7 +916,7 @@ Get a single course by ID.
 
 **Response 200**
 ```json
-{ "success": true, "course": { "id": 1, "type": "video", "folder": "intro-skin-care", "title": "...", "description": "...", "createdAt": "...", "updatedAt": "..." } }
+{ "success": true, "course": { "id": 1, "type": "video", "folder": "intro-skin-care", "title": "...", "description": "...", "youtube_url": null, "createdAt": "...", "updatedAt": "..." } }
 ```
 
 ---

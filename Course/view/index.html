@@ -46,6 +46,9 @@
           <!-- Video element -->
           <video id="videoPlayer" playsinline webkit-playsinline disablepictureinpicture></video>
 
+          <!-- YouTube player container -->
+          <div id="ytPlayer" hidden></div>
+
           <!-- Double-tap indicators (mobile) -->
           <div class="dbl-tap left" id="dblLeft">
             <div class="dbl-tap-text"><span>◀◀</span><span>10 วินาที</span></div>
@@ -107,6 +110,18 @@
                     <button class="speed-opt" data-speed="1.25">1.25×</button>
                     <button class="speed-opt" data-speed="1.5">1.5×</button>
                     <button class="speed-opt" data-speed="2">2×</button>
+                  </div>
+                </div>
+
+                <div class="quality-wrap" id="qualityWrap" hidden>
+                  <button class="ctrl-btn quality-toggle-btn" id="qualityToggle" title="Video quality">Auto</button>
+                  <div class="quality-menu" id="qualityMenu">
+                    <button class="quality-opt" data-quality="hd1080">1080p</button>
+                    <button class="quality-opt" data-quality="hd720">720p</button>
+                    <button class="quality-opt" data-quality="large">480p</button>
+                    <button class="quality-opt" data-quality="medium">360p</button>
+                    <button class="quality-opt" data-quality="small">240p</button>
+                    <button class="quality-opt active" data-quality="auto">Auto</button>
                   </div>
                 </div>
 
