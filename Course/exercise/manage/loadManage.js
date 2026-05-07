@@ -137,6 +137,15 @@ function _processLatex(text, container) {
         container.appendChild(el); i = end + 2; continue;
       }
     }
+    if (text.startsWith('\\[', i)) {
+      const end = text.indexOf('\\]', i + 2);
+      if (end !== -1) {
+        flush();
+        const el = document.createElement('div'); el.className = 'math-block';
+        _katex(text.slice(i + 2, end), true, el);
+        container.appendChild(el); i = end + 2; continue;
+      }
+    }
     if (text[i] === '$' && text[i + 1] !== '$') {
       let j = i + 1;
       while (j < text.length) {
