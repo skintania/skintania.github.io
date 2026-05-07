@@ -39,8 +39,21 @@
 
     <div class="manage-layout">
 
-      <!-- ── Left: exercise list ── -->
+      <!-- ── Left: sidebar ── -->
       <aside class="manage-sidebar">
+
+        <!-- Problem sets section -->
+        <div class="manage-sidebar-header">
+          <span class="manage-sidebar-title">ชุดโจทย์</span>
+          <button class="btn-sm" id="addPsBtn">+ เพิ่ม</button>
+        </div>
+        <ul class="manage-ps-list" id="psList">
+          <li class="manage-list-skeleton"></li>
+        </ul>
+
+        <div class="manage-sidebar-divider"></div>
+
+        <!-- Exercises section -->
         <div class="manage-sidebar-header">
           <span class="manage-sidebar-title">รายการข้อ</span>
           <span class="manage-exercise-count" id="exerciseCount">0 ข้อ</span>
@@ -85,6 +98,14 @@
             </label>
           </div>
 
+          <!-- Problem Set -->
+          <label class="form-label">
+            ชุดโจทย์ <span class="req">*</span>
+            <select class="form-input" id="fProblemSet">
+              <option value="">-- เลือกชุดโจทย์ --</option>
+            </select>
+          </label>
+
           <!-- Type -->
           <label class="form-label">
             ประเภทข้อ <span class="req">*</span>
@@ -95,24 +116,15 @@
             </select>
           </label>
 
-          <!-- Question -->
+          <!-- Question (LaTeX) -->
           <label class="form-label">
             โจทย์ <span class="req">*</span>
-            <textarea class="form-input form-textarea" id="fQuestion" rows="3"
-              placeholder="พิมพ์ข้อความโจทย์..."></textarea>
+            <textarea class="form-input form-textarea font-mono" id="fQuestion" rows="5"
+              placeholder="ใช้ LaTeX ได้ เช่น&#10;จงหาแรง $F$ เมื่อ $m = 5\ \text{kg}$ และ $a = 3\ \text{ms}^{-2}$&#10;&#10;$$F = ma$$"></textarea>
           </label>
-
-          <!-- Question LaTeX -->
-          <div class="latex-field">
-            <label class="form-label">
-              โจทย์ — LaTeX
-              <textarea class="form-input form-textarea font-mono" id="fQuestionMath" rows="2"
-                placeholder="เช่น  F = ma  หรือ  \frac{F}{m} = a"></textarea>
-            </label>
-            <div class="latex-preview">
-              <span class="latex-preview-label">Preview</span>
-              <div class="latex-preview-render" id="renderQuestionMath"></div>
-            </div>
+          <div class="latex-preview">
+            <span class="latex-preview-label">Preview</span>
+            <div class="latex-preview-render" id="renderQuestion"></div>
           </div>
 
           <!-- ── Choices (multiple_choice) ── -->
@@ -141,26 +153,38 @@
           </div>
 
           <div class="form-divider"></div>
+          <p class="form-section-label">รูปภาพประกอบโจทย์ <span class="form-hint">(ไม่บังคับ · jpeg / png / webp · ≤ 5 MB)</span></p>
+          <div class="img-upload-area" id="imgUploadArea">
+            <img class="img-preview" id="imgPreview" hidden>
+            <div class="img-upload-placeholder" id="imgPlaceholder">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.4">
+                <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <span>ยังไม่มีรูปภาพ</span>
+            </div>
+            <div class="img-upload-actions">
+              <input type="file" id="imgFileInput" accept="image/jpeg,image/png,image/webp" hidden>
+              <button type="button" class="btn-sm" id="imgUploadBtn">อัปโหลด</button>
+              <button type="button" class="btn-sm img-remove-btn" id="imgRemoveBtn" hidden>ลบรูป</button>
+            </div>
+            <p class="form-error" id="imgError" hidden></p>
+          </div>
+
+          <div class="form-divider"></div>
           <p class="form-section-label">เฉลยแบบละเอียด <span class="form-hint">(แสดงหลังส่งคำตอบ)</span></p>
 
-          <!-- Solution text -->
+          <!-- Solution (LaTeX) -->
           <label class="form-label">
-            คำอธิบาย
-            <textarea class="form-input form-textarea" id="fSolution" rows="3"
-              placeholder="อธิบายแนวทางการแก้โจทย์..."></textarea>
+            เฉลย
+            <textarea class="form-input form-textarea font-mono" id="fSolution" rows="4"
+              placeholder="ใช้ LaTeX ได้ เช่น&#10;$$a = \frac{F}{m} = \frac{30}{5} = 6\ \text{ms}^{-2}$$"></textarea>
           </label>
-
-          <!-- Solution LaTeX -->
-          <div class="latex-field">
-            <label class="form-label">
-              วิธีทำ — LaTeX
-              <textarea class="form-input form-textarea font-mono" id="fSolutionMath" rows="2"
-                placeholder="เช่น  a = \frac{F}{m} = \frac{30}{5} = 6 \ ms^{-2}"></textarea>
-            </label>
-            <div class="latex-preview">
-              <span class="latex-preview-label">Preview</span>
-              <div class="latex-preview-render" id="renderSolutionMath"></div>
-            </div>
+          <div class="latex-preview">
+            <span class="latex-preview-label">Preview</span>
+            <div class="latex-preview-render" id="renderSolution"></div>
           </div>
 
           <p class="form-error" id="formError" hidden></p>
@@ -175,6 +199,39 @@
 
     </div>
   </main>
+
+  <!-- ── Problem Set Modal ── -->
+  <div class="ps-modal-overlay" id="psModal" hidden>
+    <div class="ps-modal-box">
+      <div class="ps-modal-header">
+        <h2 class="ps-modal-title" id="psModalTitle">เพิ่มชุดโจทย์</h2>
+        <button class="ps-modal-close" id="psModalClose">✕</button>
+      </div>
+      <form id="psForm">
+        <label class="form-label">
+          ชื่อชุดโจทย์ <span class="req">*</span>
+          <input class="form-input" type="text" id="psTitle" placeholder="เช่น Week 1: Kinematics" required>
+        </label>
+        <label class="form-label" style="margin-top:14px">
+          คำอธิบาย
+          <input class="form-input" type="text" id="psDesc" placeholder="ไม่บังคับ">
+        </label>
+        <label class="form-label" style="margin-top:14px">
+          ผู้จัดทำ
+          <input class="form-input" type="text" id="psAuthor" placeholder="เช่น Dr. Smith (ค่าเริ่มต้น: Skintania)">
+        </label>
+        <label class="form-label form-label-narrow" style="margin-top:14px">
+          ลำดับ
+          <input class="form-input" type="number" id="psSortOrder" value="0" min="0">
+        </label>
+        <p class="form-error" id="psError" hidden></p>
+        <div class="form-actions" style="margin-top:20px">
+          <button type="button" class="btn-ghost" id="psCancel">ยกเลิก</button>
+          <button type="submit" class="btn" id="psSubmit">บันทึก</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </body>
 
 </html>

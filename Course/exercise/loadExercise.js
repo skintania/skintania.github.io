@@ -1,12 +1,5 @@
 import { CONFIG } from '/config.js';
 
-const GRADIENTS = [
-  ['#1a3a6b', '#3b82f6'], ['#1a4a3a', '#10b981'],
-  ['#3b1a6b', '#8b5cf6'], ['#6b3a1a', '#f59e0b'],
-  ['#1a3a6b', '#06b6d4'], ['#6b1a3a', '#ec4899'],
-  ['#2d4a1a', '#84cc16'], ['#1a2a6b', '#6366f1'],
-];
-
 const params   = new URLSearchParams(location.search);
 const courseId = params.get('id');
 const token    = () => localStorage.getItem('authToken') || '';
@@ -17,23 +10,15 @@ const TYPE_LABELS = {
   free_response:   'อัตนัย',
 };
 
-const TYPE_ICONS = {
-  multiple_choice: '🔘',
-  fill_blank:      '✏️',
-  free_response:   '📝',
-};
-
-// ── State ───────────────────────────────────────────────
-let exercises    = [];
-let currentIndex = 0;
-const answers    = {};    // id → string answer
+// ── State ────────────────────────────────────────────────
+let problemSets  = [];
+let allExercises = [];
+let activePsId   = null;
+let currentCourse = null;
+let currentUser   = null;
+const answers    = {};   // exerciseId → string
 const checked    = new Set();
-const results    = {};    // id → true | false | null (free_response)
-
-function gradientFor(n) {
-  const [a, b] = GRADIENTS[n % GRADIENTS.length];
-  return `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
-}
+const results    = {};   // exerciseId → true | false | null (free_response)
 
 // ── API ──────────────────────────────────────────────────
 async function apiFetch(path, method = 'GET', body = null) {
@@ -47,75 +32,281 @@ async function apiFetch(path, method = 'GET', body = null) {
   return res.json();
 }
 
-// ── KaTeX helper ────────────────────────────────────────
-function renderMath(latex, displayMode = true) {
+// ── LaTeX parser ─────────────────────────────────────────
+// Handles $...$, $$...$$, \begin{env}...\end{env},
+// \textbf, \textit, \emph, \label, \eqref, \hfill, spacing cmds, etc.
+
+function _katex(latex, displayMode, el) {
+  try {
+    if (window.katex) el.innerHTML = katex.renderToString(latex, { displayMode, throwOnError: false });
+    else el.textContent = latex;
+  } catch { el.textContent = latex; }
+}
+
+function _matchBraces(text, start) {
+  // Returns index of closing '}' matching the '{' at start, or -1
+  let depth = 0;
+  for (let i = start; i < text.length; i++) {
+    if (text[i] === '\\') { i++; continue; }
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') { if (--depth === 0) return i; }
+  }
+  return -1;
+}
+
+function _matchEnv(text, start) {
+  const m = text.slice(start).match(/^\\begin\{(\w+\*?)\}/);
+  if (!m) return null;
+  const env = m[1];
+  let pos = start + m[0].length;
+  // Skip optional [...]
+  if (text[pos] === '[') {
+    const close = text.indexOf(']', pos);
+    if (close !== -1) pos = close + 1;
+  }
+  const endStr = `\\end{${env}}`;
+  const endIdx = text.indexOf(endStr, pos);
+  if (endIdx === -1) return null;
+  return { env, content: text.slice(pos, endIdx), end: endIdx + endStr.length };
+}
+
+function _matchTextCmd(text, i) {
+  const m = text.slice(i).match(/^\\(textbf|textit|emph|underline|texttt|textsf|textrm)\{/);
+  if (!m) return null;
+  const braceStart = i + m[0].length - 1;
+  const braceEnd   = _matchBraces(text, braceStart);
+  if (braceEnd === -1) return null;
+  return { cmd: m[1], content: text.slice(braceStart + 1, braceEnd), end: braceEnd + 1 };
+}
+
+function _renderEnv(env, content, container) {
+  const name = env.replace('*', '');
+  const MATH_ENVS = ['equation', 'align', 'eqnarray', 'gather', 'multline', 'flalign', 'alignat'];
+
+  if (MATH_ENVS.includes(name)) {
+    const latex = content.replace(/\\label\{[^}]*\}/g, '').trim();
+    const el = document.createElement('div');
+    el.className = 'math-block';
+    _katex(latex, true, el);
+    container.appendChild(el);
+
+  } else if (name === 'description') {
+    const dl  = document.createElement('dl');
+    dl.className = 'latex-dl';
+    const re = /\\item\[([^\]]*)\]([\s\S]*?)(?=\\item\[|$)/g;
+    let m;
+    while ((m = re.exec(content)) !== null) {
+      const item = document.createElement('div');
+      item.className = 'latex-dl-item';
+      const dt = document.createElement('dt');
+      dt.className = 'latex-dt';
+      _processLatex(m[1], dt);
+      const dd = document.createElement('dd');
+      dd.className = 'latex-dd';
+      _processLatex(m[2].trim(), dd);
+      item.appendChild(dt);
+      item.appendChild(dd);
+      dl.appendChild(item);
+    }
+    container.appendChild(dl);
+
+  } else if (name === 'itemize' || name === 'enumerate') {
+    const list = document.createElement(name === 'enumerate' ? 'ol' : 'ul');
+    list.className = 'latex-list';
+    const re = /\\item([\s\S]*?)(?=\\item|$)/g;
+    let m;
+    while ((m = re.exec(content)) !== null) {
+      const li = document.createElement('li');
+      _processLatex(m[1].trim(), li);
+      list.appendChild(li);
+    }
+    container.appendChild(list);
+
+  } else {
+    // Unknown: try rendering as display math, fall back to text
+    const el = document.createElement('div');
+    el.className = 'math-block';
+    _katex(`\\begin{${env}}${content}\\end{${env}}`, true, el);
+    container.appendChild(el);
+  }
+}
+
+function _processLatex(text, container) {
+  let i = 0;
+  let buf = '';
+  const flush = () => {
+    if (buf) { container.appendChild(document.createTextNode(buf)); buf = ''; }
+  };
+
+  while (i < text.length) {
+
+    // \begin{...}...\end{...}
+    if (text.startsWith('\\begin{', i)) {
+      const env = _matchEnv(text, i);
+      if (env) { flush(); _renderEnv(env.env, env.content, container); i = env.end; continue; }
+    }
+
+    // $$...$$
+    if (text.startsWith('$$', i)) {
+      const end = text.indexOf('$$', i + 2);
+      if (end !== -1) {
+        flush();
+        const el = document.createElement('div'); el.className = 'math-block';
+        _katex(text.slice(i + 2, end), true, el);
+        container.appendChild(el); i = end + 2; continue;
+      }
+    }
+
+    // $...$
+    if (text[i] === '$' && text[i + 1] !== '$') {
+      let j = i + 1;
+      while (j < text.length) {
+        if (text[j] === '\\') { j += 2; continue; }
+        if (text[j] === '$') break;
+        j++;
+      }
+      if (j < text.length && j > i + 1) {
+        flush();
+        const el = document.createElement('span'); el.className = 'math-inline';
+        _katex(text.slice(i + 1, j), false, el);
+        container.appendChild(el); i = j + 1; continue;
+      }
+    }
+
+    // \textbf, \textit, \emph, …
+    const cmd = _matchTextCmd(text, i);
+    if (cmd) {
+      flush();
+      const el = document.createElement('span');
+      if (cmd.cmd === 'textbf')                     el.style.fontWeight = '600';
+      else if (cmd.cmd === 'textit' || cmd.cmd === 'emph') el.style.fontStyle = 'italic';
+      else if (cmd.cmd === 'underline')              el.style.textDecoration = 'underline';
+      else if (cmd.cmd === 'texttt')                 el.style.fontFamily = 'monospace';
+      _processLatex(cmd.content, el);
+      container.appendChild(el); i = cmd.end; continue;
+    }
+
+    // \label{...}, \ref{...}, \nonumber, \begin/end{document} → strip
+    const stripM = text.slice(i).match(/^\\(?:label|ref|nonumber)\{[^}]*\}|^\\(?:begin|end)\{document\}/);
+    if (stripM) { i += stripM[0].length; continue; }
+
+    // \eqref{...} → "(label)"
+    const eqM = text.slice(i).match(/^\\eqref\{([^}]*)\}/);
+    if (eqM) { flush(); container.appendChild(document.createTextNode(`(${eqM[1]})`)); i += eqM[0].length; continue; }
+
+    // \hfill → flex spacer
+    if (text.startsWith('\\hfill', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.className = 'latex-hfill';
+      container.appendChild(sp); i += 6; continue;
+    }
+
+    // \smallskip, \medskip, \bigskip, \par → <br>
+    const skipM = text.slice(i).match(/^\\(?:smallskip|medskip|bigskip|par|vspace\{[^}]*\})/);
+    if (skipM) { flush(); container.appendChild(document.createElement('br')); i += skipM[0].length; continue; }
+
+    // \noindent → ignore
+    if (text.startsWith('\\noindent', i)) { i += 9; continue; }
+
+    // \\ or \newline → <br>
+    if (text.startsWith('\\\\', i)) { flush(); container.appendChild(document.createElement('br')); i += 2; continue; }
+    if (text.startsWith('\\newline', i)) { flush(); container.appendChild(document.createElement('br')); i += 8; continue; }
+
+    buf += text[i++];
+  }
+  flush();
+}
+
+function renderLatexText(text, container) {
+  container.innerHTML = '';
+  if (!text) return;
+  _processLatex(text, container);
+}
+
+// Render a standalone LaTeX block (for question_math / solution_math fields)
+function renderMathBlock(latex, displayMode = true) {
   if (!latex || !window.katex) return null;
   const el = document.createElement(displayMode ? 'div' : 'span');
   el.className = displayMode ? 'math-block' : 'math-inline';
-  try {
-    el.innerHTML = katex.renderToString(latex, { displayMode, throwOnError: false });
-  } catch {
-    el.textContent = latex;
-  }
+  try { el.innerHTML = katex.renderToString(latex, { displayMode, throwOnError: false }); }
+  catch { el.textContent = latex; }
   return el;
 }
 
-// ── Helpers ──────────────────────────────────────────────
-function hasAnswer(ex) {
-  const a = answers[ex.id];
-  if (ex.type === 'fill_blank') return !!(a?.trim());
-  if (ex.type === 'multiple_choice') return a !== undefined;
-  return true;
-}
+// ── Build question card ───────────────────────────────────
+function buildQuestionCard(ex, num) {
+  const card = document.createElement('div');
+  card.className = 'q-card';
+  card.id        = `qcard-${ex.id}`;
 
-// ── Render exercise card ─────────────────────────────────
-function renderExercise(index) {
-  const ex = exercises[index];
-  currentIndex = index;
+  // Header
+  const header = document.createElement('div');
+  header.className = 'q-card-header';
+  header.innerHTML = `
+    <span class="q-num-badge"><span class="q-num-prefix">ข้อ </span>${num}</span>
+    <span class="q-type-badge">${TYPE_LABELS[ex.type] ?? ex.type}</span>
+  `;
+  card.appendChild(header);
 
-  document.getElementById('exerciseNum').textContent       = `ข้อ ${index + 1} / ${exercises.length}`;
-  document.getElementById('exerciseTypeBadge').textContent = TYPE_LABELS[ex.type] ?? ex.type;
+  // Question text — inline LaTeX rendered
+  const qText = document.createElement('p');
+  qText.className = 'q-question';
+  renderLatexText(ex.question, qText);
+  card.appendChild(qText);
 
-  // Question text
-  document.getElementById('exerciseQuestion').textContent = ex.question;
-
-  // Question math (LaTeX)
-  const qMathWrap = document.getElementById('questionMathWrap');
-  qMathWrap.innerHTML = '';
+  // Optional standalone display-math for question
   if (ex.question_math) {
-    const mathEl = renderMath(ex.question_math, true);
-    if (mathEl) qMathWrap.appendChild(mathEl);
+    const mathEl = renderMathBlock(ex.question_math, true);
+    if (mathEl) card.appendChild(mathEl);
   }
 
-  renderBody(ex);
+  // Question image
+  if (ex.image_key) {
+    const img = document.createElement('img');
+    img.className = 'q-image';
+    img.alt       = '';
+    loadExerciseImage(ex.image_key).then(src => { if (src) img.src = src; });
+    card.appendChild(img);
+  }
 
-  // Feedback
-  const feedbackEl = document.getElementById('exerciseFeedback');
-  feedbackEl.hidden = !checked.has(ex.id);
-  if (checked.has(ex.id)) showFeedback(ex);
+  // Answer body
+  const body = document.createElement('div');
+  body.className = 'q-body';
+  card.appendChild(body);
+
+  // Feedback area
+  const feedback = document.createElement('div');
+  feedback.className = 'q-feedback';
+  feedback.hidden    = true;
+  card.appendChild(feedback);
 
   // Check button
-  const checkBtn = document.getElementById('checkBtn');
-  checkBtn.hidden      = checked.has(ex.id);
-  checkBtn.disabled    = false;
+  const actions  = document.createElement('div');
+  actions.className = 'q-actions';
+  const checkBtn = document.createElement('button');
+  checkBtn.className   = 'btn check-btn';
   checkBtn.textContent = ex.type === 'free_response' ? 'ดูเฉลย' : 'ตรวจคำตอบ';
+  actions.appendChild(checkBtn);
+  card.appendChild(actions);
 
-  // Nav
-  document.getElementById('prevBtn').disabled    = index === 0;
-  const isLast = index === exercises.length - 1;
-  document.getElementById('nextBtn').textContent = isLast ? 'ดูผลลัพธ์ →' : 'ถัดไป →';
+  // Render initial answer area
+  renderCardBody(ex, body);
 
-  // Sidebar active
-  document.querySelectorAll('.ex-list-item').forEach(li => li.classList.remove('active'));
-  const activeEl = document.querySelector(`.ex-list-item[data-index="${index}"]`);
-  if (activeEl) activeEl.scrollIntoView({ block: 'nearest' });
-  if (activeEl) activeEl.classList.add('active');
+  // If already answered (e.g. PS switched and back), restore state
+  if (checked.has(ex.id)) {
+    applyAnsweredState(card, ex, body, feedback, checkBtn);
+  }
 
-  updateScoreDisplay();
+  checkBtn.addEventListener('click', async () => {
+    await submitAnswer(ex, card, body, feedback, checkBtn);
+    updateSidebarProgress(activePsId);
+    updateScoreBadge();
+  });
+
+  return card;
 }
 
-function renderBody(ex) {
-  const body = document.getElementById('exerciseBody');
+function renderCardBody(ex, body) {
   body.innerHTML = '';
 
   if (ex.type === 'multiple_choice') {
@@ -126,20 +317,27 @@ function renderBody(ex) {
       const li    = document.createElement('li');
       li.className = 'choice-item';
       const label = document.createElement('label');
-      const radio = document.createElement('input');
+
+      const radio    = document.createElement('input');
       radio.type     = 'radio';
       radio.name     = `ex-${ex.id}`;
       radio.value    = String(i);
       radio.disabled = checked.has(ex.id);
       if (answers[ex.id] === String(i)) radio.checked = true;
       radio.addEventListener('change', () => { answers[ex.id] = String(i); });
-
       label.appendChild(radio);
-      label.appendChild(document.createTextNode(' ' + choice.text));
 
-      if (choice.latex && window.katex) {
-        const m = renderMath(choice.latex, false);
-        if (m) { label.appendChild(document.createTextNode(' ')); label.appendChild(m); }
+      // Choice text — support plain string or {text, latex} object
+      const choiceText  = typeof choice === 'string' ? choice : (choice.text ?? '');
+      const choiceLatex = typeof choice === 'string' ? null   : (choice.latex ?? null);
+
+      const choiceSpan = document.createElement('span');
+      renderLatexText(choiceText, choiceSpan);
+      label.appendChild(choiceSpan);
+
+      if (choiceLatex) {
+        const m = renderMathBlock(choiceLatex, false);
+        if (m) label.appendChild(m);
       }
 
       li.appendChild(label);
@@ -155,7 +353,12 @@ function renderBody(ex) {
     input.value       = answers[ex.id] || '';
     input.disabled    = checked.has(ex.id);
     input.addEventListener('input', () => { answers[ex.id] = input.value; });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') checkAnswer(); });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const btn = input.closest('.q-card')?.querySelector('.check-btn');
+        if (btn && !btn.hidden) btn.click();
+      }
+    });
     body.appendChild(input);
 
   } else if (ex.type === 'free_response') {
@@ -168,44 +371,57 @@ function renderBody(ex) {
   }
 }
 
-// ── Feedback ─────────────────────────────────────────────
-function showFeedback(ex) {
-  const resultEl = document.getElementById('feedbackResult');
-  const expl     = document.getElementById('feedbackExplanation');
-  expl.innerHTML = '';
-
+function showCardFeedback(ex, feedbackEl) {
+  feedbackEl.innerHTML = '';
   const r = results[ex.id];
+
+  const line = document.createElement('div');
+  line.className = 'feedback-result';
   if (ex.type === 'free_response') {
-    resultEl.className   = 'feedback-result pending';
-    resultEl.textContent = '📖 เฉลย';
+    line.classList.add('pending'); line.textContent = '📖 เฉลย';
   } else if (r) {
-    resultEl.className   = 'feedback-result correct';
-    resultEl.textContent = '✅ ถูกต้อง!';
+    line.classList.add('correct'); line.textContent = '✅ ถูกต้อง!';
   } else {
-    resultEl.className   = 'feedback-result wrong';
-    resultEl.textContent = '❌ ไม่ถูกต้อง';
+    line.classList.add('wrong');   line.textContent = '❌ ไม่ถูกต้อง';
   }
+  feedbackEl.appendChild(line);
 
   if (ex._solution) {
     const p = document.createElement('p');
-    p.textContent = ex._solution;
-    expl.appendChild(p);
+    p.className = 'feedback-explanation';
+    renderLatexText(ex._solution, p);
+    feedbackEl.appendChild(p);
   }
-  const mathEl = renderMath(ex._solution_math ?? null, true);
-  if (mathEl) expl.appendChild(mathEl);
+  if (ex._solution_math) {
+    const mathEl = renderMathBlock(ex._solution_math, true);
+    if (mathEl) { mathEl.classList.add('feedback-explanation'); feedbackEl.appendChild(mathEl); }
+  }
 }
 
-// ── Check / Submit ────────────────────────────────────────
-async function checkAnswer() {
-  const ex = exercises[currentIndex];
+function applyAnsweredState(card, ex, body, feedbackEl, checkBtn) {
+  renderCardBody(ex, body);
+  feedbackEl.hidden = false;
+  showCardFeedback(ex, feedbackEl);
+  checkBtn.hidden = true;
+
+  const r = results[ex.id];
+  card.classList.remove('answered-correct', 'answered-wrong', 'answered-pending');
+  if (ex.type === 'free_response') card.classList.add('answered-pending');
+  else if (r) card.classList.add('answered-correct');
+  else         card.classList.add('answered-wrong');
+}
+
+async function submitAnswer(ex, card, body, feedbackEl, checkBtn) {
   if (checked.has(ex.id)) return;
 
-  if (!hasAnswer(ex)) {
-    alert('กรุณาเลือกหรือพิมพ์คำตอบก่อน');
-    return;
-  }
+  const hasAnswer = ex.type === 'fill_blank'
+    ? !!(answers[ex.id]?.trim())
+    : ex.type === 'multiple_choice'
+    ? answers[ex.id] !== undefined
+    : true;
 
-  const checkBtn = document.getElementById('checkBtn');
+  if (!hasAnswer) { alert('กรุณาเลือกหรือพิมพ์คำตอบก่อน'); return; }
+
   checkBtn.disabled    = true;
   checkBtn.textContent = 'กำลังตรวจ...';
 
@@ -220,139 +436,164 @@ async function checkAnswer() {
   }
 
   checked.add(ex.id);
-  results[ex.id]   = ex.type === 'free_response' ? null : (data.correct ?? false);
+  results[ex.id]    = ex.type === 'free_response' ? null : (data.correct ?? false);
   ex._solution      = data.solution      ?? null;
   ex._solution_math = data.solution_math ?? null;
 
-  renderBody(ex);
-  document.getElementById('exerciseFeedback').hidden = false;
-  showFeedback(ex);
-  checkBtn.hidden = true;
-
-  updateSidebarItem(currentIndex);
-  updateScoreDisplay();
+  applyAnsweredState(card, ex, body, feedbackEl, checkBtn);
 }
 
-// ── Navigate ──────────────────────────────────────────────
-function navigate(delta) {
-  const next = currentIndex + delta;
-  if (next < 0) return;
-  if (next >= exercises.length) { showSummary(); return; }
-  renderExercise(next);
+// ── Score badge ───────────────────────────────────────────
+function updateScoreBadge() {
+  const psExercises = allExercises.filter(ex => ex.problem_set_id === activePsId);
+  const correct     = psExercises.filter(ex => results[ex.id] === true).length;
+  const done        = psExercises.filter(ex => checked.has(ex.id)).length;
+  const badge       = document.getElementById('qsScoreBadge');
+  if (!badge) return;
+  badge.textContent = done > 0 ? `✅ ${correct} / ${psExercises.length}` : '';
 }
 
-// ── Score ─────────────────────────────────────────────────
-function updateScoreDisplay() {
-  const correct = Object.values(results).filter(r => r === true).length;
-  const el      = document.getElementById('scoreDisplay');
-  el.textContent = checked.size > 0 ? `${correct} / ${exercises.length} คะแนน` : '';
-}
-
-// ── Summary ───────────────────────────────────────────────
-function showSummary() {
-  const total   = exercises.length;
-  const correct = Object.values(results).filter(r => r === true).length;
-  const wrong   = Object.values(results).filter(r => r === false).length;
-  const pending = Object.values(results).filter(r => r === null).length;
-  const skipped = total - checked.size;
-  const pct     = (total - pending) > 0 ? Math.round((correct / (total - pending)) * 100) : 0;
-
-  document.getElementById('exerciseCard').hidden    = true;
-  document.getElementById('exerciseNav').hidden     = true;
-  document.getElementById('exerciseSummary').hidden = false;
-
-  document.getElementById('summaryIcon').textContent = pct >= 80 ? '🏆' : pct >= 60 ? '👍' : '📚';
-  document.getElementById('summaryScore').innerHTML  =
-    `<span class="summary-num">${correct}</span><span class="summary-denom">/ ${total} ข้อ</span>`;
-
-  const parts = [`ถูก ${correct}`, `ผิด ${wrong}`];
-  if (pending > 0) parts.push(`อัตนัย ${pending} ข้อ`);
-  if (skipped > 0) parts.push(`ยังไม่ตอบ ${skipped} ข้อ`);
-  document.getElementById('summaryDesc').textContent = parts.join(' · ');
-}
-
-function retry() {
-  Object.keys(answers).forEach(k => delete answers[k]);
-  checked.clear();
-  Object.keys(results).forEach(k => delete results[k]);
-  exercises.forEach(ex => { delete ex._solution; delete ex._solution_math; });
-
-  document.getElementById('exerciseSummary').hidden = true;
-  document.getElementById('exerciseCard').hidden    = false;
-  document.getElementById('exerciseNav').hidden     = false;
-
-  exercises.forEach((_, i) => updateSidebarItem(i));
-  renderExercise(0);
-}
-
-// ── Sidebar ───────────────────────────────────────────────
-function buildSidebar() {
-  const list = document.getElementById('exerciseList');
+// ── PS Sidebar ────────────────────────────────────────────
+function buildPsSidebar() {
+  const list = document.getElementById('psList');
   list.innerHTML = '';
 
-  exercises.forEach((ex, i) => {
-    const li         = document.createElement('li');
-    li.className     = 'clip-item ex-list-item';
-    li.dataset.index = i;
+  if (!problemSets.length) {
+    const li = document.createElement('li');
+    li.className   = 'ps-empty';
+    li.textContent = 'ยังไม่มีชุดโจทย์';
+    list.appendChild(li);
+    return;
+  }
 
+  problemSets.forEach(ps => {
+    const total = ps.exercise_count;
+    const done  = allExercises.filter(ex => ex.problem_set_id === ps.id && checked.has(ex.id)).length;
+    const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
+
+    const li = document.createElement('li');
+    li.className    = 'ps-item';
+    li.dataset.psId = ps.id;
     li.innerHTML = `
-      <span class="clip-num">${i + 1}</span>
-      <div class="ex-type-icon">${TYPE_ICONS[ex.type] ?? '❓'}</div>
-      <div class="clip-text">
-        <span class="clip-name">${ex.title}</span>
-        <span class="clip-channel">${TYPE_LABELS[ex.type] ?? ex.type}</span>
+      <div class="ps-item-inner">
+        <span class="ps-item-name">${ps.title}</span>
+        <span class="ps-item-count">${total} ข้อ</span>
       </div>
-      <span class="ex-status">⬜</span>
+      <div class="ps-item-progress">
+        <div class="ps-progress-bar" style="width:${pct}%"></div>
+      </div>
     `;
-
-    li.addEventListener('click', () => renderExercise(i));
+    li.addEventListener('click', () => loadPsQuestions(ps.id));
     list.appendChild(li);
   });
 }
 
-function updateSidebarItem(index) {
-  const ex = exercises[index];
-  const li = document.querySelector(`.ex-list-item[data-index="${index}"]`);
-  if (!li) return;
-  const st = li.querySelector('.ex-status');
+function updateSidebarProgress(psId) {
+  const ps  = problemSets.find(p => p.id === psId);
+  if (!ps) return;
+  const done = allExercises.filter(ex => ex.problem_set_id === psId && checked.has(ex.id)).length;
+  const pct  = ps.exercise_count > 0 ? Math.round((done / ps.exercise_count) * 100) : 0;
+  const bar  = document.querySelector(`.ps-item[data-ps-id="${psId}"] .ps-progress-bar`);
+  if (bar) bar.style.width = `${pct}%`;
+}
 
-  if (!checked.has(ex.id))      st.textContent = '⬜';
-  else if (results[ex.id] === null) st.textContent = '📝';
-  else if (results[ex.id])      st.textContent = '✅';
-  else                           st.textContent = '❌';
+// ── Image loader ─────────────────────────────────────────
+const _imgCache = {};
+async function loadExerciseImage(imageKey) {
+  if (_imgCache[imageKey]) return _imgCache[imageKey];
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/assets/${imageKey}`, {
+      headers: { Authorization: `Bearer ${token()}` },
+    });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    _imgCache[imageKey] = url;
+    return url;
+  } catch { return null; }
+}
+
+// ── PDF export ────────────────────────────────────────────
+function triggerPrint(ps) {
+  document.getElementById('phCourse').textContent = currentCourse?.title ?? '';
+  document.getElementById('phPs').textContent     = ps?.title ?? '';
+  document.getElementById('phAuthor').textContent = ps?.author ?? '';
+
+  const name = currentUser
+    ? `${currentUser.firstname ?? ''} ${currentUser.lastname ?? ''}`.trim()
+    : '';
+  document.getElementById('pfExportBy').textContent = name ? `Exported by ${name}` : 'Exported from Skintania';
+  document.getElementById('pfDate').textContent = new Date().toLocaleDateString('th-TH', {
+    year: 'numeric', month: 'long', day: 'numeric',
+  });
+
+  window.print();
+}
+
+// ── Load PS questions ─────────────────────────────────────
+function loadPsQuestions(psId) {
+  activePsId = psId;
+  const ps          = problemSets.find(p => p.id === psId);
+  const psExercises = allExercises.filter(ex => ex.problem_set_id === psId);
+
+  // Update sidebar active state
+  document.querySelectorAll('.ps-item').forEach(li => li.classList.remove('active'));
+  const activeItem = document.querySelector(`.ps-item[data-ps-id="${psId}"]`);
+  if (activeItem) activeItem.classList.add('active');
+
+  // Show panel header
+  const panelHeader = document.getElementById('qsPanelHeader');
+  panelHeader.hidden = false;
+  document.getElementById('qsPanelTitle').textContent = ps?.title ?? '';
+  document.getElementById('qsPanelSub').textContent   = `${psExercises.length} ข้อ`;
+  document.getElementById('qsEmpty').hidden = true;
+  document.getElementById('printBtn').onclick = () => triggerPrint(ps);
+
+  // Build stacked question cards
+  const container = document.getElementById('questionsContainer');
+  container.innerHTML = '';
+
+  if (!psExercises.length) {
+    container.innerHTML = '<p style="text-align:center;color:var(--muted);padding:40px 0">ยังไม่มีโจทย์ในชุดนี้</p>';
+  } else {
+    psExercises.forEach((ex, i) => container.appendChild(buildQuestionCard(ex, i + 1)));
+  }
+
+  updateScoreBadge();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 // ── Init ──────────────────────────────────────────────────
 async function init() {
   if (!courseId) { window.location.href = '/Course/'; return; }
 
-  // Load course info + check admin in parallel
-  const [courseRes, meRes] = await Promise.all([
+  const [courseRes, meRes, psRes, exRes] = await Promise.all([
     apiFetch(`/courses/${courseId}`),
     apiFetch('/auth/me'),
+    apiFetch(`/courses/${courseId}/problem-sets`),
+    apiFetch(`/courses/${courseId}/exercises`),
   ]);
-  if (!courseRes.success) {
-    document.getElementById('exerciseQuestion').textContent = 'ไม่พบคอร์ส';
-    return;
-  }
+
+  if (!courseRes.success) return;
 
   const course = courseRes.course;
+  currentCourse = course;
+  if (meRes.success) currentUser = meRes.user ?? null;
   document.title = `${course.title} — Skintania`;
 
-  const header = document.querySelector('site-header');
-  if (header) {
-    header.setAttribute('page-title', course.title);
-    header.setAttribute('page-desc', course.description || 'แบบฝึกหัด');
+  const siteHeader = document.querySelector('site-header');
+  if (siteHeader) {
+    siteHeader.setAttribute('page-title', course.title);
+    siteHeader.setAttribute('page-desc', course.description || 'แบบฝึกหัด');
   }
 
-  document.getElementById('playlistTitle').textContent = course.title;
-  document.getElementById('courseTitle').textContent   = course.title;
-  document.getElementById('courseNameSub').textContent = course.title;
-  document.getElementById('courseDesc').textContent    = course.description || '';
-  document.getElementById('courseMeta').textContent    = 'แบบฝึกหัด';
+  document.getElementById('sidebarCourseName').textContent = course.title;
 
-  document.getElementById('playlistHeader').style.background =
-    `linear-gradient(160deg, ${GRADIENTS[course.id % GRADIENTS.length][0]}cc 0%, #071029 100%)`;
+  problemSets  = psRes.problemSets || [];
+  allExercises = exRes.exercises   || [];
+
+  document.getElementById('sidebarCourseSub').textContent =
+    `${problemSets.length} ชุด · ${allExercises.length} ข้อ`;
 
   if (meRes.success && meRes.user?.role === 'admin') {
     const manageLink = document.getElementById('manageExerciseLink');
@@ -360,28 +601,12 @@ async function init() {
     manageLink.hidden = false;
   }
 
-  // Load exercises
-  const exRes = await apiFetch(`/courses/${courseId}/exercises`);
-  if (!exRes.success || !exRes.exercises?.length) {
-    document.getElementById('exerciseList').innerHTML = '';
-    document.getElementById('exerciseCard').innerHTML =
-      '<p style="text-align:center;color:var(--muted);padding:40px">ยังไม่มีแบบฝึกหัดในคอร์สนี้</p>';
-    document.getElementById('exerciseNav').hidden = true;
-    document.getElementById('playlistSub').textContent = '0 ข้อ';
-    return;
+  buildPsSidebar();
+
+  // Auto-select first problem set
+  if (problemSets.length > 0) {
+    loadPsQuestions(problemSets[0].id);
   }
-
-  exercises = exRes.exercises;
-  document.getElementById('playlistSub').textContent = `${exercises.length} ข้อ`;
-
-  buildSidebar();
-
-  document.getElementById('checkBtn').addEventListener('click', checkAnswer);
-  document.getElementById('prevBtn').addEventListener('click', () => navigate(-1));
-  document.getElementById('nextBtn').addEventListener('click', () => navigate(1));
-  document.getElementById('retryBtn').addEventListener('click', retry);
-
-  renderExercise(0);
 }
 
 document.addEventListener('DOMContentLoaded', init);

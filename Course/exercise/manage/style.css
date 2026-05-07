@@ -331,7 +331,8 @@
   align-items: center;
 }
 
-.choice-latex-preview {
+.choice-latex-preview,
+.choice-preview {
   min-height: 20px;
   overflow-x: auto;
   padding: 2px 0;
@@ -429,6 +430,182 @@
   border-radius: 8px;
   padding: 9px 13px;
 }
+
+/* ── Image upload area ── */
+.img-upload-area {
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.015);
+  margin-top: 6px;
+}
+
+.img-preview {
+  max-width: 100%;
+  max-height: 220px;
+  border-radius: 8px;
+  object-fit: contain;
+}
+
+.img-upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.img-upload-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.img-remove-btn {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+.img-remove-btn:hover { background: rgba(239, 68, 68, 0.15); }
+
+/* ── Sidebar divider ── */
+.manage-sidebar-divider {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  margin: 0;
+}
+
+/* ── Problem set list ── */
+.manage-ps-list {
+  list-style: none;
+  margin: 0;
+  padding: 4px 0;
+  max-height: 180px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+.manage-ps-list::-webkit-scrollbar { width: 4px; }
+.manage-ps-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.manage-ps-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  transition: background 0.15s;
+}
+.manage-ps-item:hover { background: rgba(255, 255, 255, 0.04); }
+.manage-ps-item:hover .manage-item-actions { opacity: 1; }
+
+.manage-ps-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.manage-ps-title {
+  font-size: 0.84rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-ps-author {
+  font-size: 0.72rem;
+  color: var(--muted);
+  opacity: 0.65;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.manage-ps-count {
+  font-size: 0.72rem;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.ps-empty-hint {
+  padding: 12px 14px;
+  font-size: 0.80rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── PS group headers inside exercise list ── */
+.manage-ps-group-header {
+  padding: 10px 14px 4px;
+  font-size: 0.69rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 4px;
+  list-style: none;
+  pointer-events: none;
+}
+.manage-ps-group-header:first-child {
+  border-top: none;
+  margin-top: 0;
+}
+
+/* ── Problem Set Modal ── */
+.ps-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.ps-modal-overlay[hidden] { display: none; }
+
+.ps-modal-box {
+  background: #0f1929;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 28px 32px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+.ps-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.ps-modal-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.ps-modal-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  line-height: 1;
+  transition: color 0.15s, background 0.15s;
+}
+.ps-modal-close:hover { color: var(--text); background: rgba(255, 255, 255, 0.07); }
 
 /* ── Responsive ── */
 @media (max-width: 900px) {

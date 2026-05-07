@@ -68,6 +68,12 @@
   - [DELETE /courses/:courseId/files/:fileId](#delete-coursescourseidfilesfileid)
 - [Assets](#assets)
 - [SKDrive](#skdrive)
+- [Problem Sets](#problem-sets)
+  - [GET /courses/:courseId/problem-sets](#get-coursescourseidproblem-sets)
+  - [POST /courses/:courseId/problem-sets](#post-coursescourseidproblem-sets)
+  - [GET /courses/:courseId/problem-sets/:psId](#get-coursescourseidproblem-setspsid)
+  - [PATCH /courses/:courseId/problem-sets/:psId](#patch-coursescourseidproblem-setspsid)
+  - [DELETE /courses/:courseId/problem-sets/:psId](#delete-coursescourseidproblem-setspsid)
 - [Exercises](#exercises)
   - [GET /courses/:courseId/exercises](#get-coursescourseidexercises)
   - [POST /courses/:courseId/exercises](#post-coursescourseidexercises)
@@ -1142,16 +1148,100 @@ Content-Disposition: attachment; filename="Engineering Materials.zip"
 
 ---
 
+## Problem Sets
+
+Available only on courses with `type: "exercise"`. Problem sets group exercises under a course.
+
+- **Read** — any authenticated user
+- **Write** — admin only
+
+### GET /courses/:courseId/problem-sets
+
+List all problem sets for a course, each with an `exercise_count`.
+
+**Auth required**
+
+**Response 200**
+```json
+{
+  "success": true,
+  "problemSets": [
+    { "id": 1, "course_id": 1, "title": "Week 1", "description": "Kinematics basics", "author": "Skintania", "sort_order": 0, "exercise_count": 5, "created_at": "...", "updated_at": "..." }
+  ]
+}
+```
+
+---
+
+### POST /courses/:courseId/problem-sets
+
+Create a problem set. **Admin only.**
+
+**Body**
+```json
+{ "title": "Week 1", "description": "Optional description", "author": "Dr. Smith", "sort_order": 0 }
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | yes | Problem set title |
+| `description` | string | no | Optional description |
+| `author` | string | no | Author name (defaults to `"Skintania"` if blank or omitted) |
+| `sort_order` | number | no | Display order (default 0) |
+
+**Response 201**
+```json
+{ "success": true, "message": "Problem set created", "id": 1 }
+```
+
+---
+
+### GET /courses/:courseId/problem-sets/:psId
+
+Get a single problem set with all its exercises (without answers).
+
+**Response 200**
+```json
+{
+  "success": true,
+  "problemSet": {
+    "id": 1, "course_id": 1, "title": "Week 1", "description": "...", "author": "Skintania", "sort_order": 0,
+    "exercises": [
+      { "id": 1, "problem_set_id": 1, "title": "Q1", "sort_order": 0, "type": "multiple_choice", "question": "...", "choices": ["..."], "solution": null, "created_at": "...", "updated_at": "..." }
+    ]
+  }
+}
+```
+
+---
+
+### PATCH /courses/:courseId/problem-sets/:psId
+
+Update a problem set. **Admin only.** All fields optional.
+
+**Body**
+```json
+{ "title": "Week 1 Updated", "description": "New description", "sort_order": 1 }
+```
+
+---
+
+### DELETE /courses/:courseId/problem-sets/:psId
+
+Delete a problem set and all its exercises. **Admin only.**
+
+---
+
 ## Exercises
 
-Available only on courses with `type: "exercise"`. The correct `answer` is **never returned** in GET responses — only revealed after a submit call.
+Available only on courses with `type: "exercise"`. Exercises must belong to a problem set. The correct `answer` is **never returned** in GET responses — only revealed after a submit call.
 
 - **Read / Submit** — any authenticated user
 - **Write** — admin only
 
 ### GET /courses/:courseId/exercises
 
-List all exercises for a course, ordered by `sort_order`.
+List all exercises across all problem sets for a course, ordered by problem set `sort_order` then exercise `sort_order`.
 
 **Auth required**
 
@@ -1161,23 +1251,19 @@ List all exercises for a course, ordered by `sort_order`.
   "success": true,
   "exercises": [
     {
-      "id": 1, "course_id": 1, "title": "Kinematics Q1", "sort_order": 0,
+      "id": 1, "problem_set_id": 1, "title": "Kinematics Q1", "sort_order": 0,
       "type": "multiple_choice",
-      "question": "A 5kg object has F = 30N applied. Find acceleration.",
-      "question_math": "F = ma",
-      "choices": [
-        { "text": "6 m/s²",   "latex": "a = 6 \\ ms^{-2}" },
-        { "text": "3 m/s²",   "latex": "a = 3 \\ ms^{-2}" },
-        { "text": "150 m/s²", "latex": "a = 150 \\ ms^{-2}" }
-      ],
-      "solution": null, "solution_math": null,
+      "question": "A 5kg object accelerates under $F = 30\\text{ N}$, $m = 5\\text{ kg}$. Find $a$.",
+      "choices": ["$a = 6\\ \\text{ms}^{-2}$", "$a = 3\\ \\text{ms}^{-2}$", "$a = 150\\ \\text{ms}^{-2}$"],
+      "solution": null,
+      "image_key": null,
       "created_at": "...", "updated_at": "..."
     }
   ]
 }
 ```
 
-> `answer` is omitted from all list and detail responses.
+> `answer` is omitted from all list and detail responses. `question`, `choices`, and `solution` all support LaTeX.
 
 ---
 
@@ -1188,32 +1274,26 @@ Create an exercise. **Admin only.**
 **Body**
 ```json
 {
+  "problem_set_id": 1,
   "title": "Kinematics Q1",
   "type": "multiple_choice",
-  "question": "A 5kg object has F = 30N applied. Find acceleration.",
-  "question_math": "F = ma",
-  "choices": [
-    { "text": "6 m/s²",   "latex": "a = 6 \\ ms^{-2}" },
-    { "text": "3 m/s²",   "latex": "a = 3 \\ ms^{-2}" },
-    { "text": "150 m/s²", "latex": "a = 150 \\ ms^{-2}" }
-  ],
+  "question": "A 5kg object accelerates under $F = 30\\text{ N}$. Find $a$.",
+  "choices": ["$a = 6\\ \\text{ms}^{-2}$", "$a = 3\\ \\text{ms}^{-2}$", "$a = 150\\ \\text{ms}^{-2}$"],
   "answer": "0",
-  "solution": "Rearrange F = ma to solve for a.",
-  "solution_math": "a = \\frac{F}{m} = \\frac{30}{5} = 6 \\ ms^{-2}",
+  "solution": "$a = \\frac{F}{m} = \\frac{30}{5} = 6\\ \\text{ms}^{-2}$",
   "sort_order": 0
 }
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `problem_set_id` | number | yes | ID of the problem set this exercise belongs to |
 | `title` | string | yes | Exercise title |
 | `type` | string | yes | `multiple_choice`, `fill_blank`, or `free_response` |
-| `question` | string | yes | Question text |
-| `question_math` | string | no | LaTeX for math in the question |
-| `choices` | array | if `multiple_choice` | Array of `{ text, latex }` objects |
+| `question` | string | yes | Question text — supports LaTeX |
+| `choices` | array | if `multiple_choice` | Array of strings (supports LaTeX) — min 2 |
 | `answer` | string | if `multiple_choice` or `fill_blank` | Correct choice index (`"0"`) or expected text |
-| `solution` | string | no | Explanation text shown after submission |
-| `solution_math` | string | no | LaTeX for the solution working |
+| `solution` | string | no | Solution shown after submission — supports LaTeX |
 | `sort_order` | number | no | Display order (default 0) |
 
 **Response 201**
@@ -1241,6 +1321,32 @@ Delete an exercise. **Admin only.**
 
 ---
 
+### PUT /courses/:courseId/exercises/:exerciseId/image
+
+Upload or replace the image for an exercise. **Admin only.**
+
+**Headers**
+```
+Content-Type: image/jpeg | image/png | image/webp
+Content-Length: <bytes>
+```
+Max size: **5MB**
+
+**Response 201**
+```json
+{ "success": true, "message": "Image uploaded", "image_key": "exercise-images/1.jpg" }
+```
+
+> The `image_key` is stored on the exercise. Serve it via `GET /assets/{image_key}`.
+
+---
+
+### DELETE /courses/:courseId/exercises/:exerciseId/image
+
+Remove the image from an exercise. **Admin only.**
+
+---
+
 ### POST /courses/:courseId/exercises/:exerciseId/submit
 
 Submit an answer. For `free_response`, no answer is needed — the solution is always revealed.
@@ -1255,8 +1361,7 @@ Submit an answer. For `free_response`, no answer is needed — the solution is a
 {
   "success": true,
   "correct": true,
-  "solution": "Rearrange F = ma to solve for a.",
-  "solution_math": "a = \\frac{F}{m} = \\frac{30}{5} = 6 \\ ms^{-2}"
+  "solution": "$a = \\frac{F}{m} = \\frac{30}{5} = 6\\ \\text{ms}^{-2}$"
 }
 ```
 
@@ -1265,8 +1370,7 @@ Submit an answer. For `free_response`, no answer is needed — the solution is a
 {
   "success": true,
   "result": "revealed",
-  "solution": "...",
-  "solution_math": "..."
+  "solution": "..."
 }
 ```
 

@@ -14,7 +14,6 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/Template/style.css">
-  <link rel="stylesheet" href="/Course/view/style.css">
   <link rel="stylesheet" href="/Course/exercise/style.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <link rel="icon" href="/Assest/sk-cu.png">
@@ -25,91 +24,76 @@
 </head>
 
 <body>
+
+  <!-- ══ Print-only page header (hidden on screen) ══ -->
+  <header class="print-page-header" id="printPageHeader">
+    <div class="ph-top">
+      <div class="ph-left">
+        <span class="ph-course" id="phCourse"></span>
+        <span class="ph-ps"     id="phPs"></span>
+        <!-- ph-author: populate from problem-set author field when API supports it -->
+        <span class="ph-author" id="phAuthor"></span>
+      </div>
+      <div class="ph-right">
+        <span class="ph-brand">Exported from Skintania</span>
+        <img src="/Assest/sk-cu.png" alt="SK" class="ph-logo">
+      </div>
+    </div>
+    <div class="ph-divider"></div>
+  </header>
+
+  <!-- ══ Print-only page footer (hidden on screen) ══ -->
+  <footer class="print-page-footer" id="printPageFooter">
+    <div class="pf-divider"></div>
+    <div class="pf-row">
+      <span id="pfExportBy"></span>
+      <span id="pfDate"></span>
+    </div>
+  </footer>
+
   <comment-widget></comment-widget>
 
-  <main class="wrap view-wrap">
+  <main class="wrap">
     <site-header page-title="Exercise" page-desc="กำลังโหลด..."></site-header>
 
-    <div class="view-layout">
+    <div class="exercise-layout">
 
-      <!-- ── Left: exercise content ── -->
-      <div class="player-col">
+      <!-- ── Left: problem set list ── -->
+      <aside class="ps-sidebar">
+        <div class="ps-sidebar-top">
+          <p class="ps-course-name" id="sidebarCourseName">—</p>
+          <p class="ps-course-sub"  id="sidebarCourseSub"></p>
+          <a id="manageExerciseLink" class="manage-exercise-link" href="#" hidden>⚙ จัดการ</a>
+        </div>
+        <ul class="ps-list" id="psList">
+          <li class="ps-skeleton"></li>
+          <li class="ps-skeleton"></li>
+          <li class="ps-skeleton"></li>
+        </ul>
+      </aside>
 
-        <!-- Exercise card -->
-        <div class="exercise-card" id="exerciseCard">
-          <div class="exercise-card-header">
-            <span class="exercise-num-badge" id="exerciseNum">ข้อ 1 / 1</span>
-            <span class="exercise-type-badge" id="exerciseTypeBadge">ปรนัย</span>
+      <!-- ── Right: stacked questions ── -->
+      <div class="questions-panel">
+
+        <div class="qs-panel-header" id="qsPanelHeader" hidden>
+          <div>
+            <h2 class="qs-panel-title" id="qsPanelTitle"></h2>
+            <p class="qs-panel-sub"   id="qsPanelSub"></p>
           </div>
-          <p class="exercise-question" id="exerciseQuestion">กำลังโหลด...</p>
-          <div class="question-math-wrap" id="questionMathWrap"></div>
-          <div class="exercise-body" id="exerciseBody"></div>
-          <div class="exercise-feedback" id="exerciseFeedback" hidden>
-            <div class="feedback-result" id="feedbackResult"></div>
-            <p class="feedback-explanation" id="feedbackExplanation"></p>
-          </div>
-          <div class="exercise-actions">
-            <button class="btn check-btn" id="checkBtn">ตรวจคำตอบ</button>
+          <div class="qs-header-right">
+            <div class="qs-score-badge" id="qsScoreBadge"></div>
+            <button class="btn-sm print-trigger-btn" id="printBtn">⬇ Export PDF</button>
           </div>
         </div>
 
-        <!-- Navigation -->
-        <div class="exercise-nav" id="exerciseNav">
-          <button class="exercise-nav-btn" id="prevBtn" disabled>← ก่อนหน้า</button>
-          <span class="exercise-score-display" id="scoreDisplay"></span>
-          <button class="exercise-nav-btn" id="nextBtn">ถัดไป →</button>
-        </div>
+        <div id="questionsContainer" class="questions-container"></div>
 
-        <!-- Summary (shown when finished) -->
-        <div class="exercise-summary" id="exerciseSummary" hidden>
-          <div class="summary-icon" id="summaryIcon">🎉</div>
-          <h2 class="summary-title">ผลการทำแบบฝึกหัด</h2>
-          <div class="summary-score-row" id="summaryScore"></div>
-          <p class="summary-desc" id="summaryDesc"></p>
-          <button class="btn" id="retryBtn">ทำใหม่อีกครั้ง</button>
-        </div>
-
-        <!-- Course info -->
-        <div class="video-info">
-          <h1 class="video-title" id="courseTitle">—</h1>
-          <div class="video-meta-row">
-            <div class="channel-block">
-              <div class="channel-avatar">SK</div>
-              <div class="channel-text">
-                <span class="channel-name">Skintania</span>
-                <span class="channel-sub" id="courseNameSub"></span>
-              </div>
-            </div>
-            <p class="video-date" id="courseMeta"></p>
-          </div>
-          <p class="video-desc" id="courseDesc"></p>
-        </div>
-
-      </div><!-- /player-col -->
-
-      <!-- ── Right: exercise list + other courses ── -->
-      <div class="sidebar-col">
-
-        <aside class="playlist-col">
-          <div class="playlist-header" id="playlistHeader">
-            <div class="playlist-header-inner">
-              <p class="playlist-label">รายการข้อ</p>
-              <h2 class="playlist-title" id="playlistTitle">—</h2>
-              <p class="playlist-sub" id="playlistSub"></p>
-              <a id="manageExerciseLink" class="manage-exercise-link" href="#" hidden>⚙ จัดการ</a>
-            </div>
-          </div>
-          <ul id="exerciseList" class="clip-list">
-            <li class="clip-skeleton"></li>
-            <li class="clip-skeleton"></li>
-            <li class="clip-skeleton"></li>
-            <li class="clip-skeleton"></li>
-          </ul>
-        </aside>
-
-        <div class="other-courses-col" id="otherCoursesCol" hidden>
-          <p class="other-courses-label">คอร์สอื่นๆ</p>
-          <div id="otherCoursesList" class="other-courses-list"></div>
+        <div class="qs-empty" id="qsEmpty">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1" opacity="0.2">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <p>เลือกชุดโจทย์จากรายการด้านซ้าย</p>
         </div>
 
       </div>
