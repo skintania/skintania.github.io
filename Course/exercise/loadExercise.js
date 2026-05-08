@@ -549,6 +549,90 @@ function triggerPrint(ps) {
   window.print();
 }
 
+// ── File preview modal ───────────────────────────────────────
+function closePreview() {
+  document.getElementById('filePreviewModal').style.display = 'none';
+  document.getElementById('previewModalBody').innerHTML = '';
+}
+
+async function previewFile(apiPath, filename) {
+  const modal       = document.getElementById('filePreviewModal');
+  const body        = document.getElementById('previewModalBody');
+  const nameEl      = document.getElementById('previewFileName');
+  const downloadBtn = document.getElementById('previewDownloadBtn');
+
+  modal.style.display = 'flex';
+  nameEl.textContent  = filename;
+  body.innerHTML = '<div class="preview-loading"><p>กำลังโหลด...</p></div>';
+  downloadBtn.onclick = null;
+
+  try {
+    const res = await fetch(`${CONFIG.API_URL}${apiPath}`, {
+      headers: { 'Authorization': `Bearer ${token()}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    downloadBtn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = blobUrl; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    };
+
+    body.innerHTML = '';
+    const ext = filename.split('.').pop().toLowerCase();
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+      const img = document.createElement('img');
+      img.src = blobUrl; img.className = 'preview-image';
+      body.appendChild(img);
+    } else if (ext === 'pdf') {
+      const iframe = document.createElement('iframe');
+      iframe.src = blobUrl + '#toolbar=0'; iframe.className = 'preview-iframe';
+      body.appendChild(iframe);
+    } else {
+      body.innerHTML = `<div class="preview-unsupported">
+        <div style="font-size:3rem;margin-bottom:12px;">📄</div>
+        <div>${filename}</div>
+        <div style="margin-top:8px;font-size:0.85rem;opacity:0.6;">ไม่รองรับการดูตัวอย่าง — กดดาวน์โหลดเพื่อเปิด</div>
+      </div>`;
+    }
+  } catch {
+    body.innerHTML = `<div class="preview-unsupported">
+      <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+      ไม่สามารถโหลดไฟล์ได้
+    </div>`;
+  }
+}
+
+// ── File download (Authorization header → blob → link) ───────
+async function downloadFile(apiPath, filename, btn) {
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(`${CONFIG.API_URL}${apiPath}`, {
+      headers: { 'Authorization': `Bearer ${token()}` },
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || 'ไม่สามารถดาวน์โหลดได้');
+      return;
+    }
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href = blobUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    alert('ไม่สามารถดาวน์โหลดได้');
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+
 // ── Syllabus ─────────────────────────────────────────────
 async function initSyllabus(course, isAdmin) {
   const section = document.getElementById('syllabusSection');
@@ -556,16 +640,27 @@ async function initSyllabus(course, isAdmin) {
   section.innerHTML = '';
 
   if (course.syllabus_key) {
-    const url = `${CONFIG.API_URL}/courses/${courseId}/syllabus?token=${encodeURIComponent(token())}`;
     section.innerHTML = `
       <div class="syllabus-row">
         <span>📋 ซิลลาบัส</span>
         <div class="syllabus-row-actions">
-          <a class="syllabus-dl-btn" href="${url}" target="_blank">ดาวน์โหลด</a>
           ${isAdmin ? '<button class="syllabus-del-btn">ลบ</button>' : ''}
         </div>
       </div>
     `;
+    const dlBtn = document.createElement('button');
+    dlBtn.className = 'syllabus-dl-btn';
+    dlBtn.textContent = 'ดาวน์โหลด';
+    const sylSafePath = course.syllabus_key.split('/').map(encodeURIComponent).join('/');
+    const sylFilename  = course.syllabus_key.split('/').pop() || 'syllabus';
+    dlBtn.addEventListener('click', () => downloadFile(`/skdrive/${sylSafePath}`, sylFilename, dlBtn));
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'syllabus-prev-btn';
+    prevBtn.textContent = 'ดูตัวอย่าง';
+    prevBtn.addEventListener('click', () => previewFile(`/skdrive/${sylSafePath}`, sylFilename));
+    const actions = section.querySelector('.syllabus-row-actions');
+    actions.prepend(dlBtn);
+    actions.prepend(prevBtn);
     section.hidden = false;
 
     if (isAdmin) {
@@ -646,6 +741,10 @@ function loadPsQuestions(psId) {
 // ── Init ──────────────────────────────────────────────────
 async function init() {
   if (!courseId) { window.location.href = '/Course/'; return; }
+
+  document.getElementById('previewCloseBtn').addEventListener('click', closePreview);
+  document.getElementById('previewModalBackdrop').addEventListener('click', closePreview);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
 
   const [courseRes, meRes, psRes, exRes] = await Promise.all([
     apiFetch(`/courses/${courseId}`),

@@ -276,7 +276,10 @@ function loadClipThumbnail(key, thumbEl) {
   vid.setAttribute('playsinline', '');
   vid.setAttribute('disablepictureinpicture', '');
 
+  let clipDuration = NaN;
+
   vid.addEventListener('loadedmetadata', () => {
+    clipDuration = vid.duration;
     vid.currentTime = Math.min(5, vid.duration * 0.05 || 0);
   }, { once: true });
 
@@ -285,6 +288,15 @@ function loadClipThumbnail(key, thumbEl) {
     thumbEl.innerHTML = '';
     vid.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:6px;display:block;';
     thumbEl.appendChild(vid);
+
+    if (isFinite(clipDuration) && clipDuration > 0) {
+      const m = Math.floor(clipDuration / 60);
+      const s = String(Math.floor(clipDuration % 60)).padStart(2, '0');
+      const badge = document.createElement('span');
+      badge.className = 'clip-duration';
+      badge.textContent = `${m}:${s}`;
+      thumbEl.appendChild(badge);
+    }
   }, { once: true });
 
   vid.addEventListener('error', () => {}, { once: true });
@@ -588,26 +600,40 @@ async function loadSlides(clipKey) {
 
     for (const slide of data.slides) {
       if (slide.type === 'file') {
-        const url  = `${CONFIG.API_URL}/skdrive/${encodeURIComponent(slide.skdrive_path)}?token=${encodeURIComponent(token())}`;
-        const name = slide.skdrive_path.split('/').pop();
+        const name    = slide.skdrive_path.split('/').pop();
+        const safePath = slide.skdrive_path.split('/').map(encodeURIComponent).join('/');
         const item = document.createElement('div');
         item.className = 'slide-item';
         item.innerHTML = `
           <span class="slide-icon">${fileIcon(slide.skdrive_path)}</span>
           <span class="slide-label">${slide.label}</span>
-          <a class="btn file-dl-btn" href="${url}" download="${name}" target="_blank">ดาวน์โหลด</a>
         `;
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'file-prev-btn';
+        prevBtn.textContent = 'ดูตัวอย่าง';
+        prevBtn.addEventListener('click', () => previewFile(`/skdrive/${safePath}`, name));
+        item.appendChild(prevBtn);
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'btn file-dl-btn';
+        dlBtn.textContent = 'ดาวน์โหลด';
+        dlBtn.addEventListener('click', () => downloadFile(`/skdrive/${safePath}`, name, dlBtn));
+        item.appendChild(dlBtn);
         list.appendChild(item);
       } else if (slide.type === 'folder') {
         const folderId = `folder-${slide.id}`;
         const folderEl = document.createElement('div');
         folderEl.innerHTML = `
-          <p class="slide-folder-label">📁 ${slide.label}</p>
+          <div class="slide-folder-header">
+            <p class="slide-folder-label">📁 ${slide.label}</p>
+            <button class="folder-zip-btn">⬇ ZIP</button>
+          </div>
           <div class="slide-folder-files" id="${folderId}">
             <p class="slide-loading">กำลังโหลด...</p>
           </div>
         `;
         list.appendChild(folderEl);
+        const zipBtn = folderEl.querySelector('.folder-zip-btn');
+        zipBtn.addEventListener('click', () => downloadFolderAsZip(slide.skdrive_path, zipBtn));
 
         const skData  = await apiFetch(`/skdrive?prefix=${encodeURIComponent(slide.skdrive_path)}`);
         const filesEl = document.getElementById(folderId);
@@ -615,15 +641,24 @@ async function loadSlides(clipKey) {
 
         if (skData.files?.length) {
           skData.files.forEach(f => {
-            const url  = `${CONFIG.API_URL}/skdrive/${encodeURIComponent(f.key)}?token=${encodeURIComponent(token())}`;
+            const safePath = f.key.split('/').map(encodeURIComponent).join('/');
             const item = document.createElement('div');
             item.className = 'slide-item nested';
             item.innerHTML = `
               <span class="slide-icon">${fileIcon(f.contentType || f.key)}</span>
               <span class="slide-label">${f.name}</span>
               <span class="file-size">${formatSize(f.size || 0)}</span>
-              <a class="btn file-dl-btn" href="${url}" download="${f.name}" target="_blank">ดาวน์โหลด</a>
             `;
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'file-prev-btn';
+            prevBtn.textContent = 'ดูตัวอย่าง';
+            prevBtn.addEventListener('click', () => previewFile(`/skdrive/${safePath}`, f.name));
+            item.appendChild(prevBtn);
+            const dlBtn = document.createElement('button');
+            dlBtn.className = 'btn file-dl-btn';
+            dlBtn.textContent = 'ดาวน์โหลด';
+            dlBtn.addEventListener('click', () => downloadFile(`/skdrive/${safePath}`, f.name, dlBtn));
+            item.appendChild(dlBtn);
             filesEl.appendChild(item);
           });
         } else {
@@ -637,6 +672,130 @@ async function loadSlides(clipKey) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  FILE DOWNLOAD  (Authorization header → blob → link)
+// ═══════════════════════════════════════════════════════
+async function downloadFile(apiPath, filename, btn) {
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = '...';
+  try {
+    const res = await fetch(`${CONFIG.API_URL}${apiPath}`, {
+      headers: { 'Authorization': `Bearer ${token()}` },
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || 'ไม่สามารถดาวน์โหลดได้');
+      return;
+    }
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href = blobUrl; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    alert('ไม่สามารถดาวน์โหลดได้');
+  } finally {
+    btn.disabled = false; btn.textContent = orig;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  FILE PREVIEW MODAL
+// ═══════════════════════════════════════════════════════
+function closePreview() {
+  document.getElementById('filePreviewModal').style.display = 'none';
+  document.getElementById('previewModalBody').innerHTML = '';
+}
+
+async function previewFile(apiPath, filename) {
+  const modal       = document.getElementById('filePreviewModal');
+  const body        = document.getElementById('previewModalBody');
+  const nameEl      = document.getElementById('previewFileName');
+  const downloadBtn = document.getElementById('previewDownloadBtn');
+
+  modal.style.display = 'flex';
+  nameEl.textContent  = filename;
+  body.innerHTML = '<div class="preview-loading"><p>กำลังโหลด...</p></div>';
+  downloadBtn.onclick = null;
+
+  try {
+    const res = await fetch(`${CONFIG.API_URL}${apiPath}`, {
+      headers: { 'Authorization': `Bearer ${token()}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    downloadBtn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = blobUrl; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    };
+
+    body.innerHTML = '';
+    const ext = filename.split('.').pop().toLowerCase();
+
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+      const img = document.createElement('img');
+      img.src = blobUrl; img.className = 'preview-image';
+      body.appendChild(img);
+    } else if (ext === 'pdf') {
+      const iframe = document.createElement('iframe');
+      iframe.src = blobUrl + '#toolbar=0'; iframe.className = 'preview-iframe';
+      body.appendChild(iframe);
+    } else {
+      body.innerHTML = `<div class="preview-unsupported">
+        <div style="font-size:3rem;margin-bottom:12px;">📄</div>
+        <div>${filename}</div>
+        <div style="margin-top:8px;font-size:0.85rem;opacity:0.6;">ไม่รองรับการดูตัวอย่าง — กดดาวน์โหลดเพื่อเปิด</div>
+      </div>`;
+    }
+  } catch {
+    body.innerHTML = `<div class="preview-unsupported">
+      <div style="font-size:2rem;margin-bottom:8px;">⚠️</div>
+      ไม่สามารถโหลดไฟล์ได้
+    </div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+//  SKDRIVE ZIP DOWNLOAD
+// ═══════════════════════════════════════════════════════
+async function downloadFolderAsZip(prefix, btn) {
+  const orig = btn.textContent;
+  btn.disabled    = true;
+  btn.textContent = '...';
+  try {
+    const res = await fetch(`${CONFIG.API_URL}/skdrive/download?token=${encodeURIComponent(token())}`, {
+      method:  'POST',
+      headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ prefix }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      alert(d.error || 'ไม่สามารถดาวน์โหลดได้');
+      return;
+    }
+    const blob     = await res.blob();
+    const url      = URL.createObjectURL(blob);
+    const a        = document.createElement('a');
+    const zipName  = prefix.split('/').filter(Boolean).pop() || 'slides';
+    a.href         = url;
+    a.download     = `${zipName}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch {
+    alert('ไม่สามารถดาวน์โหลดได้');
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = orig;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 //  SKDRIVE FOLDER — lazy-load, collapsible
 // ═══════════════════════════════════════════════════════
 function renderSkDriveFolder(prefix, folderName, container) {
@@ -646,11 +805,14 @@ function renderSkDriveFolder(prefix, folderName, container) {
   const folderEl = document.createElement('div');
   folderEl.className = 'skdrive-folder';
   folderEl.innerHTML = `
-    <button class="skdrive-folder-toggle">
-      <span class="folder-arrow">▶</span>
-      <span class="slide-icon">📁</span>
-      <span class="folder-name">${folderName}</span>
-    </button>
+    <div class="skdrive-folder-header">
+      <button class="skdrive-folder-toggle">
+        <span class="folder-arrow">▶</span>
+        <span class="slide-icon">📁</span>
+        <span class="folder-name">${folderName}</span>
+      </button>
+      <button class="folder-zip-btn">⬇ ZIP</button>
+    </div>
     <div class="skdrive-folder-contents">
       <div class="skdrive-folder-inner"></div>
     </div>
@@ -660,6 +822,9 @@ function renderSkDriveFolder(prefix, folderName, container) {
   const toggleBtn = folderEl.querySelector('.skdrive-folder-toggle');
   const contents  = folderEl.querySelector('.skdrive-folder-contents');
   const inner     = folderEl.querySelector('.skdrive-folder-inner');
+  const zipBtn    = folderEl.querySelector('.folder-zip-btn');
+
+  zipBtn.addEventListener('click', () => downloadFolderAsZip(prefix, zipBtn));
 
   toggleBtn.addEventListener('click', async () => {
     if (!loaded) {
@@ -677,15 +842,24 @@ function renderSkDriveFolder(prefix, folderName, container) {
       if (skData.files?.length) {
         hasContent = true;
         skData.files.forEach(f => {
-          const url  = `${CONFIG.API_URL}/skdrive/${encodeURIComponent(f.key)}?token=${encodeURIComponent(token())}`;
+          const safePath = f.key.split('/').map(encodeURIComponent).join('/');
           const item = document.createElement('div');
           item.className = 'slide-item nested';
           item.innerHTML = `
             <span class="slide-icon">${fileIcon(f.contentType || f.key)}</span>
             <span class="slide-label">${f.name}</span>
             <span class="file-size">${formatSize(f.size || 0)}</span>
-            <a class="btn file-dl-btn" href="${url}" download="${f.name}" target="_blank">ดาวน์โหลด</a>
           `;
+          const prevBtn = document.createElement('button');
+          prevBtn.className = 'file-prev-btn';
+          prevBtn.textContent = 'ดูตัวอย่าง';
+          prevBtn.addEventListener('click', () => previewFile(`/skdrive/${safePath}`, f.name));
+          item.appendChild(prevBtn);
+          const dlBtn = document.createElement('button');
+          dlBtn.className = 'btn file-dl-btn';
+          dlBtn.textContent = 'ดาวน์โหลด';
+          dlBtn.addEventListener('click', () => downloadFile(`/skdrive/${safePath}`, f.name, dlBtn));
+          item.appendChild(dlBtn);
           inner.appendChild(item);
         });
       }
@@ -719,17 +893,28 @@ async function initCourseDocs(course, isAdmin) {
 
   // ── Syllabus ──
   if (course.syllabus_key) {
-    const url = `${CONFIG.API_URL}/courses/${courseId}/syllabus?token=${encodeURIComponent(token())}`;
     const row = document.createElement('div');
     row.className = 'course-doc-row';
     row.innerHTML = `
       <span class="slide-icon">📋</span>
       <span class="slide-label">ซิลลาบัส</span>
       <div class="doc-row-actions">
-        <a class="btn file-dl-btn" href="${url}" target="_blank">ดาวน์โหลด</a>
         ${isAdmin ? '<button class="btn btn-danger-sm" id="syllabusDeleteBtn">ลบ</button>' : ''}
       </div>
     `;
+    const dlBtn = document.createElement('button');
+    dlBtn.className = 'btn file-dl-btn';
+    dlBtn.textContent = 'ดาวน์โหลด';
+    const sylSafePath = course.syllabus_key.split('/').map(encodeURIComponent).join('/');
+    const sylFilename  = course.syllabus_key.split('/').pop() || 'syllabus';
+    dlBtn.addEventListener('click', () => downloadFile(`/skdrive/${sylSafePath}`, sylFilename, dlBtn));
+    const sylPrevBtn = document.createElement('button');
+    sylPrevBtn.className = 'btn file-prev-btn';
+    sylPrevBtn.textContent = 'ดูตัวอย่าง';
+    sylPrevBtn.addEventListener('click', () => previewFile(`/skdrive/${sylSafePath}`, sylFilename));
+    const actions = row.querySelector('.doc-row-actions');
+    actions.prepend(dlBtn);
+    actions.prepend(sylPrevBtn);
     section.appendChild(row);
 
     if (isAdmin) {
@@ -1212,6 +1397,10 @@ async function initYouTubeMode(playlistIds) {
 // ═══════════════════════════════════════════════════════
 async function init() {
   if (!courseId) { window.location.href = '/Course/'; return; }
+
+  document.getElementById('previewCloseBtn').addEventListener('click', closePreview);
+  document.getElementById('previewModalBackdrop').addEventListener('click', closePreview);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
 
   initTabs();
   initCommentForm();

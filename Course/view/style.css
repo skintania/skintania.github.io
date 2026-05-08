@@ -419,7 +419,67 @@
 .file-icon  { font-size: 1.2rem; flex-shrink: 0; }
 .file-name  { flex: 1; font-size: 0.88rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-size  { font-size: 0.8rem; color: var(--muted); flex-shrink: 0; }
-.file-dl-btn { flex-shrink: 0; font-size: 0.8rem; padding: 5px 12px; }
+.file-dl-btn  { flex-shrink: 0; font-size: 0.8rem; padding: 5px 12px; }
+.file-prev-btn {
+  flex-shrink: 0; font-size: 0.8rem; padding: 5px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.file-prev-btn:hover { background: rgba(255,255,255,0.12); }
+
+/* ── File Preview Modal ── */
+.preview-modal {
+  position: fixed; inset: 0; z-index: 1100;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px; box-sizing: border-box;
+}
+.preview-modal-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+}
+.preview-modal-container {
+  position: relative; z-index: 1;
+  background: #0f172a; border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.1);
+  width: 100%; max-width: 960px; height: 90vh;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+.preview-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03); flex-shrink: 0; gap: 12px; min-width: 0;
+}
+.preview-modal-header > span {
+  font-weight: 500; font-size: 0.95rem; color: #e6eef8;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; min-width: 0;
+}
+.preview-modal-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.preview-modal-actions button {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+  color: #e6eef8; padding: 7px 14px; border-radius: 8px;
+  cursor: pointer; font-family: inherit; font-size: 0.85rem;
+  display: flex; align-items: center; gap: 6px;
+  transition: all 0.2s; white-space: nowrap;
+}
+.preview-modal-actions button:hover { background: rgba(255,255,255,0.15); border-color: var(--accent); }
+#previewCloseBtn { padding: 7px 11px !important; }
+.preview-modal-body {
+  flex: 1; overflow: auto; display: flex;
+  align-items: center; justify-content: center; background: #070e1a;
+}
+.preview-iframe { width: 100%; height: 100%; border: none; display: block; }
+.preview-image  { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.preview-loading { display: flex; flex-direction: column; align-items: center; gap: 12px; color: var(--muted); font-size: 0.95rem; }
+.preview-unsupported { text-align: center; padding: 40px 20px; color: var(--muted); line-height: 1.6; }
+@media (max-width: 600px) {
+  .preview-modal-container { height: 95vh; border-radius: 10px; }
+}
 
 /* ════════════════════════════════
    SIDEBAR COLUMN (playlist + other courses)
@@ -535,6 +595,22 @@
   inset: 0;
   border: 2px solid var(--accent);
   border-radius: 6px;
+}
+
+.clip-duration {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0,0,0,0.72);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  line-height: 1.6;
+  z-index: 1;
 }
 
 .clip-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -919,6 +995,31 @@
 .syllabus-upload-label input[type="file"] { display: none; }
 
 .skdrive-folder { margin-bottom: 2px; }
+
+.skdrive-folder-header,
+.slide-folder-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.skdrive-folder-header .skdrive-folder-toggle { flex: 1; }
+.slide-folder-header .slide-folder-label      { flex: 1; margin: 10px 0 4px; }
+
+.folder-zip-btn {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  padding: 3px 9px;
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.25);
+  color: var(--accent);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.folder-zip-btn:hover    { background: rgba(59,130,246,0.22); }
+.folder-zip-btn:disabled { opacity: 0.5; cursor: default; }
 
 .skdrive-folder-toggle {
   display: flex;
