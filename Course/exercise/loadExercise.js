@@ -549,6 +549,67 @@ function triggerPrint(ps) {
   window.print();
 }
 
+// ── Syllabus ─────────────────────────────────────────────
+async function initSyllabus(course, isAdmin) {
+  const section = document.getElementById('syllabusSection');
+  if (!section) return;
+  section.innerHTML = '';
+
+  if (course.syllabus_key) {
+    const url = `${CONFIG.API_URL}/courses/${courseId}/syllabus?token=${encodeURIComponent(token())}`;
+    section.innerHTML = `
+      <div class="syllabus-row">
+        <span>📋 ซิลลาบัส</span>
+        <div class="syllabus-row-actions">
+          <a class="syllabus-dl-btn" href="${url}" target="_blank">ดาวน์โหลด</a>
+          ${isAdmin ? '<button class="syllabus-del-btn">ลบ</button>' : ''}
+        </div>
+      </div>
+    `;
+    section.hidden = false;
+
+    if (isAdmin) {
+      section.querySelector('.syllabus-del-btn').addEventListener('click', async () => {
+        if (!confirm('ลบซิลลาบัสนี้?')) return;
+        const res = await apiFetch(`/courses/${courseId}/syllabus`, 'DELETE');
+        if (res.success) initSyllabus({ ...course, syllabus_key: null }, isAdmin);
+        else alert(res.error || 'เกิดข้อผิดพลาด');
+      });
+    }
+  } else if (isAdmin) {
+    section.innerHTML = `
+      <div class="syllabus-row">
+        <span>📋 ซิลลาบัส</span>
+        <label class="syllabus-upload-label">
+          อัปโหลด
+          <input type="file" accept=".pdf,.docx,.pptx">
+        </label>
+      </div>
+    `;
+    section.hidden = false;
+
+    section.querySelector('input[type="file"]').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const label = section.querySelector('label');
+      label.textContent = 'กำลังอัปโหลด...';
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/courses/${courseId}/syllabus`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': file.type },
+          body: file,
+        });
+        const data = await res.json();
+        if (data.success) initSyllabus({ ...course, syllabus_key: data.syllabus_key }, isAdmin);
+        else { alert(data.error || 'เกิดข้อผิดพลาด'); label.textContent = 'อัปโหลด'; }
+      } catch {
+        alert('ไม่สามารถอัปโหลดได้');
+        label.textContent = 'อัปโหลด';
+      }
+    });
+  }
+}
+
 // ── Load PS questions ─────────────────────────────────────
 function loadPsQuestions(psId) {
   activePsId = psId;
@@ -620,6 +681,7 @@ async function init() {
     manageLink.hidden = false;
   }
 
+  initSyllabus(course, currentUser?.role === 'admin');
   buildPsSidebar();
 
   // Auto-select first problem set

@@ -63,6 +63,62 @@
 }
 .manage-exercise-link:hover { color: #fff; background: rgba(255, 255, 255, 0.12); }
 
+/* ── Syllabus ── */
+.syllabus-sidebar { margin-top: 10px; }
+
+.syllabus-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.82rem;
+  color: var(--text);
+}
+
+.syllabus-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.syllabus-dl-btn {
+  font-size: 0.76rem;
+  padding: 3px 9px;
+  background: rgba(59,130,246,0.15);
+  border: 1px solid rgba(59,130,246,0.3);
+  color: var(--accent);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.syllabus-dl-btn:hover { background: rgba(59,130,246,0.25); }
+
+.syllabus-del-btn {
+  font-size: 0.76rem;
+  padding: 3px 9px;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #f87171;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.syllabus-del-btn:hover { background: rgba(239,68,68,0.22); }
+
+.syllabus-upload-label {
+  font-size: 0.76rem;
+  padding: 3px 9px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: var(--text);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.syllabus-upload-label:hover { background: rgba(255,255,255,0.1); }
+.syllabus-upload-label input[type="file"] { display: none; }
+
 .ps-list {
   list-style: none;
   margin: 0;

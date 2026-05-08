@@ -903,6 +903,7 @@ Create a new course. **Admin only.**
 | `description` | no | Optional description |
 | `type` | no | `"video"` (default) or `"exercise"` |
 | `youtube_url` | no | Comma-separated YouTube playlist IDs. If set, the frontend uses YouTube instead of R2 clips. |
+| `slides_folder` | no | Comma-separated SKDrive prefixes for lecture slides (e.g. `"Physics1/Week1/,Physics1/Week2/"`). Video courses only. |
 
 **Response 201**
 ```json
@@ -916,7 +917,7 @@ Get a single course by ID.
 
 **Response 200**
 ```json
-{ "success": true, "course": { "id": 1, "type": "video", "folder": "intro-skin-care", "title": "...", "description": "...", "youtube_url": null, "createdAt": "...", "updatedAt": "..." } }
+{ "success": true, "course": { "id": 1, "type": "video", "folder": "intro-skin-care", "title": "...", "description": "...", "youtube_url": null, "syllabus_key": null, "slides_folder": null, "createdAt": "...", "updatedAt": "..." } }
 ```
 
 ---
@@ -926,13 +927,46 @@ Update a course. **Admin only.**
 
 **Body** (all optional)
 ```json
-{ "title": "New Title", "description": "New description", "type": "exercise" }
+{ "title": "New Title", "description": "New description", "type": "exercise", "youtube_url": "PLxxx,PLyyy", "slides_folder": "Physics1/Week1/,Physics1/Week2/" }
 ```
+
+> `youtube_url` and `slides_folder` are comma-separated — split on `","` on the frontend. Set either to `null` to clear.
 
 ---
 
 ### DELETE /courses/:courseId
 Delete a course and all its clips and files from R2. **Admin only.**
+
+---
+
+### GET /courses/:courseId/syllabus
+Stream the course syllabus file. Returns the raw file with correct `Content-Type`.
+
+**Auth required** — returns 404 if no syllabus has been uploaded.
+
+---
+
+### PUT /courses/:courseId/syllabus
+Upload or replace the course syllabus. **Admin only.**
+
+**Headers**
+```
+Content-Type: application/pdf
+              application/vnd.openxmlformats-officedocument.wordprocessingml.document (.docx)
+              application/vnd.openxmlformats-officedocument.presentationml.presentation (.pptx)
+Content-Length: <bytes>
+```
+Max size: **20MB**
+
+**Response 201**
+```json
+{ "success": true, "message": "Syllabus uploaded", "syllabus_key": "syllabus/1" }
+```
+
+---
+
+### DELETE /courses/:courseId/syllabus
+Remove the syllabus from a course. **Admin only.**
 
 ---
 

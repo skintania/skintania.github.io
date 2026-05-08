@@ -876,6 +876,110 @@
 .slide-loading { color: var(--muted); font-size: 0.85rem; padding: 8px 2px; }
 
 /* ════════════════════════════════
+   COURSE DOCS (syllabus + slides_folder)
+════════════════════════════════ */
+.course-docs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 6px;
+}
+
+.course-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+}
+
+.doc-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-danger-sm {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #f87171;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+.btn-danger-sm:hover { background: rgba(239,68,68,0.22); }
+
+.syllabus-upload-label { cursor: pointer; }
+.syllabus-upload-label input[type="file"] { display: none; }
+
+.skdrive-folder { margin-bottom: 2px; }
+
+.skdrive-folder-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 6px;
+  text-align: left;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+.skdrive-folder-toggle:hover { background: rgba(255,255,255,0.05); }
+
+.folder-arrow {
+  display: inline-block;
+  font-size: 0.65rem;
+  color: var(--muted);
+  flex-shrink: 0;
+  transition: transform 0.22s ease;
+}
+.skdrive-folder-toggle.open .folder-arrow { transform: rotate(90deg); }
+
+.folder-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.skdrive-folder-contents {
+  display: grid;
+  grid-template-rows: 0fr;
+  overflow: hidden;
+  transition: grid-template-rows 0.22s ease;
+}
+.skdrive-folder-contents.open { grid-template-rows: 1fr; }
+
+.skdrive-folder-inner {
+  min-height: 0;
+  overflow: hidden;
+  padding-left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-bottom: 4px;
+}
+
+.clip-slides-header {
+  font-size: 0.74rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 14px 2px 6px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  margin-top: 4px;
+}
+
+/* ════════════════════════════════
    ASK AI
 ════════════════════════════════ */
 .ask-ai-panel { display: flex; flex-direction: column; gap: 14px; padding: 4px 0; }

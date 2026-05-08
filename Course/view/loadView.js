@@ -569,6 +569,9 @@ async function loadSlides(clipKey) {
   const badge = document.getElementById('filesBadge');
   if (!list) return;
 
+  const clipSlidesHeader = document.getElementById('clipSlidesHeader');
+  if (clipSlidesHeader) clipSlidesHeader.hidden = false;
+
   list.innerHTML = '<p class="slide-loading">กำลังโหลด...</p>';
   if (badge) badge.hidden = true;
 
@@ -634,42 +637,203 @@ async function loadSlides(clipKey) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  SKDRIVE FOLDER — lazy-load, collapsible
+// ═══════════════════════════════════════════════════════
+function renderSkDriveFolder(prefix, folderName, container) {
+  let loaded   = false;
+  let expanded = false;
+
+  const folderEl = document.createElement('div');
+  folderEl.className = 'skdrive-folder';
+  folderEl.innerHTML = `
+    <button class="skdrive-folder-toggle">
+      <span class="folder-arrow">▶</span>
+      <span class="slide-icon">📁</span>
+      <span class="folder-name">${folderName}</span>
+    </button>
+    <div class="skdrive-folder-contents">
+      <div class="skdrive-folder-inner"></div>
+    </div>
+  `;
+  container.appendChild(folderEl);
+
+  const toggleBtn = folderEl.querySelector('.skdrive-folder-toggle');
+  const contents  = folderEl.querySelector('.skdrive-folder-contents');
+  const inner     = folderEl.querySelector('.skdrive-folder-inner');
+
+  toggleBtn.addEventListener('click', async () => {
+    if (!loaded) {
+      loaded   = true;
+      expanded = true;
+      toggleBtn.classList.add('open');
+      contents.classList.add('open');
+      inner.innerHTML = '<p class="slide-loading">กำลังโหลด...</p>';
+
+      const skData = await apiFetch(`/skdrive?prefix=${encodeURIComponent(prefix)}`);
+      inner.innerHTML = '';
+
+      let hasContent = false;
+
+      if (skData.files?.length) {
+        hasContent = true;
+        skData.files.forEach(f => {
+          const url  = `${CONFIG.API_URL}/skdrive/${encodeURIComponent(f.key)}?token=${encodeURIComponent(token())}`;
+          const item = document.createElement('div');
+          item.className = 'slide-item nested';
+          item.innerHTML = `
+            <span class="slide-icon">${fileIcon(f.contentType || f.key)}</span>
+            <span class="slide-label">${f.name}</span>
+            <span class="file-size">${formatSize(f.size || 0)}</span>
+            <a class="btn file-dl-btn" href="${url}" download="${f.name}" target="_blank">ดาวน์โหลด</a>
+          `;
+          inner.appendChild(item);
+        });
+      }
+
+      if (skData.folders?.length) {
+        hasContent = true;
+        skData.folders.forEach(sub => {
+          const subName = sub.name || sub.key.split('/').filter(Boolean).pop() || sub.key;
+          renderSkDriveFolder(sub.key, subName, inner);
+        });
+      }
+
+      if (!hasContent) {
+        inner.innerHTML = '<p class="comment-empty">โฟลเดอร์ว่าง</p>';
+      }
+    } else {
+      expanded = !expanded;
+      toggleBtn.classList.toggle('open', expanded);
+      contents.classList.toggle('open', expanded);
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+//  COURSE DOCS (syllabus + slides_folder)
+// ═══════════════════════════════════════════════════════
+async function initCourseDocs(course, isAdmin) {
+  const section = document.getElementById('courseDocs');
+  if (!section) return;
+  section.innerHTML = '';
+
+  // ── Syllabus ──
+  if (course.syllabus_key) {
+    const url = `${CONFIG.API_URL}/courses/${courseId}/syllabus?token=${encodeURIComponent(token())}`;
+    const row = document.createElement('div');
+    row.className = 'course-doc-row';
+    row.innerHTML = `
+      <span class="slide-icon">📋</span>
+      <span class="slide-label">ซิลลาบัส</span>
+      <div class="doc-row-actions">
+        <a class="btn file-dl-btn" href="${url}" target="_blank">ดาวน์โหลด</a>
+        ${isAdmin ? '<button class="btn btn-danger-sm" id="syllabusDeleteBtn">ลบ</button>' : ''}
+      </div>
+    `;
+    section.appendChild(row);
+
+    if (isAdmin) {
+      document.getElementById('syllabusDeleteBtn').addEventListener('click', async () => {
+        if (!confirm('ลบซิลลาบัสนี้?')) return;
+        const res = await apiFetch(`/courses/${courseId}/syllabus`, 'DELETE');
+        if (res.success) initCourseDocs({ ...course, syllabus_key: null }, isAdmin);
+        else alert(res.error || 'เกิดข้อผิดพลาด');
+      });
+    }
+  } else if (isAdmin) {
+    const row = document.createElement('div');
+    row.className = 'course-doc-row';
+    row.innerHTML = `
+      <span class="slide-icon">📋</span>
+      <span class="slide-label">ซิลลาบัส</span>
+      <label class="btn file-dl-btn syllabus-upload-label">
+        อัปโหลด
+        <input type="file" id="syllabusFileInput" accept=".pdf,.docx,.pptx">
+      </label>
+    `;
+    section.appendChild(row);
+
+    document.getElementById('syllabusFileInput').addEventListener('change', async e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const label = row.querySelector('label');
+      label.textContent = 'กำลังอัปโหลด...';
+      try {
+        const res = await fetch(`${CONFIG.API_URL}/courses/${courseId}/syllabus`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': file.type },
+          body: file,
+        });
+        const data = await res.json();
+        if (data.success) initCourseDocs({ ...course, syllabus_key: data.syllabus_key }, isAdmin);
+        else { alert(data.error || 'เกิดข้อผิดพลาด'); label.textContent = 'อัปโหลด'; }
+      } catch {
+        alert('ไม่สามารถอัปโหลดได้');
+        label.textContent = 'อัปโหลด';
+      }
+    });
+  }
+
+  // ── Course slides_folder ──
+  if (course.slides_folder) {
+    const prefixes = course.slides_folder.split(',').map(s => s.trim()).filter(Boolean);
+    prefixes.forEach(prefix => {
+      const folderName = prefix.split('/').filter(Boolean).pop() || prefix;
+      renderSkDriveFolder(prefix, folderName, section);
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════
 //  ASK AI
 // ═══════════════════════════════════════════════════════
-function initAskAI() {
-  const captureBtn = document.getElementById('captureFrameBtn');
-  const canvas     = document.getElementById('aiCanvas');
-  const askBtn     = document.getElementById('askAiBtn');
-  const questionEl = document.getElementById('aiQuestion');
-  const answerBox  = document.getElementById('aiAnswer');
-  const usageEl    = document.getElementById('aiUsage');
-  if (!captureBtn) return;
+function initAskAI(textOnly = false) {
+  const captureBtn    = document.getElementById('captureFrameBtn');
+  const frameSection  = captureBtn?.closest('.ask-ai-frame-section');
+  const hintEl        = document.querySelector('.ask-ai-hint');
+  const canvas        = document.getElementById('aiCanvas');
+  const askBtn        = document.getElementById('askAiBtn');
+  const questionEl    = document.getElementById('aiQuestion');
+  const answerBox     = document.getElementById('aiAnswer');
+  const usageEl       = document.getElementById('aiUsage');
+  if (!askBtn) return;
 
-  captureBtn.addEventListener('click', () => {
-    const player = document.getElementById('videoPlayer');
-    if (!player.src || player.readyState === 0) {
-      alert('กรุณาเลือกคลิปก่อน');
-      return;
-    }
-    const ctx = canvas.getContext('2d');
-    canvas.width  = player.videoWidth  || 640;
-    canvas.height = player.videoHeight || 360;
-    ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
-    canvas.hidden = false;
-    captureBtn.textContent = '🔄 จับภาพใหม่';
-  });
+  if (textOnly) {
+    if (frameSection) frameSection.hidden = true;
+    if (hintEl) hintEl.textContent = 'ถามคำถามเกี่ยวกับเนื้อหาในวิดีโอ';
+    questionEl.placeholder = 'ถามอะไรก็ได้...';
+  } else {
+    captureBtn.addEventListener('click', () => {
+      const player = document.getElementById('videoPlayer');
+      if (!player.src || player.readyState === 0) {
+        alert('กรุณาเลือกคลิปก่อน');
+        return;
+      }
+      const ctx = canvas.getContext('2d');
+      canvas.width  = player.videoWidth  || 640;
+      canvas.height = player.videoHeight || 360;
+      ctx.drawImage(player, 0, 0, canvas.width, canvas.height);
+      canvas.hidden = false;
+      captureBtn.textContent = '🔄 จับภาพใหม่';
+    });
+  }
 
   askBtn.addEventListener('click', async () => {
-    if (canvas.hidden) { alert('กรุณาจับภาพจากวิดีโอก่อน'); return; }
-    const image    = canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, '');
-    const question = questionEl.value.trim() || undefined;
+    if (!textOnly && canvas.hidden) { alert('กรุณาจับภาพจากวิดีโอก่อน'); return; }
+    const question = questionEl.value.trim();
+    if (!question) { questionEl.focus(); return; }
+
+    const body = textOnly ? { question } : {
+      image: canvas.toDataURL('image/png').replace(/^data:image\/png;base64,/, ''),
+      question,
+    };
 
     askBtn.disabled    = true;
     askBtn.textContent = 'กำลังถาม...';
     answerBox.hidden   = true;
 
     try {
-      const data = await apiFetch(`/courses/${courseId}/ask-ai`, 'POST', { image, question });
+      const data = await apiFetch(`/courses/${courseId}/ask-ai`, 'POST', body);
       answerBox.textContent = data.success ? data.answer : (data.error || 'เกิดข้อผิดพลาด');
       answerBox.hidden = false;
       if (data.usage) usageEl.textContent = `ใช้ไปแล้ว ${data.usage.used}/${data.usage.limit} ครั้งวันนี้`;
@@ -1080,12 +1244,13 @@ async function init() {
   });
   document.getElementById('courseMeta').textContent = `สร้างเมื่อ ${created}`;
 
+  initCourseDocs(course, currentUser?.role === 'admin');
+
   if (course.youtube_url) {
     document.getElementById('videoPlayer').hidden = true;
     document.getElementById('seekPreview').hidden = true;
     document.getElementById('ytPlayer').hidden    = false;
-    document.getElementById('tab-qa').innerHTML   =
-      '<div class="tab-coming-soon"><p>Ask AI ไม่รองรับในโหมด YouTube</p></div>';
+    initAskAI(true);
     const playlistIds = course.youtube_url.split(',').map(s => {
       const v = s.trim();
       try { return new URL(v).searchParams.get('list') || v; } catch { return v; }
