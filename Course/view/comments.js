@@ -123,7 +123,15 @@ function wireCommentActions(container, clipKey) {
 export async function loadComments(clipKey) {
   const list = document.getElementById('commentList');
   if (!list) return;
-  list.innerHTML = '<div class="comment-loading">กำลังโหลด...</div>';
+  list.innerHTML = Array.from({ length: 3 }, () => `
+    <div class="comment-item" style="pointer-events:none">
+      <div class="comment-avatar-sm skeleton" style="background:none;flex-shrink:0"></div>
+      <div class="comment-body" style="flex:1;min-width:0">
+        <span class="sk-line sk-line--md skeleton" style="height:11px;margin-bottom:8px"></span>
+        <span class="sk-line sk-line--lg skeleton"></span>
+        <span class="sk-line sk-line--sm skeleton" style="margin-bottom:0"></span>
+      </div>
+    </div>`).join('');
 
   try {
     const data = await apiFetch(`/courses/${state.courseId}/comments?clip_key=${encodeURIComponent(clipKey)}`);

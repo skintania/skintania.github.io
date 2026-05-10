@@ -400,6 +400,18 @@ async function renderEvents(events, grid) {
 document.addEventListener('DOMContentLoaded', async () => {
     const grid = document.getElementById('coursesGrid');
     if (grid) {
+        grid.innerHTML = Array.from({ length: 3 }, () => `
+            <article class="card" style="pointer-events:none">
+              <div class="creator-header" style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <div class="creator-avatar-wrap skeleton" style="background:none;flex-shrink:0"></div>
+                <span class="sk-line sk-line--md skeleton" style="height:12px;flex:1;margin:0"></span>
+              </div>
+              <span class="sk-line sk-line--lg skeleton" style="height:18px;margin-bottom:10px"></span>
+              <span class="sk-line skeleton" style="width:72px;height:22px;border-radius:12px;margin-bottom:16px"></span>
+              <span class="sk-line sk-line--lg skeleton"></span>
+              <span class="sk-line sk-line--md skeleton"></span>
+              <span class="sk-line sk-line--sm skeleton" style="margin-bottom:0"></span>
+            </article>`).join('');
         [currentUser, window.eventList] = await Promise.all([fetchCurrentUser(), fetchEvents()]);
         await renderEvents(window.eventList, grid);
     }

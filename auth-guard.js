@@ -1,5 +1,19 @@
 import { CONFIG } from '/config.js';
 
+function showLoader() {
+  const loader = document.createElement('div');
+  loader.id = 'page-loader';
+  loader.innerHTML = '<div class="loader-spinner"></div>';
+  document.body.appendChild(loader);
+  document.body.style.display = 'block';
+  return loader;
+}
+
+function removeLoader(loader) {
+  loader.classList.add('fade-out');
+  setTimeout(() => loader.remove(), 300);
+}
+
 async function checkAuth() {
   const token = localStorage.getItem("authToken");
 
@@ -7,6 +21,9 @@ async function checkAuth() {
     window.location.replace("/login/");
     return;
   }
+
+  // Token exists — reveal body with loader covering content while we verify
+  const loader = showLoader();
 
   try {
     const response = await fetch(`${CONFIG.API_URL}/auth/me`, {
@@ -21,23 +38,17 @@ async function checkAuth() {
 
     const data = await response.json();
 
-    if (!data.success) {
+    if (!data.success || data.user?.role === 'banned') {
       localStorage.removeItem("authToken");
       window.location.replace("/login/");
       return;
     }
 
-    if (data.user?.role === 'banned') {
-      localStorage.removeItem("authToken");
-      window.location.replace("/login/");
-      return;
-    }
-
-    document.body.style.display = "block";
+    removeLoader(loader);
 
   } catch {
-    // Network error — allow through if a token exists rather than locking the user out
-    document.body.style.display = "block";
+    // Network error — allow through rather than locking the user out
+    removeLoader(loader);
   }
 }
 

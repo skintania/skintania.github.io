@@ -112,7 +112,15 @@ export function initControls() {
   let previewSeeking = false;
 
   function showSeekPreview() {
-    if (player.src && isFinite(player.duration)) seekPreview.style.display = 'flex';
+    if (!player.src || !isFinite(player.duration)) return;
+    // Lazy-load previewVideo on first hover — avoids competing with main player on clip start
+    const pending = previewVideo.dataset.lazySrc;
+    if (pending && previewVideo.dataset.loadedSrc !== pending) {
+      previewVideo.dataset.loadedSrc = pending;
+      previewVideo.crossOrigin = 'anonymous';
+      previewVideo.src = pending;
+    }
+    seekPreview.style.display = 'flex';
   }
   function hideSeekPreview() {
     seekPreview.style.display = 'none';

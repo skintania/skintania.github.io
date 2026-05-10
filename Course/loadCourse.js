@@ -135,6 +135,19 @@ async function loadCourses() {
   const grid    = document.getElementById('coursesGrid');
   const emptyEl = document.getElementById('emptyState');
 
+  grid.innerHTML = Array.from({ length: 8 }, () => `
+    <div class="yt-card" style="pointer-events:none;cursor:default">
+      <div class="yt-thumb skeleton"></div>
+      <div class="yt-info">
+        <div class="yt-avatar skeleton" style="background:none;flex-shrink:0"></div>
+        <div class="yt-meta" style="flex:1;min-width:0">
+          <span class="sk-line sk-line--lg skeleton" style="margin-bottom:6px"></span>
+          <span class="sk-line sk-line--md skeleton"></span>
+          <span class="sk-line sk-line--sm skeleton" style="margin-bottom:0"></span>
+        </div>
+      </div>
+    </div>`).join('');
+
   try {
     const [meData, data] = await Promise.all([
       apiFetch('/auth/me'),

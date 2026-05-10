@@ -10,7 +10,11 @@ export async function loadSlides(clipKey) {
   const clipSlidesHeader = document.getElementById('clipSlidesHeader');
   if (clipSlidesHeader) clipSlidesHeader.hidden = false;
 
-  list.innerHTML = '<p class="slide-loading">กำลังโหลด...</p>';
+  list.innerHTML = Array.from({ length: 3 }, () => `
+    <div class="slide-item" style="pointer-events:none">
+      <span class="skeleton" style="width:22px;height:22px;flex-shrink:0;border-radius:4px"></span>
+      <span class="sk-line sk-line--lg skeleton" style="flex:1;margin:0"></span>
+    </div>`).join('');
   if (badge) badge.hidden = true;
 
   try {
@@ -54,7 +58,10 @@ export async function loadSlides(clipKey) {
             <button class="folder-zip-btn">⬇ ZIP</button>
           </div>
           <div class="slide-folder-files" id="${folderId}">
-            <p class="slide-loading">กำลังโหลด...</p>
+            <div class="slide-item skeleton-row" style="pointer-events:none">
+              <span class="skeleton" style="width:22px;height:22px;flex-shrink:0;border-radius:4px"></span>
+              <span class="sk-line sk-line--md skeleton" style="flex:1;margin:0"></span>
+            </div>
           </div>
         `;
         list.appendChild(folderEl);
@@ -134,7 +141,7 @@ export async function previewFile(apiPath, filename) {
 
   modal.style.display = 'flex';
   nameEl.textContent  = filename;
-  body.innerHTML = '<div class="preview-loading"><p>กำลังโหลด...</p></div>';
+  body.innerHTML = '<div class="skeleton" style="height:220px;border-radius:8px;margin:16px"></div>';
   downloadBtn.onclick = null;
 
   try {
@@ -245,7 +252,10 @@ export function renderSkDriveFolder(prefix, folderName, container) {
       expanded = true;
       toggleBtn.classList.add('open');
       contents.classList.add('open');
-      inner.innerHTML = '<p class="slide-loading">กำลังโหลด...</p>';
+      inner.innerHTML = `<div class="slide-item" style="pointer-events:none">
+        <span class="skeleton" style="width:22px;height:22px;flex-shrink:0;border-radius:4px"></span>
+        <span class="sk-line sk-line--md skeleton" style="flex:1;margin:0"></span>
+      </div>`;
 
       const skData = await apiFetch(`/skdrive?prefix=${encodeURIComponent(prefix)}`);
       inner.innerHTML = '';
