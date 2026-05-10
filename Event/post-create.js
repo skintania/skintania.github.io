@@ -1,6 +1,4 @@
-import { CONFIG } from '/config.js';
-
-const getToken = () => localStorage.getItem('authToken') || '';
+import { token as getToken, API_URL } from '/shared/api.js';
 
 async function uploadImage(url, file) {
     await fetch(url, {
@@ -36,10 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const div = document.createElement('div');
             div.className = 'choice-item';
             div.innerHTML = `
-                <label style="color:#3b82f6;font-size:.85rem;font-weight:500;margin-bottom:8px;display:block;">ตัวเลือกที่ ${i}</label>
+                <label class="choice-number-label">ตัวเลือกที่ ${i}</label>
                 <input type="text" name="choiceText_${i}" placeholder="ระบุข้อความ..." required>
                 <div class="file-upload-wrapper">
-                    <label style="font-size:.75rem;color:#9aa4b2;">รูปภาพสำหรับตัวเลือกนี้ (ถ้ามี)</label>
+                    <label class="choice-file-label">รูปภาพสำหรับตัวเลือกนี้ (ถ้ามี)</label>
                     <input type="file" name="choiceImage_${i}" accept="image/*">
                 </div>
             `;
@@ -66,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let eventId;
 
             if (isEdit) {
-                const res = await fetch(`${CONFIG.API_URL}/events/${window.editingEventId}`, {
+                const res = await fetch(`${API_URL}/events/${window.editingEventId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ header, description }),
@@ -93,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     endpoint = 'announcement';
                 }
 
-                const res = await fetch(`${CONFIG.API_URL}/events/${endpoint}`, {
+                const res = await fetch(`${API_URL}/events/${endpoint}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(body),
@@ -105,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Upload main image if provided
             if (singleImageFile && eventId) {
-                await uploadImage(`${CONFIG.API_URL}/events/${eventId}/image`, singleImageFile);
+                await uploadImage(`${API_URL}/events/${eventId}/image`, singleImageFile);
             }
 
             // Upload poll choice images (new events only — edit doesn't re-upload choices)
@@ -115,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     UI.form.querySelector(`input[name="choiceImage_${i + 1}"]`)?.files?.[0] ?? null
                 );
                 if (choiceFiles.some(Boolean)) {
-                    const detailRes = await fetch(`${CONFIG.API_URL}/events/${eventId}`, {
+                    const detailRes = await fetch(`${API_URL}/events/${eventId}`, {
                         headers: { 'Authorization': `Bearer ${token}` },
                     });
                     if (detailRes.ok) {
@@ -124,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (let i = 0; i < serverChoices.length; i++) {
                             if (choiceFiles[i] && serverChoices[i]) {
                                 await uploadImage(
-                                    `${CONFIG.API_URL}/events/${eventId}/choices/${serverChoices[i].id}/image`,
+                                    `${API_URL}/events/${eventId}/choices/${serverChoices[i].id}/image`,
                                     choiceFiles[i]
                                 );
                             }

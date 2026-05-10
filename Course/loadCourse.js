@@ -1,35 +1,7 @@
-import { CONFIG } from '/config.js';
-
-const GRADIENTS = [
-  ['#1a3a6b', '#3b82f6'],
-  ['#1a4a3a', '#10b981'],
-  ['#3b1a6b', '#8b5cf6'],
-  ['#6b3a1a', '#f59e0b'],
-  ['#1a3a6b', '#06b6d4'],
-  ['#6b1a3a', '#ec4899'],
-  ['#2d4a1a', '#84cc16'],
-  ['#1a2a6b', '#6366f1'],
-];
+import { apiFetch } from '/shared/api.js';
+import { gradientFor, timeAgo } from '/shared/utils.js';
 
 let activeTag = 'all';
-
-function timeAgo(iso) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} นาทีที่แล้ว`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
-  const days = Math.floor(hours / 24);
-  if (days < 30) return `${days} วันที่แล้ว`;
-  const months = Math.floor(days / 30);
-  if (months < 12) return `${months} เดือนที่แล้ว`;
-  return `${Math.floor(months / 12)} ปีที่แล้ว`;
-}
-
-function gradientFor(id) {
-  const [a, b] = GRADIENTS[id % GRADIENTS.length];
-  return `linear-gradient(135deg, ${a} 0%, ${b} 100%)`;
-}
 
 function renderCard(course) {
   const a = document.createElement('a');
@@ -88,7 +60,7 @@ function filterCards() {
 }
 
 function buildTags(courses) {
-  const tagList  = document.getElementById('tagList');
+  const tagList   = document.getElementById('tagList');
   const tagCounts = new Map();
   courses.forEach(c => {
     const tag = (c.description || '').trim();
@@ -96,10 +68,10 @@ function buildTags(courses) {
   });
 
   tagCounts.forEach((_, tag) => {
-    const btn         = document.createElement('button');
-    btn.className     = 'tag-btn';
-    btn.dataset.tag   = tag.toLowerCase();
-    btn.textContent   = tag;
+    const btn       = document.createElement('button');
+    btn.className   = 'tag-btn';
+    btn.dataset.tag = tag.toLowerCase();
+    btn.textContent = tag;
     tagList.appendChild(btn);
   });
 
@@ -112,7 +84,6 @@ function buildTags(courses) {
   });
 }
 
-// ── Create course modal ──────────────────────────────────
 function initCreateModal() {
   const overlay   = document.getElementById('createModal');
   const openBtn   = document.getElementById('createCourseBtn');
@@ -122,12 +93,8 @@ function initCreateModal() {
   const errorEl   = document.getElementById('ccError');
   const submitBtn = document.getElementById('ccSubmit');
 
-  function openModal() {
-    form.reset();
-    errorEl.hidden = true;
-    overlay.hidden = false;
-  }
-  function closeModal() { overlay.hidden = true; }
+  const openModal  = () => { form.reset(); errorEl.hidden = true; overlay.hidden = false; };
+  const closeModal = () => { overlay.hidden = true; };
 
   openBtn.addEventListener('click', openModal);
   closeBtn.addEventListener('click', closeModal);
@@ -140,59 +107,40 @@ function initCreateModal() {
     const folder = document.getElementById('ccFolder').value.trim();
     const desc   = document.getElementById('ccDesc').value.trim();
     const type   = document.getElementById('ccType').value;
-
     if (!title || !folder) return;
 
     submitBtn.disabled    = true;
     submitBtn.textContent = 'กำลังสร้าง...';
     errorEl.hidden        = true;
 
-    const token = localStorage.getItem('authToken');
-    try {
-      const res  = await fetch(`${CONFIG.API_URL}/courses`, {
-        method:  'POST',
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ title, folder, description: desc || undefined, type }),
-      });
-      const data = await res.json();
+    const data = await apiFetch('/courses', 'POST', { title, folder, description: desc || undefined, type });
 
-      if (!data.success) {
-        errorEl.textContent = data.error || 'เกิดข้อผิดพลาด';
-        errorEl.hidden      = false;
-        return;
-      }
-
-      closeModal();
-      // Redirect to the new course
-      const dest = type === 'exercise'
-        ? `/Course/exercise/?id=${data.id}`
-        : `/Course/view/?id=${data.id}`;
-      window.location.href = dest;
-    } catch {
-      errorEl.textContent = 'ไม่สามารถเชื่อมต่อได้';
+    if (!data.success) {
+      errorEl.textContent = data.error || 'เกิดข้อผิดพลาด';
       errorEl.hidden      = false;
-    } finally {
       submitBtn.disabled    = false;
       submitBtn.textContent = 'สร้างคอร์ส';
+      return;
     }
+
+    closeModal();
+    const dest = type === 'exercise'
+      ? `/Course/exercise/?id=${data.id}`
+      : `/Course/view/?id=${data.id}`;
+    window.location.href = dest;
   });
 }
 
 async function loadCourses() {
-  const token   = localStorage.getItem('authToken');
   const grid    = document.getElementById('coursesGrid');
   const emptyEl = document.getElementById('emptyState');
 
   try {
-    // Load user role + courses in parallel
-    const [meRes, coursesRes] = await Promise.all([
-      fetch(`${CONFIG.API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${CONFIG.API_URL}/courses`,  { headers: { Authorization: `Bearer ${token}` } }),
+    const [meData, data] = await Promise.all([
+      apiFetch('/auth/me'),
+      apiFetch('/courses'),
     ]);
 
-    const [meData, data] = await Promise.all([meRes.json(), coursesRes.json()]);
-
-    // Show create button for admins
     if (meData.success && meData.user?.role === 'admin') {
       document.getElementById('createCourseBtn').hidden = false;
       initCreateModal();

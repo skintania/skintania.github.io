@@ -1,9 +1,7 @@
-import { CONFIG } from '/config.js';
-
-const getToken = () => localStorage.getItem('authToken') || '';
+import { token as getToken, API_URL } from '/shared/api.js';
 
 async function apiFetch(path, options = {}) {
-    return fetch(`${CONFIG.API_URL}${path}`, {
+    return fetch(`${API_URL}${path}`, {
         ...options,
         headers: { 'Authorization': `Bearer ${getToken()}`, ...options.headers },
     });
@@ -163,38 +161,38 @@ async function renderPoll(ev) {
     }
 
     const container = document.createElement('div');
-    container.style.cssText = 'margin-top:15px;display:flex;flex-direction:column;gap:15px;';
+    container.className = 'poll-choices';
 
     // Build DOM refs so we can update counts later
     const refs = [];
 
     for (const choice of choices) {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:15px;';
+        row.className = 'poll-choice-row';
 
         if (choice.imgLink) {
             const img = document.createElement('img');
             img.src = await loadImageWithAuth(choice.imgLink) ?? '';
-            img.style.cssText = 'width:200px;max-height:300px;border-radius:8px;object-fit:contain;flex-shrink:0;background:rgba(0,0,0,.1);';
+            img.className = 'poll-choice-img';
             row.appendChild(img);
         }
 
         const content = document.createElement('div');
-        content.style.flexGrow = '1';
+        content.className = 'poll-choice-content';
 
         const header = document.createElement('div');
-        header.style.cssText = 'display:flex;justify-content:space-between;margin-bottom:4px;';
+        header.className = 'poll-choice-header';
         const label = document.createElement('strong');
         label.textContent = choice.choiceText;
         const voteText = document.createElement('span');
-        voteText.style.color = '#60a5fa';
+        voteText.className = 'poll-vote-count';
         header.appendChild(label);
         header.appendChild(voteText);
 
         const barOuter = document.createElement('div');
-        barOuter.style.cssText = 'height:20px;background:rgba(255,255,255,.1);border-radius:10px;overflow:hidden;';
+        barOuter.className = 'poll-bar-track';
         const bar = document.createElement('div');
-        bar.style.cssText = 'height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa);transition:width .3s ease;';
+        bar.className = 'poll-bar-fill';
         barOuter.appendChild(bar);
 
         content.appendChild(header);
@@ -202,7 +200,7 @@ async function renderPoll(ev) {
 
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
-        checkbox.style.cssText = 'width:20px;height:20px;cursor:pointer;flex-shrink:0;';
+        checkbox.className = 'poll-vote-checkbox';
 
         refs.push({ choice: { ...choice, voteCount: choice.voteCount ?? 0 }, voteText, bar, checkbox });
 
@@ -286,12 +284,12 @@ async function renderPoll(ev) {
 
 async function renderActivity(ev) {
     const container = document.createElement('div');
-    container.style.cssText = 'margin-top:15px;display:flex;align-items:center;gap:15px;';
+    container.className = 'activity-content';
 
     if (ev.imgLink) {
         const img = document.createElement('img');
         img.src = await loadImageWithAuth(ev.imgLink) ?? '';
-        img.style.cssText = 'max-height:300px;width:30%;border-radius:10px;object-fit:cover;background:#222;flex-shrink:0;';
+        img.className = 'activity-img';
         container.appendChild(img);
     }
 
@@ -299,17 +297,17 @@ async function renderActivity(ev) {
     let joined = ev.isJoined ?? false;
 
     const textDiv = document.createElement('div');
-    textDiv.style.flexGrow = '1';
+    textDiv.className = 'activity-text';
     textDiv.innerHTML = `
         <p style="margin:0 0 5px">${ev.description || ''}</p>
-        <div class="participant-count" style="font-size:13px;color:#10b981">👥 ผู้เข้าร่วม: ${count} คน</div>
+        <div class="participant-count">👥 ผู้เข้าร่วม: ${count} คน</div>
     `;
 
     const joinBox = document.createElement('div');
-    joinBox.style.textAlign = 'center';
+    joinBox.className = 'activity-join-box';
     joinBox.innerHTML = `
-        <input type="checkbox" id="chk-${ev.id}" style="width:20px;height:20px;cursor:pointer;display:block;margin:0 auto;">
-        <label for="chk-${ev.id}" style="font-size:12px;cursor:pointer;color:#94a3b8;">เข้าร่วม</label>
+        <input type="checkbox" id="chk-${ev.id}" class="join-checkbox">
+        <label for="chk-${ev.id}" class="join-label">เข้าร่วม</label>
     `;
 
     const chk = joinBox.querySelector('input');
@@ -346,16 +344,16 @@ async function renderActivity(ev) {
 
 async function renderAnnouncement(ev) {
     const container = document.createElement('div');
-    container.style.marginTop = '15px';
+    container.className = 'announcement-content';
     if (ev.imgLink) {
         const img = document.createElement('img');
         img.src = await loadImageWithAuth(ev.imgLink) ?? '';
-        img.style.cssText = 'width:100%;max-height:250px;border-radius:8px;object-fit:cover;margin-bottom:10px;background:#222;';
+        img.className = 'announcement-img';
         container.appendChild(img);
     }
     if (ev.description) {
         const p = document.createElement('p');
-        p.style.lineHeight = '1.5';
+        p.className = 'announcement-text';
         p.innerText = ev.description;
         container.appendChild(p);
     }
@@ -365,7 +363,7 @@ async function renderAnnouncement(ev) {
 async function renderEvents(events, grid) {
     grid.innerHTML = '';
     if (!events.length) {
-        grid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1">ยังไม่มีกิจกรรมในขณะนี้</p>';
+        grid.innerHTML = '<p class="events-empty">ยังไม่มีกิจกรรมในขณะนี้</p>';
         return;
     }
 
@@ -374,7 +372,6 @@ async function renderEvents(events, grid) {
     for (const ev of events) {
         const card = document.createElement('article');
         card.className = 'card';
-        card.style.position = 'relative';
 
         const isCreator = currentUser?.id === ev.creatorId;
         const canEdit   = isCreator;
@@ -389,7 +386,7 @@ async function renderEvents(events, grid) {
 
         const tag = document.createElement('span');
         tag.innerText = ev.type;
-        tag.style.cssText = 'font-size:12px;padding:2px 8px;border-radius:4px;background:rgba(59,130,246,.2);color:#3b82f6;';
+        tag.className = 'event-type-tag';
         card.appendChild(tag);
 
         if (ev.type === 'Poll') card.appendChild(await renderPoll(ev));

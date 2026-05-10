@@ -1,4 +1,4 @@
-import { CONFIG } from '/config.js';
+import { token as getToken, API_URL } from '/shared/api.js';
 
 const AUDIT_PER_PAGE = 30;
 let allAuditLogs = [];
@@ -24,11 +24,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function checkAdminAccess() {
-    const token = localStorage.getItem("authToken");
-    if (!token) { window.location.href = '/login/'; return false; }
+    if (!getToken()) { window.location.href = '/login/'; return false; }
     try {
-        const res = await fetch(`${CONFIG.API_URL}/admin/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         if (res.status === 403) { window.location.href = '/'; return false; }
         if (res.status === 401) { localStorage.removeItem("authToken"); window.location.href = '/login/'; return false; }
@@ -67,9 +66,8 @@ function setupNavigation() {
 // ─── OVERVIEW STATS ───────────────────────────────────────────────────────────
 async function loadAdminStats() {
     try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch(`${CONFIG.API_URL}/admin/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         if (!res.ok) throw new Error();
         const data = await res.json();
@@ -78,7 +76,7 @@ async function loadAdminStats() {
         document.getElementById('stat-total-users').textContent = s.totalUsers         ?? '0';
         document.getElementById('stat-verified').textContent    = s.verifiedUsers      ?? '0';
         document.getElementById('stat-banned').textContent      = s.bannedUsers        ?? '0';
-        document.getElementById('stat-osk').textContent         = s.oskCount          ?? '0';
+        document.getElementById('stat-osk').textContent         = s.oskCount           ?? '0';
         document.getElementById('stat-events').textContent      = s.totalEvents        ?? '0';
         document.getElementById('stat-joins').textContent       = s.totalActivityJoins ?? '0';
     } catch {
@@ -100,9 +98,8 @@ async function loadWorkerStats(date = null) {
     wsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '...'; });
 
     try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch(`${CONFIG.API_URL}/admin/stats/worker?date=${date}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/admin/stats/worker?date=${date}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
@@ -130,8 +127,8 @@ const NUMBER_FIELDS = [
     { id: 'cfg-jwt-days',       key: 'JWT_EXPIRES_DAYS' },
     { id: 'cfg-rl-requests',    key: 'RATE_LIMIT_REQUESTS' },
     { id: 'cfg-rl-window',      key: 'RATE_LIMIT_WINDOW_SECONDS' },
-    { id: 'cfg-skdrive-max-dl',    key: 'SKDRIVE_MAX_DOWNLOAD_MB' },
-    { id: 'cfg-req-limit-day',    key: 'REQUEST_LIMIT_PERDAY' },
+    { id: 'cfg-skdrive-max-dl', key: 'SKDRIVE_MAX_DOWNLOAD_MB' },
+    { id: 'cfg-req-limit-day',  key: 'REQUEST_LIMIT_PERDAY' },
 ];
 
 const CONFIG_LABELS = {
@@ -153,9 +150,8 @@ let lastSavedConfig = {};
 
 async function loadConfig() {
     try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch(`${CONFIG.API_URL}/admin/config`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/admin/config`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
         if (!res.ok) throw new Error();
         const data = await res.json();
@@ -228,7 +224,6 @@ function saveConfig() {
 
     const serverCloseOn = diff.some(d => d.key === 'SERVER_CLOSE' && d.to === true);
 
-    // populate modal
     const list = document.getElementById('cfgDiffList');
     list.innerHTML = diff.map(d => `
         <li class="cfg-diff-item${d.key === 'SERVER_CLOSE' && d.to ? ' danger' : ''}">
@@ -248,7 +243,6 @@ function saveConfig() {
     const modal = document.getElementById('configConfirmModal');
     modal.style.display = 'flex';
 
-    // wire buttons (replace to avoid duplicate listeners)
     const confirmBtn = document.getElementById('cfgConfirmBtn');
     const cancelBtn  = document.getElementById('cfgCancelBtn');
     const backdrop   = document.getElementById('cfgModalBackdrop');
@@ -265,11 +259,10 @@ async function applyConfigSave(payload) {
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; }
 
     try {
-        const token = localStorage.getItem("authToken");
-        const res = await fetch(`${CONFIG.API_URL}/admin/config`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+        const res = await fetch(`${API_URL}/admin/config`, {
+            method:  'PATCH',
+            headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
         });
         const data = await res.json();
         if (res.ok && data.success) {
@@ -297,11 +290,10 @@ async function loadAuditLog(cursor = null, targetPage = 1) {
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</td></tr>';
     try {
-        const token = localStorage.getItem("authToken");
-        let url = `${CONFIG.API_URL}/admin/audit?limit=${AUDIT_PER_PAGE}`;
+        let url = `${API_URL}/admin/audit?limit=${AUDIT_PER_PAGE}`;
         if (cursor) url += `&cursor=${cursor}`;
 
-        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getToken()}` } });
         if (!res.ok) throw new Error();
         const data = await res.json();
 
@@ -320,9 +312,9 @@ function formatAuditTarget(log) {
     const type = log.target_type;
     const id   = log.target_id ?? '';
     if (!type) return '-';
-    if (type === 'user')   return `<a class="audit-detail-link" href="/profile/?id=${id}" target="_blank">User #${id}</a>`;
-    if (type === 'event')  return `Event #${id}`;
-    if (type === 'config') return 'Config';
+    if (type === 'user')    return `<a class="audit-detail-link" href="/profile/?id=${id}" target="_blank">User #${id}</a>`;
+    if (type === 'event')   return `Event #${id}`;
+    if (type === 'config')  return 'Config';
     if (type === 'skdrive') return `<span title="${escapeHtml(id)}">SKDrive</span>`;
     return `${type} #${id}`;
 }
@@ -337,7 +329,7 @@ function renderAuditTable() {
         tbody.innerHTML = '<tr><td colspan="6" class="table-empty">ไม่มีข้อมูล</td></tr>';
     } else {
         allAuditLogs.forEach(log => {
-            const actionKey  = (log.action || '').split('_')[0];
+            const actionKey = (log.action || '').split('_')[0];
             const tr = document.createElement('tr');
             tr.style.cursor = 'pointer';
             tr.innerHTML = `
@@ -502,12 +494,11 @@ async function loadServerLogs(cursor = null, targetPage = 1) {
     const level = document.getElementById('logLevelFilter')?.value || '';
 
     try {
-        const token = localStorage.getItem("authToken");
-        let url = `${CONFIG.API_URL}/admin/server-logs?limit=${LOG_PER_PAGE}`;
+        let url = `${API_URL}/admin/server-logs?limit=${LOG_PER_PAGE}`;
         if (cursor) url += `&cursor=${cursor}`;
         if (level)  url += `&level=${level}`;
 
-        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getToken()}` } });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
@@ -569,7 +560,6 @@ function escapeHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ─── SHARED PAGINATION ────────────────────────────────────────────────────────
 function renderPagination(totalPages, current, fnName, container) {
     if (!container) return;
     if (totalPages <= 1) { container.innerHTML = ''; return; }

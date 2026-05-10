@@ -1,8 +1,7 @@
-import { CONFIG } from '/config.js';
+import { apiFetch, token, API_URL } from '/shared/api.js';
 
 const params   = new URLSearchParams(location.search);
 const courseId = params.get('id');
-const token    = () => localStorage.getItem('authToken') || '';
 
 const TYPE_LABELS = {
   multiple_choice: 'ปรนัย',
@@ -11,26 +10,14 @@ const TYPE_LABELS = {
 };
 
 // ── State ────────────────────────────────────────────────
-let problemSets  = [];
-let allExercises = [];
-let activePsId   = null;
+let problemSets   = [];
+let allExercises  = [];
+let activePsId    = null;
 let currentCourse = null;
 let currentUser   = null;
-const answers    = {};   // exerciseId → string
-const checked    = new Set();
-const results    = {};   // exerciseId → true | false | null (free_response)
-
-// ── API ──────────────────────────────────────────────────
-async function apiFetch(path, method = 'GET', body = null) {
-  const opts = { method, headers: { Authorization: `Bearer ${token()}` } };
-  if (body) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  }
-  const res = await fetch(`${CONFIG.API_URL}${path}`, opts);
-  if (res.status === 204) return { success: true };
-  return res.json();
-}
+const answers = {};    // exerciseId → string
+const checked = new Set();
+const results = {};    // exerciseId → true | false | null (free_response)
 
 // ── LaTeX parser ─────────────────────────────────────────
 // Handles $...$, $$...$$, \begin{env}...\end{env},
@@ -44,7 +31,6 @@ function _katex(latex, displayMode, el) {
 }
 
 function _matchBraces(text, start) {
-  // Returns index of closing '}' matching the '{' at start, or -1
   let depth = 0;
   for (let i = start; i < text.length; i++) {
     if (text[i] === '\\') { i++; continue; }
@@ -59,7 +45,6 @@ function _matchEnv(text, start) {
   if (!m) return null;
   const env = m[1];
   let pos = start + m[0].length;
-  // Skip optional [...]
   if (text[pos] === '[') {
     const close = text.indexOf(']', pos);
     if (close !== -1) pos = close + 1;
@@ -91,7 +76,7 @@ function _renderEnv(env, content, container) {
     container.appendChild(el);
 
   } else if (name === 'description') {
-    const dl  = document.createElement('dl');
+    const dl = document.createElement('dl');
     dl.className = 'latex-dl';
     const re = /\\item\[([^\]]*)\]([\s\S]*?)(?=\\item\[|$)/g;
     let m;
@@ -123,7 +108,6 @@ function _renderEnv(env, content, container) {
     container.appendChild(list);
 
   } else {
-    // Unknown: try rendering as display math, fall back to text
     const el = document.createElement('div');
     el.className = 'math-block';
     _katex(`\\begin{${env}}${content}\\end{${env}}`, true, el);
@@ -140,13 +124,11 @@ function _processLatex(text, container) {
 
   while (i < text.length) {
 
-    // \begin{...}...\end{...}
     if (text.startsWith('\\begin{', i)) {
       const env = _matchEnv(text, i);
       if (env) { flush(); _renderEnv(env.env, env.content, container); i = env.end; continue; }
     }
 
-    // $$...$$
     if (text.startsWith('$$', i)) {
       const end = text.indexOf('$$', i + 2);
       if (end !== -1) {
@@ -157,7 +139,6 @@ function _processLatex(text, container) {
       }
     }
 
-    // \[...\]
     if (text.startsWith('\\[', i)) {
       const end = text.indexOf('\\]', i + 2);
       if (end !== -1) {
@@ -168,7 +149,6 @@ function _processLatex(text, container) {
       }
     }
 
-    // $...$
     if (text[i] === '$' && text[i + 1] !== '$') {
       let j = i + 1;
       while (j < text.length) {
@@ -192,42 +172,35 @@ function _processLatex(text, container) {
       }
     }
 
-    // \textbf, \textit, \emph, …
     const cmd = _matchTextCmd(text, i);
     if (cmd) {
       flush();
       const el = document.createElement('span');
-      if (cmd.cmd === 'textbf')                     el.style.fontWeight = '600';
-      else if (cmd.cmd === 'textit' || cmd.cmd === 'emph') el.style.fontStyle = 'italic';
-      else if (cmd.cmd === 'underline')              el.style.textDecoration = 'underline';
-      else if (cmd.cmd === 'texttt')                 el.style.fontFamily = 'monospace';
+      if (cmd.cmd === 'textbf')                              el.style.fontWeight = '600';
+      else if (cmd.cmd === 'textit' || cmd.cmd === 'emph')   el.style.fontStyle = 'italic';
+      else if (cmd.cmd === 'underline')                      el.style.textDecoration = 'underline';
+      else if (cmd.cmd === 'texttt')                         el.style.fontFamily = 'monospace';
       _processLatex(cmd.content, el);
       container.appendChild(el); i = cmd.end; continue;
     }
 
-    // \label{...}, \ref{...}, \nonumber, \begin/end{document} → strip
     const stripM = text.slice(i).match(/^\\(?:label|ref|nonumber)\{[^}]*\}|^\\(?:begin|end)\{document\}/);
     if (stripM) { i += stripM[0].length; continue; }
 
-    // \eqref{...} → "(label)"
     const eqM = text.slice(i).match(/^\\eqref\{([^}]*)\}/);
     if (eqM) { flush(); container.appendChild(document.createTextNode(`(${eqM[1]})`)); i += eqM[0].length; continue; }
 
-    // \hfill → flex spacer
     if (text.startsWith('\\hfill', i)) {
       flush();
       const sp = document.createElement('span'); sp.className = 'latex-hfill';
       container.appendChild(sp); i += 6; continue;
     }
 
-    // \smallskip, \medskip, \bigskip, \par → <br>
     const skipM = text.slice(i).match(/^\\(?:smallskip|medskip|bigskip|par|vspace\{[^}]*\})/);
     if (skipM) { flush(); container.appendChild(document.createElement('br')); i += skipM[0].length; continue; }
 
-    // \noindent → ignore
     if (text.startsWith('\\noindent', i)) { i += 9; continue; }
 
-    // \\ or \newline → <br>
     if (text.startsWith('\\\\', i)) { flush(); container.appendChild(document.createElement('br')); i += 2; continue; }
     if (text.startsWith('\\newline', i)) { flush(); container.appendChild(document.createElement('br')); i += 8; continue; }
 
@@ -242,7 +215,6 @@ function renderLatexText(text, container) {
   _processLatex(text, container);
 }
 
-// Render a standalone LaTeX block (for question_math / solution_math fields)
 function renderMathBlock(latex, displayMode = true) {
   if (!latex || !window.katex) return null;
   const el = document.createElement(displayMode ? 'div' : 'span');
@@ -258,7 +230,6 @@ function buildQuestionCard(ex, num) {
   card.className = 'q-card';
   card.id        = `qcard-${ex.id}`;
 
-  // Header
   const header = document.createElement('div');
   header.className = 'q-card-header';
   header.innerHTML = `
@@ -267,19 +238,16 @@ function buildQuestionCard(ex, num) {
   `;
   card.appendChild(header);
 
-  // Question text — inline LaTeX rendered
   const qText = document.createElement('p');
   qText.className = 'q-question';
   renderLatexText(ex.question, qText);
   card.appendChild(qText);
 
-  // Optional standalone display-math for question
   if (ex.question_math) {
     const mathEl = renderMathBlock(ex.question_math, true);
     if (mathEl) card.appendChild(mathEl);
   }
 
-  // Question image
   if (ex.image_key) {
     const img = document.createElement('img');
     img.className = 'q-image';
@@ -288,18 +256,15 @@ function buildQuestionCard(ex, num) {
     card.appendChild(img);
   }
 
-  // Answer body
   const body = document.createElement('div');
   body.className = 'q-body';
   card.appendChild(body);
 
-  // Feedback area
   const feedback = document.createElement('div');
   feedback.className = 'q-feedback';
   feedback.hidden    = true;
   card.appendChild(feedback);
 
-  // Check button
   const actions  = document.createElement('div');
   actions.className = 'q-actions';
   const checkBtn = document.createElement('button');
@@ -308,10 +273,8 @@ function buildQuestionCard(ex, num) {
   actions.appendChild(checkBtn);
   card.appendChild(actions);
 
-  // Render initial answer area
   renderCardBody(ex, body);
 
-  // If already answered (e.g. PS switched and back), restore state
   if (checked.has(ex.id)) {
     applyAnsweredState(card, ex, body, feedback, checkBtn);
   }
@@ -346,7 +309,6 @@ function renderCardBody(ex, body) {
       radio.addEventListener('change', () => { answers[ex.id] = String(i); });
       label.appendChild(radio);
 
-      // Choice text — support plain string or {text, latex} object
       const choiceText  = typeof choice === 'string' ? choice : (choice.text ?? '');
       const choiceLatex = typeof choice === 'string' ? null   : (choice.latex ?? null);
 
@@ -508,7 +470,7 @@ function buildPsSidebar() {
 }
 
 function updateSidebarProgress(psId) {
-  const ps  = problemSets.find(p => p.id === psId);
+  const ps   = problemSets.find(p => p.id === psId);
   if (!ps) return;
   const done = allExercises.filter(ex => ex.problem_set_id === psId && checked.has(ex.id)).length;
   const pct  = ps.exercise_count > 0 ? Math.round((done / ps.exercise_count) * 100) : 0;
@@ -521,7 +483,7 @@ const _imgCache = {};
 async function loadExerciseImage(imageKey) {
   if (_imgCache[imageKey]) return _imgCache[imageKey];
   try {
-    const res = await fetch(`${CONFIG.API_URL}/assets/${imageKey}`, {
+    const res = await fetch(`${API_URL}/assets/${imageKey}`, {
       headers: { Authorization: `Bearer ${token()}` },
     });
     if (!res.ok) return null;
@@ -534,9 +496,9 @@ async function loadExerciseImage(imageKey) {
 
 // ── PDF export ────────────────────────────────────────────
 function triggerPrint(ps) {
-  document.getElementById('phCourse').textContent = currentCourse?.title ?? '';
-  document.getElementById('phPs').textContent     = ps?.title ?? '';
-  document.getElementById('phAuthor').textContent = ps?.author ?? '';
+  document.getElementById('phCourse').textContent  = currentCourse?.title ?? '';
+  document.getElementById('phPs').textContent      = ps?.title ?? '';
+  document.getElementById('phAuthor').textContent  = ps?.author ?? '';
 
   const name = currentUser
     ? `${currentUser.firstname ?? ''} ${currentUser.lastname ?? ''}`.trim()
@@ -549,7 +511,7 @@ function triggerPrint(ps) {
   window.print();
 }
 
-// ── File preview modal ───────────────────────────────────────
+// ── File preview modal ────────────────────────────────────
 function closePreview() {
   document.getElementById('filePreviewModal').style.display = 'none';
   document.getElementById('previewModalBody').innerHTML = '';
@@ -567,7 +529,7 @@ async function previewFile(apiPath, filename) {
   downloadBtn.onclick = null;
 
   try {
-    const res = await fetch(`${CONFIG.API_URL}${apiPath}`, {
+    const res = await fetch(`${API_URL}${apiPath}`, {
       headers: { 'Authorization': `Bearer ${token()}` },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -607,12 +569,11 @@ async function previewFile(apiPath, filename) {
   }
 }
 
-// ── File download (Authorization header → blob → link) ───────
 async function downloadFile(apiPath, filename, btn) {
   const orig = btn.textContent;
   btn.disabled = true; btn.textContent = '...';
   try {
-    const res = await fetch(`${CONFIG.API_URL}${apiPath}`, {
+    const res = await fetch(`${API_URL}${apiPath}`, {
       headers: { 'Authorization': `Bearer ${token()}` },
     });
     if (!res.ok) {
@@ -648,14 +609,14 @@ async function initSyllabus(course, isAdmin) {
         </div>
       </div>
     `;
-    const dlBtn = document.createElement('button');
-    dlBtn.className = 'syllabus-dl-btn';
-    dlBtn.textContent = 'ดาวน์โหลด';
     const sylSafePath = course.syllabus_key.split('/').map(encodeURIComponent).join('/');
     const sylFilename  = course.syllabus_key.split('/').pop() || 'syllabus';
+    const dlBtn = document.createElement('button');
+    dlBtn.className   = 'syllabus-dl-btn';
+    dlBtn.textContent = 'ดาวน์โหลด';
     dlBtn.addEventListener('click', () => downloadFile(`/skdrive/${sylSafePath}`, sylFilename, dlBtn));
     const prevBtn = document.createElement('button');
-    prevBtn.className = 'syllabus-prev-btn';
+    prevBtn.className   = 'syllabus-prev-btn';
     prevBtn.textContent = 'ดูตัวอย่าง';
     prevBtn.addEventListener('click', () => previewFile(`/skdrive/${sylSafePath}`, sylFilename));
     const actions = section.querySelector('.syllabus-row-actions');
@@ -689,10 +650,10 @@ async function initSyllabus(course, isAdmin) {
       const label = section.querySelector('label');
       label.textContent = 'กำลังอัปโหลด...';
       try {
-        const res = await fetch(`${CONFIG.API_URL}/courses/${courseId}/syllabus`, {
-          method: 'PUT',
+        const res = await fetch(`${API_URL}/courses/${courseId}/syllabus`, {
+          method:  'PUT',
           headers: { 'Authorization': `Bearer ${token()}`, 'Content-Type': file.type },
-          body: file,
+          body:    file,
         });
         const data = await res.json();
         if (data.success) initSyllabus({ ...course, syllabus_key: data.syllabus_key }, isAdmin);
@@ -711,12 +672,10 @@ function loadPsQuestions(psId) {
   const ps          = problemSets.find(p => p.id === psId);
   const psExercises = allExercises.filter(ex => ex.problem_set_id === psId);
 
-  // Update sidebar active state
   document.querySelectorAll('.ps-item').forEach(li => li.classList.remove('active'));
   const activeItem = document.querySelector(`.ps-item[data-ps-id="${psId}"]`);
   if (activeItem) activeItem.classList.add('active');
 
-  // Show panel header
   const panelHeader = document.getElementById('qsPanelHeader');
   panelHeader.hidden = false;
   document.getElementById('qsPanelTitle').textContent = ps?.title ?? '';
@@ -724,7 +683,6 @@ function loadPsQuestions(psId) {
   document.getElementById('qsEmpty').hidden = true;
   document.getElementById('printBtn').onclick = () => triggerPrint(ps);
 
-  // Build stacked question cards
   const container = document.getElementById('questionsContainer');
   container.innerHTML = '';
 
@@ -783,7 +741,6 @@ async function init() {
   initSyllabus(course, currentUser?.role === 'admin');
   buildPsSidebar();
 
-  // Auto-select first problem set
   if (problemSets.length > 0) {
     loadPsQuestions(problemSets[0].id);
   }
