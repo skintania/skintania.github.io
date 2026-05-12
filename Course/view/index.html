@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Skintania — Course</title>
+
+  <style>body { display: none }</style>
+
+  <script type="module" src="/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/Template/style.css">
+  <link rel="stylesheet" href="/Course/view/style.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
+
+  <script type="module" src="/Template/component.js" defer></script>
+  <script type="module" src="/Course/view/loadView.js" defer></script>
+</head>
+
+<body>
+  <comment-widget></comment-widget>
+
+  <main class="wrap view-wrap">
+    <site-header page-title="Course" page-desc="กำลังโหลด..."></site-header>
+
+    <div class="view-layout">
+
+      <!-- ── Left: player + info ── -->
+      <div class="player-col">
+
+        <div id="playerWrap" class="player-wrap">
+
+          <!-- Placeholder (before any clip selected) -->
+          <div class="player-placeholder" id="playerPlaceholder">
+            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="1" opacity="0.25">
+              <polygon points="5,3 19,12 5,21"></polygon>
+            </svg>
+            <p>เลือกคลิปจากรายการ →</p>
+          </div>
+
+          <!-- Video element -->
+          <video id="videoPlayer" playsinline webkit-playsinline disablepictureinpicture></video>
+
+          <!-- YouTube player container -->
+          <div id="ytPlayer" hidden></div>
+
+          <!-- Double-tap indicators (mobile) -->
+          <div class="dbl-tap left" id="dblLeft">
+            <div class="dbl-tap-text"><span>◀◀</span><span>10 วินาที</span></div>
+          </div>
+          <div class="dbl-tap right" id="dblRight">
+            <div class="dbl-tap-text"><span>▶▶</span><span>10 วินาที</span></div>
+          </div>
+
+          <!-- Custom controls -->
+          <div class="video-controls" id="videoControls">
+            <div class="seek-wrap" id="seekWrap">
+              <div class="seek-preview" id="seekPreview">
+                <video id="previewVideo" preload="metadata" muted playsinline></video>
+                <span id="previewTime"></span>
+              </div>
+              <input type="range" id="seekBar" min="0" max="100" value="0" step="0.1">
+            </div>
+
+            <div class="controls-row">
+              <div class="controls-left">
+
+                <button class="ctrl-btn" id="playBtn" title="Play / Pause">
+                  <svg id="playIcon" viewBox="0 0 24 24" width="20" height="20" fill="white"><polygon points="5,3 19,12 5,21"/></svg>
+                  <svg id="pauseIcon" viewBox="0 0 24 24" width="20" height="20" fill="white" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                </button>
+
+                <button class="ctrl-btn" id="skipBackBtn" title="ย้อนกลับ 10 วินาที">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+                    <path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/>
+                    <text x="12" y="15.5" text-anchor="middle" font-size="5.5" font-family="sans-serif" font-weight="bold" fill="white">10</text>
+                  </svg>
+                </button>
+
+                <button class="ctrl-btn" id="skipFwdBtn" title="ข้ามไป 10 วินาที">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+                    <path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/>
+                    <text x="12" y="15.5" text-anchor="middle" font-size="5.5" font-family="sans-serif" font-weight="bold" fill="white">10</text>
+                  </svg>
+                </button>
+
+                <div class="volume-wrap">
+                  <button class="ctrl-btn" id="muteBtn" title="Mute">
+                    <svg id="volOnIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <svg id="volOffIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="display:none"><polygon points="11,5 6,9 2,9 2,15 6,15 11,19"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                  </button>
+                  <input type="range" id="volumeBar" min="0" max="1" step="0.05" value="1">
+                </div>
+
+                <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+              </div>
+
+              <div class="controls-right">
+                <div class="speed-wrap">
+                  <button class="ctrl-btn speed-toggle-btn" id="speedToggle" title="Playback speed">1×</button>
+                  <div class="speed-menu" id="speedMenu">
+                    <button class="speed-opt" data-speed="0.5">0.5×</button>
+                    <button class="speed-opt" data-speed="0.75">0.75×</button>
+                    <button class="speed-opt active" data-speed="1">1×</button>
+                    <button class="speed-opt" data-speed="1.25">1.25×</button>
+                    <button class="speed-opt" data-speed="1.5">1.5×</button>
+                    <button class="speed-opt" data-speed="2">2×</button>
+                  </div>
+                </div>
+
+                <div class="quality-wrap" id="qualityWrap" hidden>
+                  <button class="ctrl-btn quality-toggle-btn" id="qualityToggle" title="Video quality">Auto</button>
+                  <div class="quality-menu" id="qualityMenu">
+                    <button class="quality-opt" data-quality="hd1080">1080p</button>
+                    <button class="quality-opt" data-quality="hd720">720p</button>
+                    <button class="quality-opt" data-quality="large">480p</button>
+                    <button class="quality-opt" data-quality="medium">360p</button>
+                    <button class="quality-opt" data-quality="small">240p</button>
+                    <button class="quality-opt active" data-quality="auto">Auto</button>
+                  </div>
+                </div>
+
+                <button class="ctrl-btn" id="fullscreenBtn" title="Fullscreen">
+                  <svg id="fsEnterIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                  <svg id="fsExitIcon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" style="display:none"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /playerWrap -->
+
+        <!-- Video info below player -->
+        <div class="video-info">
+          <h1 id="nowPlayingTitle" class="video-title">เลือกคลิปเพื่อเริ่มเรียน</h1>
+          <div class="video-meta-row">
+            <div class="channel-block">
+              <div class="channel-avatar">SK</div>
+              <div class="channel-text">
+                <span class="channel-name">Skintania</span>
+                <span class="channel-sub" id="courseNameSub"></span>
+              </div>
+            </div>
+            <p class="video-date" id="courseMeta"></p>
+          </div>
+          <p class="video-desc" id="courseDesc"></p>
+        </div>
+
+        <!-- ── Tabbed section ── -->
+        <section class="tabs-section">
+
+          <!-- Tab bar -->
+          <div class="tab-bar" role="tablist">
+            <button class="tab-btn active" data-tab="comments" role="tab">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+              ความคิดเห็น
+            </button>
+            <button class="tab-btn" data-tab="files" role="tab">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              สไลด์ / เอกสาร
+              <span class="tab-badge" id="filesBadge" hidden></span>
+            </button>
+            <button class="tab-btn" data-tab="qa" role="tab">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+              ถามตอบ
+            </button>
+          </div>
+
+          <!-- Tab: Comments -->
+          <div class="tab-panel active" id="tab-comments" role="tabpanel">
+            <div class="comment-form">
+              <div class="comment-input-row">
+                <div class="comment-avatar-sm" id="myAvatar">?</div>
+                <div class="comment-input-wrap">
+                  <textarea id="commentInput" class="comment-textarea" placeholder="แสดงความคิดเห็น..." rows="2"></textarea>
+                  <div class="comment-actions" id="commentActions" hidden>
+                    <button class="comment-cancel-btn" id="commentCancel">ยกเลิก</button>
+                    <button class="btn comment-submit-btn" id="commentSubmit">โพสต์</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="commentList" class="comment-list"></div>
+          </div>
+
+          <!-- Tab: Slides / Docs -->
+          <div class="tab-panel" id="tab-files" role="tabpanel">
+            <div id="courseDocs" class="course-docs-section"></div>
+            <div id="clipSlidesHeader" class="clip-slides-header" hidden>
+              <span>เอกสารประกอบคลิปนี้</span>
+            </div>
+            <div id="slideList" class="slide-list">
+              <div class="tab-coming-soon"><p>เลือกคลิปเพื่อดูเอกสาร</p></div>
+            </div>
+          </div>
+
+          <!-- Tab: Ask AI -->
+          <div class="tab-panel" id="tab-qa" role="tabpanel">
+            <div class="ask-ai-panel">
+              <p class="ask-ai-hint">จับภาพจากวิดีโอแล้วถาม AI เกี่ยวกับเนื้อหาในภาพ</p>
+              <div class="ask-ai-frame-section">
+                <canvas id="aiCanvas" class="ai-canvas" hidden></canvas>
+                <button class="btn capture-btn" id="captureFrameBtn">📸 จับภาพจากวิดีโอ</button>
+              </div>
+              <textarea id="aiQuestion" class="ai-question-input" placeholder="ถามอะไรก็ได้... (ไม่จำเป็นต้องระบุ)" rows="3"></textarea>
+              <div class="ask-ai-bottom-row">
+                <button class="btn" id="askAiBtn">ถามเลย</button>
+                <span class="ai-usage" id="aiUsage"></span>
+              </div>
+              <div class="ai-answer-box" id="aiAnswer" hidden></div>
+            </div>
+          </div>
+
+        </section>
+
+      </div><!-- /player-col -->
+
+      <!-- ── Right: playlist + other courses ── -->
+      <div class="sidebar-col">
+
+        <aside class="playlist-col">
+
+          <div class="playlist-header" id="playlistHeader">
+            <div class="playlist-header-inner">
+              <p class="playlist-label">รายการเรียน</p>
+              <h2 class="playlist-title" id="playlistTitle">—</h2>
+              <p class="playlist-sub" id="playlistSub"></p>
+            </div>
+          </div>
+
+          <ul id="clipList" class="clip-list">
+            <li class="clip-skeleton"></li>
+            <li class="clip-skeleton"></li>
+            <li class="clip-skeleton"></li>
+            <li class="clip-skeleton"></li>
+            <li class="clip-skeleton"></li>
+          </ul>
+
+          <p id="clipEmpty" class="clip-empty" hidden>ยังไม่มีคลิปในคอร์สนี้</p>
+          <button id="loadMoreBtn" class="btn load-more-btn" hidden>โหลดเพิ่ม</button>
+
+        </aside>
+
+        <!-- ── Other courses directly below playlist ── -->
+        <div class="other-courses-col" id="otherCoursesCol">
+          <p class="other-courses-label">คอร์สอื่นๆ</p>
+          <div id="otherCoursesList" class="other-courses-list">
+            <!-- populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+    <!-- File Preview Modal -->
+    <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
+      <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
+      <div class="preview-modal-container">
+        <div class="preview-modal-header">
+          <span id="previewFileName"></span>
+          <div class="preview-modal-actions">
+            <button id="previewDownloadBtn">⬇ ดาวน์โหลด</button>
+            <button id="previewCloseBtn" aria-label="Close">✕</button>
+          </div>
+        </div>
+        <div id="previewModalBody" class="preview-modal-body"></div>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>

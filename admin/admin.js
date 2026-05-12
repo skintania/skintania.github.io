@@ -1,493 +1,571 @@
-import { CONFIG } from '/config.js';
+import { token as getToken, API_URL } from '/shared/api.js';
+
+const AUDIT_PER_PAGE = 30;
+let allAuditLogs = [];
+let auditPage = 1;
 
 document.addEventListener('DOMContentLoaded', async () => {
-
     const isAdmin = await checkAdminAccess();
-
-    if (!isAdmin) return; 
-
-    document.body.style.display = ''; 
+    if (!isAdmin) return;
+    document.body.style.display = 'block';
 
     setupNavigation();
-    setupR2Manager();
-    setupD1Manager();
-
     loadAdminStats();
-    loadUsersList();
-    loadSystemLogs();
+    loadWorkerStats();
+    loadConfig();
+    loadAuditLog();
+    loadServerLogs();
 
-    const refreshLogsBtn = document.getElementById('refreshLogsBtn');
-    if (refreshLogsBtn) {
-        refreshLogsBtn.addEventListener('click', loadSystemLogs);
-    }
+    document.getElementById('workerStatsDate')?.addEventListener('change', e => loadWorkerStats(e.target.value));
+    document.getElementById('saveConfigBtn')?.addEventListener('click', saveConfig);
+    document.getElementById('reloadConfigBtn')?.addEventListener('click', loadConfig);
+    document.getElementById('refreshLogsBtn')?.addEventListener('click', () => loadServerLogs());
+    document.getElementById('logLevelFilter')?.addEventListener('change', () => loadServerLogs());
 });
 
-// ==========================================
-// 🛡️ ฟังก์ชันเช็คสิทธิ์แอดมิน (Gatekeeper)
-// ==========================================
 async function checkAdminAccess() {
-    const token = localStorage.getItem("authToken");
-
-    // 1. ถ้าไม่มี Token เลย แปลว่ายังไม่ได้ Login ให้เตะไปหน้า Login
-    if (!token) {
-        window.location.href = '/login/'; // เปลี่ยนเป็นหน้า Login ของคุณ
-        return false;
-    }
-
+    if (!getToken()) { window.location.href = '/login/'; return false; }
     try {
-        // 2. ลองยิงไปที่ API ของ Admin (ใช้ /admin/stats เป็นตัวทดสอบ)
-        const response = await fetch(`${CONFIG.API_URL}/admin/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-
-        // 3. ถ้า Backend ตอบกลับมาเป็น 403 Forbidden (ไม่ใช่ Admin)
-        if (response.status === 403) {
-            window.location.href = '/'; // เตะกลับไปหน้า Homepage
-            return false;
-        }
-
-        // ถ้า Token หมดอายุ หรือพัง (401 Unauthorized)
-        if (response.status === 401) {
-            localStorage.removeItem("authToken");
-            window.location.href = '/login/';
-            return false;
-        }
-
+        if (res.status === 403) { window.location.href = '/'; return false; }
+        if (res.status === 401) { localStorage.removeItem("authToken"); window.location.href = '/login/'; return false; }
         return true;
-
-    } catch (error) {
-        console.error("Auth Check Error:", error);
-        alert("❌ เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์");
+    } catch {
         window.location.href = '/';
         return false;
     }
 }
-/* ==========================================
-   1. NAVIGATION SYSTEM (ระบบสลับหน้าต่าง)
-   ========================================== */
+
 function setupNavigation() {
-    const navItems = document.querySelectorAll('.nav-item[data-section]');
-    const contentSections = document.querySelectorAll('.content-section');
+    const navItems = document.querySelectorAll('.admin-nav-item[data-section]');
+    const sections = document.querySelectorAll('.admin-section');
 
     navItems.forEach(item => {
-        item.addEventListener('click', function (e) {
-            e.preventDefault();
-            const targetSectionId = 'section-' + this.getAttribute('data-section');
-            const targetSection = document.getElementById(targetSectionId);
-
-            if (targetSection) {
-                // ล้างคลาส active ออกจากเมนูและเนื้อหาทั้งหมด
-                navItems.forEach(nav => nav.classList.remove('active'));
-                contentSections.forEach(section => section.classList.remove('active'));
-
-                // ใส่คลาส active ให้ตัวที่ถูกคลิก
-                this.classList.add('active');
-                targetSection.classList.add('active');
-            }
+        item.addEventListener('click', () => {
+            const id = 'section-' + item.getAttribute('data-section');
+            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            navItems.forEach(n => n.classList.remove('active'));
+            item.classList.add('active');
         });
     });
+
+    window.addEventListener('scroll', () => {
+        let current = '';
+        sections.forEach(s => {
+            if (pageYOffset >= s.offsetTop - s.clientHeight / 3)
+                current = s.id.replace('section-', '');
+        });
+        navItems.forEach(n => n.classList.toggle('active', n.getAttribute('data-section') === current));
+    });
+
+    window.dispatchEvent(new Event('scroll'));
 }
 
-/* ==========================================
-   2. DASHBOARD STATS (ภาพรวมระบบ)
-   ========================================== */
+// ─── OVERVIEW STATS ───────────────────────────────────────────────────────────
 async function loadAdminStats() {
     try {
-        const token = localStorage.getItem("authToken");
-        const response = await fetch(`${CONFIG.API_URL}/admin/stats`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/admin/stats`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-        
-        if (!response.ok) throw new Error("Failed to load stats");
-        const data = await response.json();
+        if (!res.ok) throw new Error();
+        const data = await res.json();
 
-        // อัปเดตตัวเลขหน้า Dashboard
-        document.getElementById('stat-total-users').innerText = data.total_users || '0';
-        document.getElementById('stat-verified-users').innerText = data.verified_users || '0';
-        document.getElementById('stat-storage').innerText = data.storage_used || '0 MB';
-
-    } catch (error) {
-        console.error("Stats Error:", error);
-        document.getElementById('stat-total-users').innerText = 'N/A';
-        document.getElementById('stat-verified-users').innerText = 'N/A';
-        document.getElementById('stat-storage').innerText = 'N/A';
+        const s = data.stats;
+        document.getElementById('stat-total-users').textContent = s.totalUsers         ?? '0';
+        document.getElementById('stat-verified').textContent    = s.verifiedUsers      ?? '0';
+        document.getElementById('stat-banned').textContent      = s.bannedUsers        ?? '0';
+        document.getElementById('stat-osk').textContent         = s.oskCount           ?? '0';
+        document.getElementById('stat-events').textContent      = s.totalEvents        ?? '0';
+        document.getElementById('stat-joins').textContent       = s.totalActivityJoins ?? '0';
+    } catch {
+        ['stat-total-users','stat-verified','stat-banned','stat-osk','stat-events','stat-joins']
+            .forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'N/A'; });
     }
 }
 
-/* ==========================================
-   3. USER MANAGEMENT (จัดการผู้ใช้)
-   ========================================== */
-async function loadUsersList() {
+// ─── WORKER STATS ────────────────────────────────────────────────────────────
+async function loadWorkerStats(date = null) {
+    const wsIds = ['ws-requests', 'ws-errors', 'ws-subrequests'];
+
+    const dateInput = document.getElementById('workerStatsDate');
+    if (!date) {
+        date = new Date().toISOString().split('T')[0];
+        if (dateInput) dateInput.value = date;
+    }
+
+    wsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '...'; });
+
     try {
-        const token = localStorage.getItem("authToken");
-        const response = await fetch(`${CONFIG.API_URL}/admin/users`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/admin/stats/worker?date=${date}`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
-        const data = await response.json();
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
 
-        if (data.success) {
-            const tbody = document.getElementById('usersTableBody');
-            if (!tbody) return; 
-            
-            tbody.innerHTML = ''; // เคลียร์ของเก่า
-
-            data.users.forEach(user => {
-                const tr = document.createElement('tr');
-                
-                // 1. แถวหลัก (ใช้โค้ดและสีที่คุณกำหนดมาเป๊ะๆ 🎨)
-                tr.innerHTML = `
-                    <td>${user.id}</td>
-                    <td><strong>${user.username}</strong></td>
-                    <td>${user.email}</td>
-                    <td>${user.osk_gen || '-'}</td>
-                    <td>
-                        <span style="padding: 4px 8px; border-radius: 12px; font-size: 12px; 
-                              background: ${user.role === 'admin' ? 'rgba(239, 68, 188, 0.2)' : 'rgba(87, 194, 243, 0.6)'}; 
-                              color: ${user.role === 'admin' ? '#fca5a5' : '#cbd5e1'}; 
-                              border: 1px solid ${user.role === 'admin' ? 'rgba(224, 55, 196, 0.3)' : 'rgba(70, 211, 253, 0.9)'};">
-                            ${user.role === 'admin' ? 'Admin' : 'User'}
-                        </span>
-                        
-                        ${user.is_banned === 1 ? `
-                        <span style="margin-left: 8px; padding: 4px 8px; border-radius: 12px; font-size: 12px; 
-                              background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-                            🚫 Banned
-                        </span>
-                        ` : ''}
-                    </td>
-                    <td>
-                        <button class="btn-toggle-detail" onclick="toggleUserDetails(${user.id}, this)">
-                            ▼ ข้อมูล
-                        </button>
-                    </td>
-                `;
-
-                // 2. แถวรายละเอียด (โชว์ตอนกดปุ่ม ▼ ข้อมูล)
-                const detailTr = document.createElement('tr');
-                detailTr.id = `user-detail-${user.id}`;
-                detailTr.className = 'user-detail-row';
-                detailTr.style.display = 'none'; 
-
-                const defaultAvatar = `https://ui-avatars.com/api/?name=${user.username || 'U'}&background=random&color=fff&size=128`; 
-
-                let profileImg = defaultAvatar;
-
-                // เช็คการโหลดรูป Profile (ถ้าไม่มีให้ใช้ Default)
-                profileImg = '/Assest/default-avatar.png'; 
-                if (user.profile_url) {
-                    profileImg = user.profile_url.startsWith('http') 
-                        ? user.profile_url 
-                        : `${CONFIG.API_URL}/${user.profile_url}`;
-                }
-
-                detailTr.innerHTML = `
-                    <td colspan="6" style="padding: 0; border: none; background: transparent;">
-                        <div class="user-detail-card">
-                            <div>
-                                <img src="${profileImg}" alt="Avatar" class="user-detail-avatar" onerror="this.src='${defaultAvatar}'">
-                            </div>
-                            <div class="user-info-group">
-                                <p><strong>ชื่อ-นามสกุล:</strong> ${user.firstname || '-'} ${user.lastname || '-'}</p>
-                                <p><strong>OSK Gen:</strong> ${user.osk_gen || '-'}</p>
-                                <p><strong>OSK ID:</strong> ${user.osk_id || '-'}</p>
-                            </div>
-                            <div class="user-info-group">
-                                <p><strong>รหัสนิสิต:</strong> ${user.student_id || '-'}</p>
-                                <p><strong>สถานะการยืนยัน:</strong> 
-                                    ${user.is_verified 
-                                        ? '<span style="color:#34d399;">ยืนยันอีเมลแล้ว</span>' 
-                                        : '<span style="color:#fbbf24;">รอการยืนยัน</span>'}
-                                </p>
-                                <p><strong>วันที่สมัคร:</strong> ${user.created_at ? new Date(user.created_at).toLocaleDateString('th-TH') : '-'}</p>
-                            </div>
-                            
-                            <div class="user-detail-footer">
-                                ${user.is_banned === 1 ? `
-                                    <button class="btn-ban" style="background: rgba(34, 197, 94, 0.1); color: #22c55e; border-color: rgba(34, 197, 94, 0.3);" 
-                                            onclick="unbanUser(${user.id}, '${user.username}')">
-                                        <i class="fa-solid fa-check"></i> ปลดแบน
-                                    </button>
-                                ` : `
-                                    <button class="btn-ban" onclick="banUser(${user.id}, '${user.username}')">
-                                        <i class="fa-solid fa-ban"></i> แบนผู้ใช้
-                                    </button>
-                                `}
-                            </div>
-
-                        </div>
-                    </td>
-                `;
-
-                tbody.appendChild(tr);
-                tbody.appendChild(detailTr);
-            });
-        }
-    } catch (error) {
-        console.error("Load users error:", error);
+        document.getElementById('ws-requests').textContent    = data.requests    != null ? data.requests.toLocaleString()    : '—';
+        document.getElementById('ws-errors').textContent      = data.errors      != null ? data.errors.toLocaleString()      : '—';
+        document.getElementById('ws-subrequests').textContent = data.subrequests != null ? data.subrequests.toLocaleString() : '—';
+    } catch (err) {
+        console.error('Worker stats error:', err.message);
+        wsIds.forEach(id => { const el = document.getElementById(id); if (el) el.textContent = 'N/A'; });
     }
 }
 
-window.toggleUserDetails = function(userId, btnElement) {
-    const detailRow = document.getElementById(`user-detail-${userId}`);
+// ─── SERVER CONFIG ────────────────────────────────────────────────────────────
+const TOGGLE_FIELDS = [
+    { id: 'cfg-server-close', key: 'SERVER_CLOSE' },
+    { id: 'cfg-registration',  key: 'REGISTRATION_OPEN' },
+    { id: 'cfg-token-check',   key: 'ENABLE_TOKEN_CHECK' },
+    { id: 'cfg-rate-limit',    key: 'RATE_LIMIT_ENABLED' },
+];
+const NUMBER_FIELDS = [
+    { id: 'cfg-max-reg',        key: 'MAX_REGISTRATIONS' },
+    { id: 'cfg-otp-exp',        key: 'OTP_EXPIRES_MINUTES' },
+    { id: 'cfg-otp-cooldown',   key: 'OTP_RESEND_COOLDOWN_SECONDS' },
+    { id: 'cfg-jwt-days',       key: 'JWT_EXPIRES_DAYS' },
+    { id: 'cfg-rl-requests',    key: 'RATE_LIMIT_REQUESTS' },
+    { id: 'cfg-rl-window',      key: 'RATE_LIMIT_WINDOW_SECONDS' },
+    { id: 'cfg-skdrive-max-dl', key: 'SKDRIVE_MAX_DOWNLOAD_MB' },
+    { id: 'cfg-req-limit-day',  key: 'REQUEST_LIMIT_PERDAY' },
+];
 
-    if (detailRow.style.display === 'none') {
-        detailRow.style.display = 'table-row';
-        btnElement.innerHTML = '▲ ปิด';
-        btnElement.style.background = 'rgba(255, 255, 255, 0.1)';
-        btnElement.style.color = '#e2e8f0';
-        btnElement.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-    } else {
-        detailRow.style.display = 'none';
-        btnElement.innerHTML = '▼ ข้อมูล';
-        btnElement.style.background = 'rgba(56, 189, 248, 0.1)';
-        btnElement.style.color = '#38bdf8';
-        btnElement.style.borderColor = 'rgba(56, 189, 248, 0.2)';
-    }
-}
-
-// ฟังก์ชันเปิดหน้าต่างแก้ไข/แบนผู้ใช้ (แปะไว้ที่ Window Object เพื่อให้เรียกจาก HTML ได้)
-window.editUser = function(id) {
-    alert(`เตรียมเปิดหน้าแก้ไขข้อมูล User ID: ${id}`);
-    // TODO: ใส่ Logic ดึงข้อมูล User นี้มาแสดงใน Modal
+const CONFIG_LABELS = {
+    SERVER_CLOSE:                'Server Close',
+    REGISTRATION_OPEN:           'Registration Open',
+    ENABLE_TOKEN_CHECK:          'Token Check',
+    RATE_LIMIT_ENABLED:          'Rate Limiting',
+    MAX_REGISTRATIONS:           'Max Registrations',
+    OTP_EXPIRES_MINUTES:         'OTP Expiry',
+    OTP_RESEND_COOLDOWN_SECONDS: 'OTP Resend Cooldown',
+    JWT_EXPIRES_DAYS:            'JWT Expiry',
+    RATE_LIMIT_REQUESTS:         'Rate Limit Requests',
+    RATE_LIMIT_WINDOW_SECONDS:   'Rate Limit Window',
+    SKDRIVE_MAX_DOWNLOAD_MB:     'SKDrive Max Download',
+    REQUEST_LIMIT_PERDAY:        'Request Limit Per Day',
 };
 
-window.banUser = async function(userId, username) {
-    // 1. ถามเพื่อความชัวร์ ป้องกันการมือลั่น
-    const confirmBan = confirm(`⚠️ คุณแน่ใจหรือไม่ว่าต้องการแบนผู้ใช้งาน: ${username} ?\nการกระทำนี้อาจทำให้ผู้ใช้ไม่สามารถเข้าสู่ระบบได้อีก`);
-    
-    if (!confirmBan) return; // ถ้ายกเลิก ก็จบการทำงาน
+let lastSavedConfig = {};
 
+async function loadConfig() {
     try {
-        const token = localStorage.getItem("authToken");
-        
-        // 2. ยิง API ไปที่ Backend ของคุณ (ปรับ URL ให้ตรงกับที่คุณออกแบบไว้นะครับ)
-        const response = await fetch(`${CONFIG.API_URL}/admin/users/${userId}/ban`, {
-            method: 'POST', // หรือ PUT, DELETE ตามที่คุณเขียนไว้ใน Backend
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
+        const res = await fetch(`${API_URL}/admin/config`, {
+            headers: { 'Authorization': `Bearer ${getToken()}` }
         });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const cfg = data.config || data;
 
-        const data = await response.json();
+        lastSavedConfig = { ...cfg };
 
-        if (response.ok && data.success) {
-            alert(`✅ ทำการแบนผู้ใช้งาน ${username} เรียบร้อยแล้ว`);
-            // โหลดตารางใหม่เพื่ออัปเดตข้อมูลล่าสุด
-            loadUsersList(); 
-        } else {
-            alert(`❌ เกิดข้อผิดพลาด: ${data.message || 'ไม่สามารถแบนผู้ใช้ได้'}`);
-        }
-    } catch (error) {
-        console.error("Ban User Error:", error);
-        alert("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
+        TOGGLE_FIELDS.forEach(({ id, key }) => {
+            const el = document.getElementById(id);
+            if (el) el.checked = !!cfg[key];
+        });
+        NUMBER_FIELDS.forEach(({ id, key }) => {
+            const el = document.getElementById(id);
+            if (el && cfg[key] !== undefined) el.value = cfg[key];
+        });
+    } catch {
+        console.error("Failed to load config");
     }
 }
 
-window.unbanUser = async function(userId, username) {
-    // 1. ถามเพื่อความชัวร์
-    const confirmUnban = confirm(`✅ คุณแน่ใจหรือไม่ว่าต้องการ "ปลดแบน" ผู้ใช้งาน: ${username} ?\nผู้ใช้จะสามารถกลับมาเข้าสู่ระบบได้ตามปกติ`);
-    
-    if (!confirmUnban) return; 
-
-    try {
-        const token = localStorage.getItem("authToken");
-        
-        // 2. ยิง API ไปที่ Backend เพื่อปลดแบน
-        const response = await fetch(`${CONFIG.API_URL}/admin/users/${userId}/unban`, {
-            method: 'POST', 
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            alert(`✅ ทำการปลดแบนผู้ใช้งาน ${username} เรียบร้อยแล้ว`);
-            // โหลดตารางใหม่เพื่อให้ปุ่มสลับกลับเป็นปุ่มแบนสีแดง
-            loadUsersList(); 
-        } else {
-            alert(`❌ เกิดข้อผิดพลาด: ${data.message || 'ไม่สามารถปลดแบนผู้ใช้ได้'}`);
-        }
-    } catch (error) {
-        console.error("Unban User Error:", error);
-        alert("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
-    }
-}
-/* ==========================================
-   4. SYSTEM LOGS (บันทึกการทำงาน)
-   ========================================== */
-async function loadSystemLogs() {
-    const terminal = document.getElementById('logTerminal');
-    if (!terminal) return;
-
-    terminal.innerHTML = '<div class="log-line info">Fetching latest logs...</div>';
-
-    try {
-        const token = localStorage.getItem("authToken");
-        const response = await fetch(`${CONFIG.API_URL}/admin/logs`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!response.ok) throw new Error("Failed to load logs");
-        const data = await response.json();
-        const logs = data.logs || []; 
-
-        terminal.innerHTML = ''; // ล้างของเก่า
-
-        if (logs.length === 0) {
-            terminal.innerHTML = '<div class="log-line success">✅ No recent error or warning logs found.</div>';
-            return;
-        }
-
-        logs.forEach(log => {
-            const type = log.type || 'info'; 
-            const div = document.createElement('div');
-            div.className = `log-line ${type}`;
-            div.innerHTML = `[${log.timestamp || new Date().toISOString()}] <strong>${type.toUpperCase()}:</strong> ${log.message}`;
-            terminal.appendChild(div);
-        });
-
-        // เลื่อน Scroll ไปล่างสุดของหน้าต่าง Terminal
-        terminal.scrollTop = terminal.scrollHeight;
-
-    } catch (error) {
-        terminal.innerHTML += `<div class="log-line error">[System Error] ❌ ${error.message}</div>`;
-    }
-}
-
-/* ==========================================
-   5. R2 STORAGE MANAGER (อัปโหลดไฟล์ลง Cloudflare)
-   ========================================== */
-function setupR2Manager() {
-    const uploadZone = document.getElementById('r2UploadZone');
-    const fileInput = document.getElementById('r2FileInput');
-
-    if (!uploadZone || !fileInput) return;
-
-    // กดที่กล่องเพื่อเลือกไฟล์
-    uploadZone.addEventListener('click', () => fileInput.click());
-
-    // เมื่อเลือกไฟล์เสร็จ -> ทำการอัปโหลด
-    fileInput.addEventListener('change', async (e) => {
-        const files = e.target.files;
-        if (files.length === 0) return;
-
-        await uploadToR2(files[0]);
-        fileInput.value = ''; // รีเซ็ตค่า Input
+function buildPayload() {
+    const payload = {};
+    TOGGLE_FIELDS.forEach(({ id, key }) => {
+        const el = document.getElementById(id);
+        if (el) payload[key] = el.checked;
     });
-}
-
-async function uploadToR2(file) {
-    try {
-        const token = localStorage.getItem("authToken");
-        const formData = new FormData();
-        formData.append('file', file);
-
-        // เปลี่ยนไอคอนให้หมุนติ้วๆ
-        const uploadIcon = document.querySelector('#r2UploadZone i');
-        if (uploadIcon) uploadIcon.className = "fa-solid fa-spinner fa-spin text-pink";
-
-        const response = await fetch(`${CONFIG.API_URL}/admin/r2/upload`, {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${token}` },
-            body: formData
-        });
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error || "Upload failed");
-
-        alert(`✅ อัปโหลดไฟล์ ${file.name} สำเร็จ!`);
-        // TODO: เรียกฟังก์ชันรีเฟรชรายการไฟล์ R2 (ถ้ามี)
-
-    } catch (error) {
-        alert("❌ อัปโหลดล้มเหลว: " + error.message);
-    } finally {
-        // คืนค่าไอคอนเดิม
-        const uploadIcon = document.querySelector('#r2UploadZone i');
-        if (uploadIcon) uploadIcon.className = "fa-solid fa-file-arrow-up";
-    }
-}
-
-/* ==========================================
-   6. D1 DATABASE MANAGER (รันคำสั่ง SQL)
-   ========================================== */
-function setupD1Manager() {
-    const runBtn = document.getElementById('runQueryBtn');
-    const queryInput = document.getElementById('sqlQueryInput');
-    const resultArea = document.querySelector('.query-result-area');
-
-    if (!runBtn || !queryInput) return;
-
-    runBtn.addEventListener('click', async () => {
-        const query = queryInput.value.trim();
-        if (!query) {
-            alert("⚠️ กรุณาพิมพ์คำสั่ง SQL ก่อนรัน");
-            return;
-        }
-
-        if (!confirm("🚨 คำเตือน: คุณกำลังรันคำสั่ง SQL ลงฐานข้อมูลหลัก ยืนยันใช่หรือไม่?")) return;
-
-        try {
-            runBtn.disabled = true;
-            runBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running...';
-            resultArea.innerHTML = '<div style="text-align:center; color: var(--accent-blue);">กำลังดึงข้อมูล...</div>';
-
-            const token = localStorage.getItem("authToken");
-            const response = await fetch(`${CONFIG.API_URL}/admin/d1/query`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ query: query })
-            });
-
-            const data = await response.json();
-            
-            if (!response.ok) throw new Error(data.error || "Query Execution Failed");
-
-            // วาดตารางผลลัพธ์
-            renderSQLResults(data.results, resultArea);
-
-        } catch (error) {
-            resultArea.innerHTML = `
-                <div style="color: #ef4444; background: rgba(239,68,68,0.1); padding: 15px; border-radius: 8px;">
-                    <i class="fa-solid fa-triangle-exclamation"></i> <strong>SQL Error:</strong> ${error.message}
-                </div>`;
-        } finally {
-            runBtn.disabled = false;
-            runBtn.innerHTML = '<i class="fa-solid fa-play"></i> Run Query';
-        }
+    NUMBER_FIELDS.forEach(({ id, key }) => {
+        const el = document.getElementById(id);
+        if (el) payload[key] = Number(el.value);
     });
+    return payload;
 }
 
-function renderSQLResults(results, container) {
-    if (!Array.isArray(results) || results.length === 0) {
-        container.innerHTML = `
-            <div style="color: #10b981; text-align: center; padding: 20px; border: 1px dashed var(--border); border-radius: 8px;">
-                <i class="fa-solid fa-check-circle"></i> ทำงานสำเร็จ! (ไม่มีข้อมูลรีเทิร์นกลับมา หรือ 0 rows affected)
-            </div>`;
+function buildDiff(payload) {
+    return Object.entries(payload).filter(([key, newVal]) => {
+        const oldVal = lastSavedConfig[key];
+        return oldVal !== undefined && String(oldVal) !== String(newVal);
+    }).map(([key, newVal]) => ({
+        key,
+        label: CONFIG_LABELS[key] || key,
+        from: lastSavedConfig[key],
+        to: newVal,
+    }));
+}
+
+function formatVal(key, val) {
+    const isToggle = TOGGLE_FIELDS.some(f => f.key === key);
+    if (isToggle) return val ? 'ON' : 'OFF';
+    const units = {
+        OTP_EXPIRES_MINUTES: 'min', OTP_RESEND_COOLDOWN_SECONDS: 's',
+        JWT_EXPIRES_DAYS: 'days', RATE_LIMIT_WINDOW_SECONDS: 's',
+        SKDRIVE_MAX_DOWNLOAD_MB: 'MB',
+        REQUEST_LIMIT_PERDAY:    'req/day',
+    };
+    return units[key] ? `${val} ${units[key]}` : String(val);
+}
+
+function saveConfig() {
+    const payload = buildPayload();
+    const diff    = buildDiff(payload);
+
+    if (diff.length === 0) {
+        const btn = document.getElementById('saveConfigBtn');
+        if (btn) {
+            btn.innerHTML = '<i class="fa-solid fa-check"></i> No Changes';
+            setTimeout(() => { btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes'; }, 1500);
+        }
         return;
     }
 
-    const headers = Object.keys(results[0]);
-    let tableHTML = `<div style="overflow-x: auto;"><table class="d1-result-table"><thead><tr>`;
-    
-    headers.forEach(h => { tableHTML += `<th>${h}</th>`; });
-    tableHTML += `</tr></thead><tbody>`;
+    const serverCloseOn = diff.some(d => d.key === 'SERVER_CLOSE' && d.to === true);
 
-    results.forEach(row => {
-        tableHTML += `<tr>`;
-        headers.forEach(h => {
-            const cellData = typeof row[h] === 'object' ? JSON.stringify(row[h]) : row[h];
-            tableHTML += `<td>${cellData !== null ? cellData : '<i>NULL</i>'}</td>`;
+    const list = document.getElementById('cfgDiffList');
+    list.innerHTML = diff.map(d => `
+        <li class="cfg-diff-item${d.key === 'SERVER_CLOSE' && d.to ? ' danger' : ''}">
+            <span class="cfg-diff-label">${d.label}</span>
+            <span class="cfg-diff-arrow">
+                <span class="cfg-diff-from">${formatVal(d.key, d.from)}</span>
+                <i class="fa-solid fa-arrow-right"></i>
+                <span class="cfg-diff-to${d.to === false || d.to === 0 ? ' off' : ' on'}">${formatVal(d.key, d.to)}</span>
+            </span>
+        </li>`).join('');
+
+    const banner = document.getElementById('cfgDangerBanner');
+    const icon   = document.getElementById('cfgModalIcon');
+    banner.style.display = serverCloseOn ? 'flex' : 'none';
+    icon.className = serverCloseOn ? 'cfg-modal-icon danger' : 'cfg-modal-icon warning';
+
+    const modal = document.getElementById('configConfirmModal');
+    modal.style.display = 'flex';
+
+    const confirmBtn = document.getElementById('cfgConfirmBtn');
+    const cancelBtn  = document.getElementById('cfgCancelBtn');
+    const backdrop   = document.getElementById('cfgModalBackdrop');
+
+    const close = () => { modal.style.display = 'none'; };
+
+    cancelBtn.onclick  = close;
+    backdrop.onclick   = close;
+    confirmBtn.onclick = () => { close(); applyConfigSave(payload); };
+}
+
+async function applyConfigSave(payload) {
+    const btn = document.getElementById('saveConfigBtn');
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...'; }
+
+    try {
+        const res = await fetch(`${API_URL}/admin/config`, {
+            method:  'PATCH',
+            headers: { 'Authorization': `Bearer ${getToken()}`, 'Content-Type': 'application/json' },
+            body:    JSON.stringify(payload)
         });
-        tableHTML += `</tr>`;
-    });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            lastSavedConfig = { ...(data.config || payload) };
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Saved!';
+            setTimeout(() => {
+                if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes'; }
+            }, 2000);
+        } else {
+            alert(`❌ ${data.error || 'Save failed'}`);
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes'; }
+        }
+    } catch {
+        alert("❌ ไม่สามารถติดต่อเซิร์ฟเวอร์ได้");
+        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Changes'; }
+    }
+}
 
-    tableHTML += `</tbody></table></div>`;
-    container.innerHTML = tableHTML;
+// ─── AUDIT LOG ────────────────────────────────────────────────────────────────
+let auditCursorMap = { 1: null };
+let auditNextCursor = null;
+
+async function loadAuditLog(cursor = null, targetPage = 1) {
+    const tbody = document.getElementById('auditTableBody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" class="table-empty"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</td></tr>';
+    try {
+        let url = `${API_URL}/admin/audit?limit=${AUDIT_PER_PAGE}`;
+        if (cursor) url += `&cursor=${cursor}`;
+
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+
+        allAuditLogs = data.logs || [];
+        auditNextCursor = data.nextCursor ?? null;
+        auditPage = targetPage;
+        if (auditNextCursor) auditCursorMap[auditPage + 1] = auditNextCursor;
+
+        renderAuditTable();
+    } catch {
+        if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="table-empty">ไม่สามารถโหลด Audit Log ได้</td></tr>';
+    }
+}
+
+function formatAuditTarget(log) {
+    const type = log.target_type;
+    const id   = log.target_id ?? '';
+    if (!type) return '-';
+    if (type === 'user')    return `<a class="audit-detail-link" href="/profile/?id=${id}" target="_blank">User #${id}</a>`;
+    if (type === 'event')   return `Event #${id}`;
+    if (type === 'config')  return 'Config';
+    if (type === 'skdrive') return `<span title="${escapeHtml(id)}">SKDrive</span>`;
+    return `${type} #${id}`;
+}
+
+function renderAuditTable() {
+    const tbody      = document.getElementById('auditTableBody');
+    const pagination = document.getElementById('auditPagination');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    if (allAuditLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="table-empty">ไม่มีข้อมูล</td></tr>';
+    } else {
+        allAuditLogs.forEach(log => {
+            const actionKey = (log.action || '').split('_')[0];
+            const tr = document.createElement('tr');
+            tr.style.cursor = 'pointer';
+            tr.innerHTML = `
+                <td class="audit-id-cell">#${log.id ?? '-'}</td>
+                <td>${log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : '-'}</td>
+                <td>@${log.actor_username ?? log.actor_id ?? '-'}</td>
+                <td><span class="audit-action-badge audit-action-${actionKey}">${log.action || '-'}</span></td>
+                <td>${formatAuditTarget(log)}</td>
+                <td class="audit-view-cell"><i class="fa-solid fa-eye"></i></td>
+            `;
+            tr.addEventListener('click', () => openAuditDetail(log));
+            tbody.appendChild(tr);
+        });
+    }
+
+    if (!pagination) return;
+    const hasPages = auditPage > 1 || auditNextCursor;
+    if (!hasPages) { pagination.innerHTML = ''; return; }
+
+    let html = '';
+    Object.keys(auditCursorMap).sort((a, b) => a - b).forEach(p => {
+        const n = Number(p);
+        html += `<button class="page-btn${n === auditPage ? ' active' : ''}" onclick="goAuditPage(${n})">${n}</button>`;
+    });
+    if (auditNextCursor) {
+        html += `<button class="page-btn" onclick="goAuditPage(${auditPage + 1})">›</button>`;
+    }
+    pagination.innerHTML = html;
+}
+
+window.goAuditPage = function(page) {
+    loadAuditLog(auditCursorMap[page] ?? null, page);
+};
+
+function auditFormatKey(k) {
+    return k.toLowerCase().replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function auditFormatVal(v) {
+    if (typeof v === 'boolean') return v ? 'ON' : 'OFF';
+    if (v === null || v === '') return '—';
+    return String(v);
+}
+
+function auditRenderRow(label, value, rawHtml = null) {
+    if (rawHtml !== null) return `
+        <div class="audit-detail-row">
+            <span class="audit-detail-label">${escapeHtml(label)}</span>
+            <span class="audit-detail-value">${rawHtml}</span>
+        </div>`;
+    if (Array.isArray(value)) {
+        const chips = value.length
+            ? value.map(item => `<span class="audit-detail-chip">${escapeHtml(auditFormatKey(String(item)))}</span>`).join('')
+            : '<span class="audit-detail-chip">—</span>';
+        return `
+        <div class="audit-detail-row audit-detail-row-stack">
+            <span class="audit-detail-label">${escapeHtml(label)}</span>
+            <div class="audit-detail-chips">${chips}</div>
+        </div>`;
+    }
+    return `
+        <div class="audit-detail-row">
+            <span class="audit-detail-label">${escapeHtml(label)}</span>
+            <span class="audit-detail-value">${escapeHtml(auditFormatVal(value))}</span>
+        </div>`;
+}
+
+function renderModalTarget(log) {
+    const type = log.target_type;
+    const id   = log.target_id ?? '';
+    if (!type) return auditRenderRow('Target', '-');
+
+    if (type === 'user') {
+        const link = id
+            ? `<a class="audit-detail-link" href="/profile/?id=${id}" target="_blank">User #${escapeHtml(id)}</a>`
+            : 'User';
+        return auditRenderRow('Target', null, link);
+    }
+    if (type === 'config') return auditRenderRow('Target', 'Config');
+    if (type === 'event')  return auditRenderRow('Target', `Event #${id}`);
+    if (type === 'skdrive') {
+        const paths = id.split(',').map(p => p.trim()).filter(Boolean);
+        const chips = paths.length
+            ? paths.map(p => `<span class="audit-detail-chip audit-detail-chip-path" title="${escapeHtml(p)}">${escapeHtml(p)}</span>`).join('')
+            : '<span class="audit-detail-chip">—</span>';
+        return `
+        <div class="audit-detail-row audit-detail-row-stack">
+            <span class="audit-detail-label">Target</span>
+            <div class="audit-detail-chips">${chips}</div>
+        </div>`;
+    }
+    return auditRenderRow('Target', `${type} #${id}`);
+}
+
+function openAuditDetail(log) {
+    const ACTION_LABELS = {
+        ban_user:       'Ban User',
+        unban_user:     'Unban User',
+        delete_user:    'Delete User',
+        change_role:    'Change Role',
+        delete_event:   'Delete Event',
+        config_update:  'Config Update',
+        skdrive_upload: 'SKDrive Upload',
+        skdrive_delete: 'SKDrive Delete',
+    };
+    const ACTION_ICONS = {
+        ban_user:       'fa-ban',
+        unban_user:     'fa-circle-check',
+        delete_user:    'fa-user-minus',
+        change_role:    'fa-user-gear',
+        delete_event:   'fa-calendar-xmark',
+        config_update:  'fa-sliders',
+        skdrive_upload: 'fa-upload',
+        skdrive_delete: 'fa-trash',
+    };
+
+    const action    = log.action || '';
+    const actionKey = action.split('_')[0];
+
+    const iconEl = document.getElementById('auditModalIcon');
+    iconEl.className = `audit-modal-icon audit-action-${actionKey}`;
+    iconEl.innerHTML = `<i class="fa-solid ${ACTION_ICONS[action] || 'fa-clock-rotate-left'}"></i>`;
+
+    document.getElementById('auditModalTitle').textContent = ACTION_LABELS[action] || action || '-';
+    document.getElementById('auditModalTime').textContent  = log.created_at
+        ? new Date(log.created_at).toLocaleString('th-TH') : '-';
+
+    const adminLink = log.actor_id
+        ? `<a class="audit-detail-link" href="/profile/?id=${log.actor_id}" target="_blank">@${escapeHtml(log.actor_username ?? String(log.actor_id))}</a>`
+        : '—';
+
+    const detailRows = log.detail && typeof log.detail === 'object'
+        ? Object.entries(log.detail).map(([k, v]) => [auditFormatKey(k), v])
+        : [];
+
+    document.getElementById('auditDetailRows').innerHTML = [
+        auditRenderRow('Admin',  null, adminLink),
+        renderModalTarget(log),
+        ...detailRows.map(([k, v]) => auditRenderRow(k, v)),
+    ].join('');
+
+    const modal = document.getElementById('auditDetailModal');
+    modal.style.display = 'flex';
+
+    const close = () => { modal.style.display = 'none'; };
+    document.getElementById('auditModalBackdrop').onclick = close;
+    document.getElementById('auditModalCloseBtn').onclick = close;
+}
+
+// ─── SERVER LOG ───────────────────────────────────────────────────────────────
+const LOG_PER_PAGE = 50;
+let allServerLogs = [];
+let serverLogPage = 1;
+let serverLogCursorMap = { 1: null };
+let serverLogNextCursor = null;
+
+async function loadServerLogs(cursor = null, targetPage = 1) {
+    const terminal = document.getElementById('logTerminal');
+    if (!terminal) return;
+    terminal.innerHTML = '<div class="log-line info"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+
+    const level = document.getElementById('logLevelFilter')?.value || '';
+
+    try {
+        let url = `${API_URL}/admin/server-logs?limit=${LOG_PER_PAGE}`;
+        if (cursor) url += `&cursor=${cursor}`;
+        if (level)  url += `&level=${level}`;
+
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${getToken()}` } });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        allServerLogs = data.logs || [];
+        serverLogNextCursor = data.nextCursor ?? null;
+        serverLogPage = targetPage;
+        if (serverLogNextCursor) serverLogCursorMap[serverLogPage + 1] = serverLogNextCursor;
+
+        renderServerLogs();
+    } catch (err) {
+        terminal.innerHTML = `<div class="log-line error"><i class="fa-solid fa-triangle-exclamation"></i> ไม่สามารถโหลด Log ได้: ${err.message}</div>`;
+    }
+}
+
+function renderServerLogs() {
+    const terminal   = document.getElementById('logTerminal');
+    const pagination = document.getElementById('logPagination');
+    if (!terminal) return;
+
+    terminal.innerHTML = '';
+
+    if (allServerLogs.length === 0) {
+        terminal.innerHTML = '<div class="log-line info">ไม่มี Log ในช่วงเวลานี้</div>';
+    } else {
+        allServerLogs.forEach(log => {
+            const level  = (log.level || 'info').toLowerCase();
+            const time   = log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : '';
+            const msg    = log.message || '-';
+            const detail = log.detail ? ` <span class="log-detail">${escapeHtml(JSON.stringify(log.detail))}</span>` : '';
+
+            const div = document.createElement('div');
+            div.className = `log-line ${level}`;
+            div.innerHTML = `<span class="log-time">${time}</span> <span class="log-level">${level.toUpperCase()}</span> ${escapeHtml(msg)}${detail}`;
+            terminal.appendChild(div);
+        });
+        terminal.scrollTop = terminal.scrollHeight;
+    }
+
+    if (!pagination) return;
+    const hasPages = serverLogPage > 1 || serverLogNextCursor;
+    if (!hasPages) { pagination.innerHTML = ''; return; }
+
+    let html = '';
+    Object.keys(serverLogCursorMap).sort((a, b) => a - b).forEach(p => {
+        const n = Number(p);
+        html += `<button class="page-btn${n === serverLogPage ? ' active' : ''}" onclick="goLogPage(${n})">${n}</button>`;
+    });
+    if (serverLogNextCursor) {
+        html += `<button class="page-btn" onclick="goLogPage(${serverLogPage + 1})">›</button>`;
+    }
+    pagination.innerHTML = html;
+}
+
+window.goLogPage = function(page) {
+    loadServerLogs(serverLogCursorMap[page] ?? null, page);
+};
+
+function escapeHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderPagination(totalPages, current, fnName, container) {
+    if (!container) return;
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<button class="page-btn${i === current ? ' active' : ''}" onclick="${fnName}(${i})">${i}</button>`;
+    }
+    container.innerHTML = html;
 }

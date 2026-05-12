@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Skintania — Exercise</title>
+
+  <style>body { display: none }</style>
+
+  <script type="module" src="/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
+  <link rel="stylesheet" href="/global.css">
+  <link rel="stylesheet" href="/Template/style.css">
+  <link rel="stylesheet" href="/Course/exercise/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
+
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script type="module" src="/Template/component.js" defer></script>
+  <script type="module" src="/Course/exercise/loadExercise.js" defer></script>
+</head>
+
+<body>
+
+  <!-- ══ Print-only page header (hidden on screen) ══ -->
+  <header class="print-page-header" id="printPageHeader">
+    <div class="ph-top">
+      <div class="ph-left">
+        <span class="ph-course" id="phCourse"></span>
+        <span class="ph-ps"     id="phPs"></span>
+        <!-- ph-author: populate from problem-set author field when API supports it -->
+        <span class="ph-author" id="phAuthor"></span>
+      </div>
+      <div class="ph-right">
+        <span class="ph-brand">Exported from Skintania</span>
+        <img src="/Assest/sk-cu.png" alt="SK" class="ph-logo">
+      </div>
+    </div>
+    <div class="ph-divider"></div>
+  </header>
+
+  <!-- ══ Print-only page footer (hidden on screen) ══ -->
+  <footer class="print-page-footer" id="printPageFooter">
+    <div class="pf-divider"></div>
+    <div class="pf-row">
+      <span id="pfExportBy"></span>
+      <span id="pfDate"></span>
+    </div>
+  </footer>
+
+  <comment-widget></comment-widget>
+
+  <main class="wrap">
+    <site-header page-title="Exercise" page-desc="กำลังโหลด..."></site-header>
+
+    <div class="exercise-layout">
+
+      <!-- ── Left: problem set list ── -->
+      <aside class="ps-sidebar">
+        <div class="ps-sidebar-top">
+          <p class="ps-course-name" id="sidebarCourseName">—</p>
+          <p class="ps-course-sub"  id="sidebarCourseSub"></p>
+          <a id="manageExerciseLink" class="manage-exercise-link" href="#" hidden>⚙ จัดการ</a>
+          <div id="syllabusSection" class="syllabus-sidebar" hidden></div>
+        </div>
+        <ul class="ps-list" id="psList">
+          <li class="ps-skeleton"></li>
+          <li class="ps-skeleton"></li>
+          <li class="ps-skeleton"></li>
+        </ul>
+      </aside>
+
+      <!-- ── Right: stacked questions ── -->
+      <div class="questions-panel">
+
+        <div class="qs-panel-header" id="qsPanelHeader" hidden>
+          <div>
+            <h2 class="qs-panel-title" id="qsPanelTitle"></h2>
+            <p class="qs-panel-sub"   id="qsPanelSub"></p>
+          </div>
+          <div class="qs-header-right">
+            <div class="qs-score-badge" id="qsScoreBadge"></div>
+            <button class="btn-sm print-trigger-btn" id="printBtn">⬇ Export PDF</button>
+          </div>
+        </div>
+
+        <div id="questionsContainer" class="questions-container"></div>
+
+        <div class="qs-empty" id="qsEmpty">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="1" opacity="0.2">
+            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+          </svg>
+          <p>เลือกชุดโจทย์จากรายการด้านซ้าย</p>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- File Preview Modal -->
+    <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
+      <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
+      <div class="preview-modal-container">
+        <div class="preview-modal-header">
+          <span id="previewFileName"></span>
+          <div class="preview-modal-actions">
+            <button id="previewDownloadBtn">⬇ ดาวน์โหลด</button>
+            <button id="previewCloseBtn" aria-label="Close">✕</button>
+          </div>
+        </div>
+        <div id="previewModalBody" class="preview-modal-body"></div>
+      </div>
+    </div>
+  </main>
+</body>
+
+</html>

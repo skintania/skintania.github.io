@@ -24,7 +24,6 @@ body {
     color: var(--text-main);
     margin: 0;
     line-height: 1.6;
-    scroll-behavior: smooth; /* เลื่อนนุ่มนวลทั้งหน้า */
 }
 
 /* 2. Main Layout */
@@ -122,20 +121,22 @@ body {
     color: var(--danger);
 }
 
-/* 5. Content Panel (Multi-Block Layout) */
+/* 5. Content Panel */
 .settings-content-panel {
     flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 30px; /* ระยะห่างระหว่างบล็อกเมนู */
+    min-width: 0;
 }
 
 .content-section {
+    display: none;
     background: var(--card-bg);
     border-radius: 16px;
     border: 1px solid var(--border);
     padding: 40px;
-    margin-bottom: 30px;
+}
+
+.content-section.active {
+    display: block;
 }
 .section-header {
     margin-bottom: 30px;
@@ -203,28 +204,9 @@ body {
 }
 
 .avatar-actions {
-    display: none; /* จะเปิดผ่าน JS เมื่อเข้าโหมดแก้ไข */
+    display: none;
     flex-direction: column;
     gap: 8px;
-}
-
-.avatar-icon-placeholder {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    z-index: 1;
-}
-
-.avatar-wrapper img, .avatar-preview-big img {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    z-index: 2;
 }
 
 /* 7. Forms & Elements */
@@ -496,7 +478,99 @@ input:checked + .slider:before {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* 9. Responsive */
+/* 9. Readonly Badge */
+.readonly-badge {
+    font-size: 0.7rem;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 400;
+    vertical-align: middle;
+    margin-left: 6px;
+}
+
+/* 10. Coming Soon Box */
+.coming-soon-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    gap: 12px;
+    color: var(--text-muted);
+}
+
+.coming-soon-icon {
+    font-size: 3rem;
+    opacity: 0.3;
+    margin-bottom: 8px;
+}
+
+/* 11. File hint */
+.file-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+}
+
+/* 12. Danger button (solid) */
+.btn-danger {
+    background-color: var(--danger);
+    color: white;
+    padding: 12px 28px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: inherit;
+}
+
+.btn-danger:hover {
+    background-color: var(--danger-hover);
+    transform: translateY(-1px);
+}
+
+.btn-danger:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* 13. Toast Notifications */
+.settings-toast {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    padding: 14px 22px;
+    border-radius: 10px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s;
+    z-index: 9999;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+}
+
+.settings-toast.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.settings-toast--success { background: #10b981; }
+.settings-toast--error   { background: #ef4444; }
+.settings-toast--warning { background: #f59e0b; }
+
+/* 14. Responsive */
 @media (max-width: 992px) {
     .settings-main-container {
         flex-direction: column;
