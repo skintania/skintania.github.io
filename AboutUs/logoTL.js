@@ -4,7 +4,7 @@ export function createLogoTimeline() {
     scrollTrigger: {
       trigger: ".parallax-header",
       start: "top top",
-      end: "+=5000",
+      end: "+=2000",
       scrub: true,
       pin: true,
     }

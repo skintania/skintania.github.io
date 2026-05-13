@@ -1,5 +1,6 @@
 import { createLogoTimeline } from "./logoTL.js";
 import { createChatTimeline } from "./chatTL.js";
+import { createStoryTimeline } from "./storyTL.js";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -13,3 +14,4 @@ gsap.to(".header-text i", {
 
 createLogoTimeline();
 await createChatTimeline();
+createStoryTimeline();

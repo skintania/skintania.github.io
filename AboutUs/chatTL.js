@@ -107,7 +107,7 @@ export async function createChatTimeline() {
 
       trigger: ".chat-section",
       start: "top 80%",
-      end: "bottom top",
+      end: "bottom 50%",
       scrub: 1
 
       // markers:true
@@ -161,7 +161,7 @@ export async function createChatTimeline() {
 
       }
 
-    );
+    ,">");
 
   });
 
@@ -191,7 +191,18 @@ export async function createChatTimeline() {
 
     }
 
-  );
+  ,">")
+
+  .to(".chat-container", {
+
+    opacity: 0,
+
+    filter: "blur(20px)",
+
+    duration: 2
+
+  },"+=1");
+
 
   // =========================
   // RETURN TIMELINE
