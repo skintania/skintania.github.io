@@ -45,14 +45,15 @@ function _matchEnv(text, start) {
   if (!m) return null;
   const env = m[1];
   let pos = start + m[0].length;
+  let opt = null;
   if (text[pos] === '[') {
     const close = text.indexOf(']', pos);
-    if (close !== -1) pos = close + 1;
+    if (close !== -1) { opt = text.slice(pos + 1, close); pos = close + 1; }
   }
   const endStr = `\\end{${env}}`;
   const endIdx = text.indexOf(endStr, pos);
   if (endIdx === -1) return null;
-  return { env, content: text.slice(pos, endIdx), end: endIdx + endStr.length };
+  return { env, content: text.slice(pos, endIdx), end: endIdx + endStr.length, opt };
 }
 
 function _matchTextCmd(text, i) {
@@ -64,7 +65,7 @@ function _matchTextCmd(text, i) {
   return { cmd: m[1], content: text.slice(braceStart + 1, braceEnd), end: braceEnd + 1 };
 }
 
-function _renderEnv(env, content, container) {
+function _renderEnv(env, content, container, opt) {
   const name = env.replace('*', '');
   const MATH_ENVS = ['equation', 'align', 'eqnarray', 'gather', 'multline', 'flalign', 'alignat'];
 
@@ -98,13 +99,46 @@ function _renderEnv(env, content, container) {
   } else if (name === 'itemize' || name === 'enumerate') {
     const list = document.createElement(name === 'enumerate' ? 'ol' : 'ul');
     list.className = 'latex-list';
-    const re = /\\item([\s\S]*?)(?=\\item|$)/g;
-    let m;
-    while ((m = re.exec(content)) !== null) {
-      const li = document.createElement('li');
-      _processLatex(m[1].trim(), li);
-      list.appendChild(li);
+
+    if (name === 'enumerate' && opt) {
+      const optKey = opt.replace(/[().\s]/g, '');
+      if (optKey === 'a')      list.style.listStyleType = 'lower-alpha';
+      else if (optKey === 'A') list.style.listStyleType = 'upper-alpha';
+      else if (optKey === 'i') list.style.listStyleType = 'lower-roman';
+      else if (optKey === 'I') list.style.listStyleType = 'upper-roman';
     }
+
+    const re = /\\item(?:\[([^\]]*)\])?([\s\S]*?)(?=\\item|$)/g;
+    let m;
+    const items = [];
+    while ((m = re.exec(content)) !== null) {
+      const itemText = m[2].trim();
+      if (!itemText && m[1] == null) continue;
+      items.push({ label: m[1] ?? null, text: itemText });
+    }
+
+    const hasCustomLabels = items.some(it => it.label !== null);
+    if (hasCustomLabels) {
+      list.style.listStyle = 'none';
+      list.style.paddingLeft = '0';
+    }
+
+    items.forEach(({ label, text: itemText }) => {
+      const li = document.createElement('li');
+      if (label !== null) {
+        li.className = 'latex-list-item-labeled';
+        const labelEl = document.createElement('span');
+        labelEl.className = 'latex-item-label';
+        _processLatex(label, labelEl);
+        li.appendChild(labelEl);
+        const contentEl = document.createElement('span');
+        _processLatex(itemText, contentEl);
+        li.appendChild(contentEl);
+      } else {
+        _processLatex(itemText, li);
+      }
+      list.appendChild(li);
+    });
     container.appendChild(list);
 
   } else {
@@ -126,7 +160,7 @@ function _processLatex(text, container) {
 
     if (text.startsWith('\\begin{', i)) {
       const env = _matchEnv(text, i);
-      if (env) { flush(); _renderEnv(env.env, env.content, container); i = env.end; continue; }
+      if (env) { flush(); _renderEnv(env.env, env.content, container, env.opt); i = env.end; continue; }
     }
 
     if (text.startsWith('$$', i)) {
