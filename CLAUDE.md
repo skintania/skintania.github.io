@@ -42,7 +42,7 @@ Every protected page includes this in `<head>`:
 
 ### User roles
 
-`member`, `OSK`, `admin`. Admin-only write operations are enforced server-side. The header component injects an "Admin Panel" link for `admin` and `OSK` roles.
+`member`, `OSK`, `admin`. Admin-only write operations are enforced server-side. The header component injects an "Admin Panel" link for `admin` role only.
 
 ### Custom Web Components (`Template/component.js`)
 

@@ -106,7 +106,7 @@ class SiteHeader extends HTMLElement {
                     await fetchAndSetAvatar(imgEl, iconEl, user.id);
                 }
 
-                if (user.role === 'admin' || user.role === 'OSK') {
+                if (user.role === 'admin') {
                     const menuCard = this.querySelector('.dropdown-menu-card');
                     if (menuCard) {
                         const adminLink = document.createElement('a');
