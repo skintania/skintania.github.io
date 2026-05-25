@@ -97,6 +97,7 @@
 - [Calculator](#calculator)
   - [POST /calculator](#post-calculator)
   - [GET /calculator/grades](#get-calculatorgrades)
+  - [GET /calculator/history](#get-calculatorhistory)
 - [Rate Limiting](#rate-limiting)
 - [HTTP Status Codes](#http-status-codes)
 
@@ -1306,7 +1307,9 @@ List all exercises across all problem sets for a course, ordered by problem set 
 
 Create an exercise. **Admin only.**
 
-**Body**
+Accepts either `application/json` (no image) or `multipart/form-data` (with optional image).
+
+**JSON body**
 ```json
 {
   "problem_set_id": 1,
@@ -1319,6 +1322,8 @@ Create an exercise. **Admin only.**
   "sort_order": 0
 }
 ```
+
+**multipart/form-data** — same fields as text parts, plus an optional file field (any name) for the image. Send `choices` as a JSON string. Allowed image types: `image/jpeg`, `image/png`, `image/webp`. Max **5MB**.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -1335,6 +1340,8 @@ Create an exercise. **Admin only.**
 ```json
 { "success": true, "message": "Exercise created", "id": 1 }
 ```
+
+> If an image is included, it is stored in the assets bucket at `Exercises/{course_title}/{problem_set_title}/q{exercise_title}.{ext}` and the `image_key` is set automatically. Serve it via `GET /assets/{image_key}`.
 
 ---
 
@@ -1614,9 +1621,9 @@ Ask Gemini 2.0 Flash a question about a captured video frame. The image is sent 
 
 ## Calculator
 
-GPA/admission-chance calculator. Loads weights and historical data from R2 (`Calculator/weight.json` and `Calculator/data.json`). Saves the user's grade selections to D1 so they persist across sessions.
+GPA/admission-chance calculator. Weights and historical data are stored in D1. Saves the user's grade selections to D1 so they persist across sessions.
 
-**Auth:** Bearer token required for both endpoints.
+**Auth:** Bearer token required for all endpoints.
 
 ---
 
@@ -1626,7 +1633,7 @@ Submit grades for a department. Runs the weighted GPA calculation, returns the r
 **Request body**
 ```json
 {
-  "department": "CPE",
+  "department": "CP",
   "grades": [
     { "subject": "General Physics 1", "grade": 3.5 },
     { "subject": "Calculus 1", "grade": 4.0 }
@@ -1638,25 +1645,29 @@ Submit grades for a department. Runs the weighted GPA calculation, returns the r
 ```json
 {
   "success": true,
-  "department": "CPE",
+  "department": "CP",
   "gpax": 3.72,
   "weightedScore": 44.6,
   "fullScore": 60.0,
+  "admScore": 58.5,
+  "admFullScore": 96.0,
   "chancePercent": 65.00,
   "allDepartments": [
-    { "department": "CPE", "name": "Computer Engineering", "minScore": 280.5, "maxScore": 310.0, "chance": 65.00 },
-    { "department": "EE",  "name": "Electrical Engineering", "minScore": 260.0, "maxScore": 295.0, "chance": 55.00 }
+    { "department": "CP", "name": "CP", "minScore": 280.5, "maxScore": 310.0, "chance": 65.00 },
+    { "department": "EE", "name": "EE", "minScore": 260.0, "maxScore": 295.0, "chance": 55.00 }
   ]
 }
 ```
 
 | Field | Description |
 |-------|-------------|
-| `gpax` | Weighted GPA for the selected department |
-| `weightedScore` | Raw weighted score (`sum(grade × weight)`) |
-| `fullScore` | Maximum possible score (`totalWeight × 4`) |
-| `chancePercent` | Estimated admission chance (0–100.00), or `null` if no history data |
-| `allDepartments` | Chance for every department in `weight.json`, sorted by code. `minScore`/`maxScore` from most recent history year. |
+| `gpax` | GPAX using constant credit-hour weights (3 for regular subjects, 1 for lab) |
+| `weightedScore` | GPAX raw weighted score `Σ(grade × constant_weight)` |
+| `fullScore` | GPAX maximum possible score (`totalConstantWeight × 4`) |
+| `admScore` | Admission weighted score `Σ(grade × department_weight)` for the selected department |
+| `admFullScore` | Admission maximum possible score (`totalDeptWeight × 4`) |
+| `chancePercent` | Estimated admission chance (0–100.00) based on historical min/max scores |
+| `allDepartments` | Chance for every department, sorted by code. `name` is the department code. `minScore`/`maxScore` from the most recent history year. |
 
 ---
 
@@ -1673,6 +1684,39 @@ Retrieve the current user's last saved grade selections.
   ]
 }
 ```
+
+---
+
+### GET /calculator/history
+Get all historical admission score data for graph plotting.
+
+**Response**
+```json
+{
+  "success": true,
+  "history": {
+    "2559": {
+      "CE": { "capacity": 93, "lowestRank": 449, "fullScore": 144, "maxScore": 135, "minScore": 79 },
+      "EE": { "capacity": 111, "lowestRank": 402, "fullScore": 180, "maxScore": 180, "minScore": 102 }
+    },
+    "2567": {
+      "CE": { "capacity": 90, "lowestRank": 501, "fullScore": 144, "maxScore": 138, "minScore": 66 }
+    }
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| Top-level key | Thai academic year (e.g. `"2559"`) |
+| Second-level key | Department code (`"CE"`, `"EE"`, etc.) |
+| `capacity` | Number of seats available that year |
+| `lowestRank` | Lowest admitted TCAS rank |
+| `fullScore` | Maximum possible admission score for this department |
+| `maxScore` | Highest score among admitted students |
+| `minScore` | Lowest score among admitted students (cut-off) |
+
+> A department key is absent for a given year if it did not participate in admissions that year.
 
 ---
 
