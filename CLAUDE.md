@@ -2,6 +2,15 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Maintaining Context Docs
+
+The `context/` folder contains three files that serve as quick-load context for future Claude sessions:
+- `context/claude.md` — project overview and architecture
+- `context/route.md` — file dependency graph and data flows
+- `context/docs.md` — what each file does
+
+**After any major change** (new page, new shared module, new API endpoint, renamed/deleted file, changed auth flow, new component), update the relevant `context/` files before finishing the task. Each file must stay under 300 lines.
+
 ## Project Overview
 
 **Skintania** is a static frontend for OSK CU Intania — a student platform for engineering prep courses, activities, and tools. It is deployed to GitHub Pages via Jekyll (no build step, no bundler, no package.json). All logic is plain HTML/CSS/ES module JavaScript talking to a Cloudflare Worker API.
