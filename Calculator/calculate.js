@@ -95,7 +95,7 @@ function setDropdownValue(card, gradeValue) {
     }
 }
 
-function updateResultUI({ gpax, admScore, admFullScore, chancePercent, allDepartments }) {
+function updateResultUI({ gpax, admScore, admFullScore, chancePercent, allDepartments }, history) {
     const percent = chancePercent ?? 0;
 
     const chanceTextEl  = document.querySelector('.chance-text');
@@ -131,13 +131,25 @@ function updateResultUI({ gpax, admScore, admFullScore, chancePercent, allDepart
     if (deptTableBody && Array.isArray(allDepartments)) {
         deptTableBody.innerHTML = '';
         allDepartments.forEach(({ department, name, minScore, maxScore, chance }) => {
-            const improved = improveLinearChance(chance);
+            // Use API chance when it's a meaningful value; otherwise compute per-department
+            let displayChance = (chance != null && chance < 100) ? improveLinearChance(chance) : null;
+            if (displayChance == null && history && admScore != null && admFullScore && maxScore > minScore) {
+                const years = Object.keys(history).sort();
+                const latestYear = years[years.length - 1];
+                const deptHist = history[latestYear]?.[department];
+                if (deptHist?.fullScore) {
+                    const approxScore = (admScore / admFullScore) * deptHist.fullScore;
+                    const linear = Math.min(100, Math.max(0,
+                        (approxScore - minScore) / (maxScore - minScore) * 100));
+                    displayChance = improveLinearChance(linear);
+                }
+            }
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${name ?? department} (${department})</td>
                 <td>${minScore != null ? minScore : '-'}</td>
                 <td>${maxScore != null ? maxScore : '-'}</td>
-                <td class="chance">${improved != null ? improved.toFixed(1) + '%' : '-'}</td>
+                <td class="chance">${displayChance != null ? displayChance.toFixed(1) + '%' : '-'}</td>
             `;
             deptTableBody.appendChild(row);
         });
@@ -199,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (improved !== null) data.chancePercent = improved;
             }
 
-            updateResultUI(data);
+            updateResultUI(data, history);
         } catch (e) {
             alert('เกิดข้อผิดพลาด: ' + e.message);
         } finally {
