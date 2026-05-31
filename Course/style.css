@@ -302,6 +302,7 @@
   flex-shrink: 0;
 }
 .create-course-btn:hover { opacity: 0.85; }
+.create-course-btn[hidden] { display: none; }
 
 /* ── Modal overlay ── */
 .modal-overlay {

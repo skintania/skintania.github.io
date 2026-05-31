@@ -573,6 +573,18 @@
   line-height: 1.9;
 }
 
+/* \item[label] — custom-labeled list items */
+.latex-list-item-labeled {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35em;
+}
+
+.latex-item-label {
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
 /* ── Responsive ── */
 @media (max-width: 860px) {
   .exercise-layout {
@@ -750,6 +762,8 @@
   .latex-dt      { font-weight: 600; flex-shrink: 0; color: #111 !important; }
   .latex-dd      { margin: 0; flex: 1; line-height: 1.8; color: #111 !important; }
   .latex-list    { margin: 8px 0 4px 1.4em; gap: 4px; color: #111 !important; }
+  .latex-list-item-labeled { display: flex; align-items: baseline; gap: 0.35em; color: #111 !important; }
+  .latex-item-label { flex-shrink: 0; font-weight: 500; color: #111 !important; }
 
   /* ── Question image ── */
   .q-image {

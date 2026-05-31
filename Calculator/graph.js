@@ -1,7 +1,7 @@
 // =========================================================
 // ไฟล์ graph.js - สำหรับจัดการกราฟสถิติคะแนนย้อนหลัง
 // =========================================================
-import { CONFIG } from '/config.js';
+import { getHistory } from '/Calculator/historyCache.js';
 
 let trendChart = null; 
 let globalHistoryData = null; 
@@ -184,34 +184,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    const finalUrl = `${CONFIG.API_URL}/assets/Calculator/data.json`;
-
-    // 1. ดึง Token มาเตรียมไว้ (เช็คชื่อ Key ให้ตรงกับที่คุณเซฟไว้ เช่น "authToken")
-    const token = localStorage.getItem("authToken");
-
-    fetch(finalUrl, {
-        method: 'GET', // ระบุ Method (ปกติ fetch จะเป็น GET อยู่แล้ว แต่ใส่ไว้เพื่อให้ชัดเจน)
-        headers: {
-            'Authorization': `Bearer ${token}`, // 🔑 ส่งกุญแจยืนยันตัวตน
-            'Content-Type': 'application/json'
-        }
-    })
-        .then(res => {
-            if (!res.ok) {
-                // ถ้ารหัสเป็น 401 แปลว่า Token หมดอายุหรือผิด
-                if (res.status === 401) {
-                    console.error("Session expired. Redirecting to login...");
-                    window.location.replace("/login/");
-                }
-                console.error("Server responded with:", res.status);
-                return res.text().then(text => { throw new Error(text) });
-            }
-            return res.json();
-        })
-        .then(historyData => {
-            // ✅ ส่งข้อมูลไปวาดกราฟ
-            renderTrendChart(historyData, 'minScore');
-        })
+    getHistory()
+        .then(history => renderTrendChart(history, 'minScore'))
         .catch(err => console.error("Fetch error:", err));
 });
 

@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         // 🚨 กรณีพิเศษ: ถ้ายังไม่ได้ยืนยัน OTP (Error 403 ที่เราเขียนไว้ใน Worker)
         const needsVerify = response.status === 403 ||
-          (result.error && result.error.toLowerCase().includes('verif'));
+          (result.error && (result.error.toLowerCase().includes('expired') || result.error.toLowerCase().includes('verify')));
 
         if (needsVerify) {
           const params = new URLSearchParams({ identifier: emailOrUser, from: 'login' });

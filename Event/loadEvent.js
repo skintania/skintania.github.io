@@ -413,6 +413,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               <span class="sk-line sk-line--sm skeleton" style="margin-bottom:0"></span>
             </article>`).join('');
         [currentUser, window.eventList] = await Promise.all([fetchCurrentUser(), fetchEvents()]);
+        if (currentUser?.role === 'admin') {
+            document.getElementById('openModalBtn').hidden = false;
+        }
         await renderEvents(window.eventList, grid);
     }
 
