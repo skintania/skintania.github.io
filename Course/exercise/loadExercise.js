@@ -30,7 +30,7 @@ function buildQuestionCard(ex, num) {
   const header = document.createElement('div');
   header.className = 'q-card-header';
   header.innerHTML = `
-    <span class="q-num-badge"><span class="q-num-prefix">ข้อ </span>${num}</span>
+    <span class="q-num-badge"><span class="q-num-prefix">ข้อ </span>${ex.title ?? num}</span>
     <span class="q-type-badge">${TYPE_LABELS[ex.type] ?? ex.type}</span>
   `;
   card.appendChild(header);
