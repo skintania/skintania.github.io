@@ -33,8 +33,9 @@ function _matchEnv(text, start) {
   return { env, content: text.slice(pos, endIdx), end: endIdx + endStr.length, opt };
 }
 
+// Commands that take a single {argument}
 function _matchTextCmd(text, i) {
-  const m = text.slice(i).match(/^\\(textbf|textit|emph|underline|texttt|textsf|textrm)\{/);
+  const m = text.slice(i).match(/^\\(textbf|textit|emph|underline|texttt|textsf|textrm|textsc|textsl|textnormal|textup|textmd|textsuperscript|textsubscript|mbox|hbox|fbox|section|subsection|subsubsection|paragraph|footnote|url)\{/);
   if (!m) return null;
   const braceStart = i + m[0].length - 1;
   const braceEnd   = _matchBraces(text, braceStart);
@@ -126,6 +127,46 @@ function _renderEnv(env, content, container, opt) {
   }
 }
 
+// No-argument commands that output a single character or string
+const _CHAR_CMDS = {
+  // Ellipsis
+  ldots: '…', dots: '…', cdots: '⋯', textellipsis: '…',
+  // Dashes
+  textendash: '–', textemdash: '—',
+  // Quotes
+  textquoteleft: '‘', textquoteright: '’', lq: '‘', rq: '’',
+  textquotedblleft: '“', textquotedblright: '”',
+  // Special text symbols
+  textbackslash: '\\', textbar: '|', textless: '<', textgreater: '>',
+  textasciitilde: '~', textasciicircum: '^',
+  textbullet: '•', textperiodcentered: '·',
+  textregistered: '®', texttrademark: '™', textcopyright: '©',
+  textdegree: '°', textcelsius: '℃',
+  textmu: 'µ', textohm: 'Ω',
+  textparagraph: '¶', textsection: '§',
+  // Symbols
+  dag: '†', ddag: '‡', S: '§', P: '¶',
+  copyright: '©', registered: '®',
+  pounds: '£', textsterling: '£', yen: '¥', euro: '€',
+  // Non-ASCII letters
+  AE: 'Æ', ae: 'æ', OE: 'Œ', oe: 'œ',
+  AA: 'Å', aa: 'å', O: 'Ø', o: 'ø', ss: 'ß',
+  i: 'ı', j: 'ȷ', l: 'ł', L: 'Ł',
+  // Degree / angle
+  circ: '°',
+};
+
+// Commands that are silently consumed (no output, no argument)
+const _NOOP_CMDS = new Set([
+  'tiny', 'scriptsize', 'footnotesize', 'small', 'normalsize',
+  'large', 'Large', 'LARGE', 'huge', 'Huge',
+  'normalfont', 'rmfamily', 'sffamily', 'ttfamily',
+  'bfseries', 'mdseries', 'itshape', 'slshape', 'upshape', 'scshape',
+  'centering', 'raggedright', 'raggedleft',
+  'protect', 'relax', 'allowbreak', 'linewidth', 'textwidth',
+  'boldmath', 'unboldmath',
+]);
+
 function _processLatex(text, container) {
   let i = 0;
   let buf = '';
@@ -135,11 +176,13 @@ function _processLatex(text, container) {
 
   while (i < text.length) {
 
+    // \begin{env}...\end{env}
     if (text.startsWith('\\begin{', i)) {
       const env = _matchEnv(text, i);
       if (env) { flush(); _renderEnv(env.env, env.content, container, env.opt); i = env.end; continue; }
     }
 
+    // $$...$$ display math
     if (text.startsWith('$$', i)) {
       const end = text.indexOf('$$', i + 2);
       if (end !== -1) {
@@ -150,6 +193,7 @@ function _processLatex(text, container) {
       }
     }
 
+    // \[...\] display math
     if (text.startsWith('\\[', i)) {
       const end = text.indexOf('\\]', i + 2);
       if (end !== -1) {
@@ -160,6 +204,7 @@ function _processLatex(text, container) {
       }
     }
 
+    // $...$ inline math
     if (text[i] === '$' && text[i + 1] !== '$') {
       let j = i + 1;
       while (j < text.length) {
@@ -183,37 +228,235 @@ function _processLatex(text, container) {
       }
     }
 
+    // \textcolor{color}{text}
+    const colorM = text.slice(i).match(/^\\textcolor\{([^}]*)\}\{/);
+    if (colorM) {
+      const braceStart = i + colorM[0].length - 1;
+      const braceEnd = _matchBraces(text, braceStart);
+      if (braceEnd !== -1) {
+        flush();
+        const el = document.createElement('span');
+        el.style.color = colorM[1];
+        _processLatex(text.slice(braceStart + 1, braceEnd), el);
+        container.appendChild(el);
+        i = braceEnd + 1; continue;
+      }
+    }
+
+    // \colorbox{color}{text}
+    const cboxM = text.slice(i).match(/^\\colorbox\{([^}]*)\}\{/);
+    if (cboxM) {
+      const braceStart = i + cboxM[0].length - 1;
+      const braceEnd = _matchBraces(text, braceStart);
+      if (braceEnd !== -1) {
+        flush();
+        const el = document.createElement('span');
+        el.style.backgroundColor = cboxM[1];
+        el.style.padding = '0 2px';
+        el.style.borderRadius = '2px';
+        _processLatex(text.slice(braceStart + 1, braceEnd), el);
+        container.appendChild(el);
+        i = braceEnd + 1; continue;
+      }
+    }
+
+    // Text commands with {argument}: \textbf, \textit, \textsuperscript, \section, etc.
     const cmd = _matchTextCmd(text, i);
     if (cmd) {
       flush();
-      const el = document.createElement('span');
-      if (cmd.cmd === 'textbf')                              el.style.fontWeight = '600';
-      else if (cmd.cmd === 'textit' || cmd.cmd === 'emph')   el.style.fontStyle = 'italic';
-      else if (cmd.cmd === 'underline')                      el.style.textDecoration = 'underline';
-      else if (cmd.cmd === 'texttt')                         el.style.fontFamily = 'monospace';
+      let el;
+      if (cmd.cmd === 'textsuperscript') {
+        el = document.createElement('sup');
+      } else if (cmd.cmd === 'textsubscript') {
+        el = document.createElement('sub');
+      } else if (cmd.cmd === 'section') {
+        el = document.createElement('h2'); el.className = 'latex-section';
+      } else if (cmd.cmd === 'subsection') {
+        el = document.createElement('h3'); el.className = 'latex-subsection';
+      } else if (cmd.cmd === 'subsubsection') {
+        el = document.createElement('h4'); el.className = 'latex-subsubsection';
+      } else if (cmd.cmd === 'paragraph') {
+        el = document.createElement('p'); el.className = 'latex-paragraph'; el.style.fontWeight = '600';
+      } else if (cmd.cmd === 'footnote') {
+        // Render as a small inline note in parentheses
+        const sup = document.createElement('sup');
+        sup.textContent = '*';
+        container.appendChild(sup);
+        const note = document.createElement('span');
+        note.className = 'latex-footnote';
+        _processLatex(cmd.content, note);
+        container.appendChild(note);
+        i = cmd.end; continue;
+      } else if (cmd.cmd === 'url') {
+        el = document.createElement('a');
+        el.href = cmd.content; el.target = '_blank'; el.rel = 'noopener noreferrer';
+        el.className = 'latex-url'; el.textContent = cmd.content;
+        container.appendChild(el); i = cmd.end; continue;
+      } else {
+        el = document.createElement('span');
+        if      (cmd.cmd === 'textbf')                             el.style.fontWeight = '700';
+        else if (cmd.cmd === 'textit' || cmd.cmd === 'emph')       el.style.fontStyle  = 'italic';
+        else if (cmd.cmd === 'underline')                          el.style.textDecoration = 'underline';
+        else if (cmd.cmd === 'texttt')                             el.style.fontFamily = 'monospace';
+        else if (cmd.cmd === 'textsf')                             el.style.fontFamily = 'sans-serif';
+        else if (cmd.cmd === 'textsc')                             el.style.fontVariant = 'small-caps';
+        else if (cmd.cmd === 'textsl')                             el.style.fontStyle  = 'oblique';
+        else if (cmd.cmd === 'fbox') {
+          el.style.border = '1px solid currentColor';
+          el.style.padding = '1px 4px';
+          el.style.borderRadius = '2px';
+          el.style.display = 'inline-block';
+        }
+        // mbox, hbox, textnormal, textup, textmd, textrm: render content as-is
+      }
       _processLatex(cmd.content, el);
-      container.appendChild(el); i = cmd.end; continue;
+      container.appendChild(el);
+      i = cmd.end; continue;
     }
 
-    const stripM = text.slice(i).match(/^\\(?:label|ref|nonumber)\{[^}]*\}|^\\(?:begin|end)\{document\}/);
+    // Strip commands (swallow, no output)
+    const stripM = text.slice(i).match(/^\\(?:label|ref|nonumber|pageref|index|glossary|hyphenation|bibliographystyle|bibliography)\{[^}]*\}|^\\(?:begin|end)\{document\}/);
     if (stripM) { i += stripM[0].length; continue; }
 
+    // \eqref{key} → "(key)"
     const eqM = text.slice(i).match(/^\\eqref\{([^}]*)\}/);
     if (eqM) { flush(); container.appendChild(document.createTextNode(`(${eqM[1]})`)); i += eqM[0].length; continue; }
 
+    // \cite[note]{key} → "[key]"
+    const citeM = text.slice(i).match(/^\\cite(?:\[[^\]]*\])?\{([^}]*)\}/);
+    if (citeM) { flush(); container.appendChild(document.createTextNode(`[${citeM[1]}]`)); i += citeM[0].length; continue; }
+
+    // \hfill → flex spacer
     if (text.startsWith('\\hfill', i)) {
       flush();
       const sp = document.createElement('span'); sp.className = 'latex-hfill';
       container.appendChild(sp); i += 6; continue;
     }
 
-    const skipM = text.slice(i).match(/^\\(?:smallskip|medskip|bigskip|par|vspace\{[^}]*\})/);
+    // Horizontal spacing (longest first to avoid prefix conflicts)
+    if (text.startsWith('\\qquad', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.style.display = 'inline-block'; sp.style.width = '2em';
+      container.appendChild(sp); i += 6; continue;
+    }
+    if (text.startsWith('\\quad', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.style.display = 'inline-block'; sp.style.width = '1em';
+      container.appendChild(sp); i += 5; continue;
+    }
+    if (text.startsWith('\\enspace', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.style.display = 'inline-block'; sp.style.width = '0.5em';
+      container.appendChild(sp); i += 8; continue;
+    }
+    if (text.startsWith('\\thinspace', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.style.display = 'inline-block'; sp.style.width = '0.167em';
+      container.appendChild(sp); i += 10; continue;
+    }
+    if (text.startsWith('\\negthinspace', i)) { i += 13; continue; }
+    if (text.startsWith('\\negmedspace', i))  { i += 12; continue; }
+    if (text.startsWith('\\negthickspace', i)) { i += 14; continue; }
+
+    // \hspace{len} or \hspace*{len}
+    const hspaceM = text.slice(i).match(/^\\hspace\*?\{([^}]*)\}/);
+    if (hspaceM) {
+      flush();
+      const sp = document.createElement('span');
+      sp.style.display = 'inline-block';
+      const len = hspaceM[1].trim();
+      sp.style.width = /^[\d.]+(?:em|ex|pt|cm|mm|in|px|rem)$/.test(len) ? len : '1em';
+      container.appendChild(sp); i += hspaceM[0].length; continue;
+    }
+
+    // Vertical spacing / page breaks
+    const skipM = text.slice(i).match(/^\\(?:smallskip|medskip|bigskip|par|vspace\*?\{[^}]*\}|vfill)/);
     if (skipM) { flush(); container.appendChild(document.createElement('br')); i += skipM[0].length; continue; }
 
-    if (text.startsWith('\\noindent', i)) { i += 9; continue; }
+    const pageM = text.slice(i).match(/^\\(?:newpage|clearpage|cleardoublepage)/);
+    if (pageM) { flush(); container.appendChild(document.createElement('hr')); i += pageM[0].length; continue; }
 
-    if (text.startsWith('\\\\', i)) { flush(); container.appendChild(document.createElement('br')); i += 2; continue; }
+    // \noindent, \linebreak → consume / br
+    if (text.startsWith('\\noindent', i))  { i += 9;  continue; }
+    if (text.startsWith('\\linebreak', i)) { flush(); container.appendChild(document.createElement('br')); i += 10; continue; }
+
+    // \\ and \newline → <br>
+    if (text.startsWith('\\\\', i))      { flush(); container.appendChild(document.createElement('br')); i += 2; continue; }
     if (text.startsWith('\\newline', i)) { flush(); container.appendChild(document.createElement('br')); i += 8; continue; }
+
+    // Backslash-escaped reserved characters: \% \$ \& \# \_ \{ \}
+    if (text[i] === '\\' && i + 1 < text.length) {
+      const ESCAPED = { '%': '%', '$': '$', '&': '&', '#': '#', '_': '_', '{': '{', '}': '}' };
+      if (ESCAPED[text[i + 1]] !== undefined) {
+        flush(); buf += ESCAPED[text[i + 1]]; i += 2; continue;
+      }
+    }
+
+    // Single-char math spacing (must check before generic \cmd handler)
+    if (text.startsWith('\\,', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.style.display = 'inline-block'; sp.style.width = '0.167em';
+      container.appendChild(sp); i += 2; continue;
+    }
+    if (text.startsWith('\\;', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.style.display = 'inline-block'; sp.style.width = '0.278em';
+      container.appendChild(sp); i += 2; continue;
+    }
+    if (text.startsWith('\\:', i)) {
+      flush();
+      const sp = document.createElement('span'); sp.style.display = 'inline-block'; sp.style.width = '0.222em';
+      container.appendChild(sp); i += 2; continue;
+    }
+    if (text.startsWith('\\!', i)) { i += 2; continue; } // negative thin space → skip
+
+    // \  (backslash + space) → forced space
+    if (text[i] === '\\' && text[i + 1] === ' ') { flush(); buf += ' '; i += 2; continue; }
+
+    // \LaTeX and \TeX → styled output
+    if (text.startsWith('\\LaTeX', i)) {
+      flush();
+      const el = document.createElement('span');
+      el.innerHTML = 'L<sup style="font-size:.75em;vertical-align:.25em;margin-left:-.1em">A</sup>'
+                   + '<span style="letter-spacing:-.1em">T</span>'
+                   + '<sub style="font-size:.75em;vertical-align:-.2em">E</sub>X';
+      container.appendChild(el); i += 6; continue;
+    }
+    if (text.startsWith('\\TeX', i)) {
+      flush();
+      const el = document.createElement('span');
+      el.innerHTML = 'T<sub style="font-size:.75em;vertical-align:-.2em">E</sub>X';
+      container.appendChild(el); i += 4; continue;
+    }
+
+    // Generic no-arg \cmdname lookup
+    if (text[i] === '\\' && i + 1 < text.length && /[a-zA-Z]/.test(text[i + 1])) {
+      const m = text.slice(i + 1).match(/^([a-zA-Z]+)/);
+      if (m) {
+        const cmdName = m[1];
+        if (_CHAR_CMDS[cmdName] !== undefined) {
+          flush();
+          buf += _CHAR_CMDS[cmdName];
+          i += 1 + cmdName.length;
+          if (text[i] === '{' && text[i + 1] === '}') i += 2; // consume optional {}
+          else if (text[i] === ' ') i++;                        // consume trailing space
+          continue;
+        }
+        if (_NOOP_CMDS.has(cmdName)) {
+          i += 1 + cmdName.length;
+          if (text[i] === '{' && text[i + 1] === '}') i += 2;
+          else if (text[i] === ' ') i++;
+          continue;
+        }
+      }
+    }
+
+    // Typographic dashes: --- → em dash, -- → en dash (must check --- before --)
+    if (text.startsWith('---', i)) { flush(); buf += '—'; i += 3; continue; }
+    if (text.startsWith('--',  i)) { flush(); buf += '–'; i += 2; continue; }
+
+    // ~ → non-breaking space (LaTeX text-mode tie)
+    if (text[i] === '~') { flush(); buf += ' '; i++; continue; }
 
     buf += text[i++];
   }
