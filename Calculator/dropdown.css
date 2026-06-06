@@ -403,3 +403,403 @@ body {
 #deptChanceTable td.chance {
     font-weight: 700;
 }
+
+/* ── Department Countdown ─────────────────────────────── */
+.countdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.countdown-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    flex-wrap: wrap;
+    transition: border-color 0.3s, background 0.3s;
+}
+
+.countdown-item.active {
+    border-color: rgba(34, 197, 94, 0.5);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.countdown-item.passed {
+    opacity: 0.38;
+}
+
+.countdown-label {
+    flex: 1;
+    min-width: 180px;
+}
+
+.countdown-label-text {
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+.countdown-date-text {
+    font-size: 0.78rem;
+    color: var(--muted, #9aa4b2);
+    margin-top: 2px;
+}
+
+.countdown-digits {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.countdown-unit {
+    text-align: center;
+    min-width: 44px;
+}
+
+.countdown-num {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #3b82f6;
+    line-height: 1;
+    display: block;
+}
+
+.countdown-unit-label {
+    font-size: 0.62rem;
+    color: var(--muted, #9aa4b2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.countdown-sep {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #475569;
+    line-height: 1;
+    align-self: flex-start;
+    margin-top: 2px;
+}
+
+.countdown-status {
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+}
+
+.countdown-status.active {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.countdown-status.passed {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+}
+
+@media (max-width: 600px) {
+    .countdown-item {
+        gap: 10px;
+    }
+    .countdown-num {
+        font-size: 1.1rem;
+    }
+}
+
+/* ── Two-button layout ────────────────────────────────── */
+.calc-btn-row {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 30px auto;
+}
+
+.calc-btn-row #calbutton {
+    margin: 0;
+}
+
+.btn-predict {
+    padding: 12px 32px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+    background-color: #8b5cf6;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s ease;
+}
+
+.btn-predict:hover {
+    background-color: #7c3aed;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-predict:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(139, 92, 246, 0.2);
+}
+
+/* ── Predict Modal Overlay ────────────────────────────── */
+.predict-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+}
+
+.predict-overlay[hidden] {
+    display: none !important;
+}
+
+.predict-modal {
+    background: var(--card, #0b1220);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+}
+
+.predict-modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px;
+}
+
+.predict-modal-desc {
+    color: var(--muted, #9aa4b2);
+    font-size: 0.875rem;
+    margin: 0 0 20px;
+}
+
+/* ── Preference List ──────────────────────────────────── */
+.pref-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pref-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 8px;
+    padding: 9px 12px;
+}
+
+.pref-rank {
+    width: 26px;
+    height: 26px;
+    background: #3b82f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.pref-name {
+    flex: 1;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+}
+
+.drag-handle {
+    color: #475569;
+    font-size: 1.1rem;
+    cursor: grab;
+    user-select: none;
+    flex-shrink: 0;
+    margin-right: -2px;
+    line-height: 1;
+}
+
+.pref-item.dragging {
+    opacity: 0.3;
+    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
+.pref-item.drag-over {
+    border-color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.12);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35);
+    transform: scale(1.01);
+}
+
+.pref-item.excluded {
+    opacity: 0.3;
+    background: rgba(255, 255, 255, 0.01);
+    border-color: rgba(255, 255, 255, 0.03);
+}
+
+.pref-item.excluded .pref-rank {
+    background: #374151;
+}
+
+.pref-toggle {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #64748b;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    font-size: 0.75rem;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.pref-toggle:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.pref-item.excluded .pref-toggle:hover {
+    border-color: #22c55e;
+    color: #22c55e;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+/* ── Modal Action Buttons ─────────────────────────────── */
+.predict-modal-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.predict-cancel-btn {
+    flex: 1;
+    padding: 11px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9aa4b2;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.predict-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.09);
+    color: #e2e8f0;
+}
+
+.predict-submit-btn {
+    flex: 2;
+    padding: 11px;
+    background: #8b5cf6;
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.predict-submit-btn:hover:not(:disabled) {
+    background: #7c3aed;
+}
+
+.predict-submit-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Predict Result Card ──────────────────────────────── */
+.predict-winner-banner {
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.predict-winner-label {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.875rem;
+    margin: 0 0 4px;
+}
+
+.predict-winner-dept {
+    color: #fff;
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+#predictDeptTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 0.95rem;
+}
+
+#predictDeptTable th,
+#predictDeptTable td {
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    padding: 10px 12px;
+    text-align: center;
+}
+
+#predictDeptTable th {
+    background-color: rgba(139, 92, 246, 0.35);
+    color: #f8fafc;
+}
+
+#predictDeptTable tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+#predictDeptTable .predicted-row {
+    background-color: rgba(139, 92, 246, 0.15) !important;
+}
+
+@media (max-width: 600px) {
+    .calc-btn-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-predict {
+        width: 100%;
+        text-align: center;
+    }
+}

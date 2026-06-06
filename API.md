@@ -98,6 +98,8 @@
   - [POST /calculator](#post-calculator)
   - [GET /calculator/grades](#get-calculatorgrades)
   - [GET /calculator/history](#get-calculatorhistory)
+  - [GET /calculator/departments](#get-calculatordepartmentsyear2568)
+  - [POST /calculator/predict](#post-calculatorpredict)
 - [Rate Limiting](#rate-limiting)
 - [HTTP Status Codes](#http-status-codes)
 
@@ -1376,10 +1378,10 @@ Max size: **5MB**
 
 **Response 201**
 ```json
-{ "success": true, "message": "Image uploaded", "image_key": "exercise-images/1.jpg" }
+{ "success": true, "message": "Image uploaded", "image_key": "Exercises/Calculus I/Week 1/qChain Rule.jpeg" }
 ```
 
-> The `image_key` is stored on the exercise. Serve it via `GET /assets/{image_key}`.
+> The `image_key` is stored on the exercise and follows the pattern `Exercises/{course_title}/{problem_set_title}/q{exercise_title}.{ext}`. Serve it via `GET /assets/{image_key}`.
 
 ---
 
@@ -1653,8 +1655,8 @@ Submit grades for a department. Runs the weighted GPA calculation, returns the r
   "admFullScore": 96.0,
   "chancePercent": 65.00,
   "allDepartments": [
-    { "department": "CP", "name": "CP", "minScore": 280.5, "maxScore": 310.0, "chance": 65.00 },
-    { "department": "EE", "name": "EE", "minScore": 260.0, "maxScore": 295.0, "chance": 55.00 }
+    { "department": "CP", "name": "CP", "minScore": 280.5, "maxScore": 310.0, "chance": 65.00, "capacity": 33 },
+    { "department": "EE", "name": "EE", "minScore": 260.0, "maxScore": 295.0, "chance": 55.00, "capacity": 112 }
   ]
 }
 ```
@@ -1667,7 +1669,12 @@ Submit grades for a department. Runs the weighted GPA calculation, returns the r
 | `admScore` | Admission weighted score `Σ(grade × department_weight)` for the selected department |
 | `admFullScore` | Admission maximum possible score (`totalDeptWeight × 4`) |
 | `chancePercent` | Estimated admission chance (0–100.00) based on historical min/max scores |
-| `allDepartments` | Chance for every department, sorted by code. `name` is the department code. `minScore`/`maxScore` from the most recent history year. |
+| `allDepartments[].department` | Department code |
+| `allDepartments[].name` | Department display name (falls back to code if unavailable) |
+| `allDepartments[].minScore` | Cutoff score from the most recent history year with real data |
+| `allDepartments[].maxScore` | Highest score from the most recent history year with real data |
+| `allDepartments[].chance` | Estimated admission chance (0–100.00) for this department with the submitted grades |
+| `allDepartments[].capacity` | Number of seats for 2568; `null` if unknown |
 
 ---
 
@@ -1717,6 +1724,145 @@ Get all historical admission score data for graph plotting.
 | `minScore` | Lowest score among admitted students (cut-off) |
 
 > A department key is absent for a given year if it did not participate in admissions that year.
+
+### GET /calculator/departments?year=2568
+List all departments with their seat capacity, name, and most recent historical cutoff scores. Does not require grades — chance is always `null` here. Use `POST /calculator` or `POST /calculator/predict` to get per-department chances for a specific student.
+
+**Query parameters**
+
+| Param | Default | Description |
+|-------|---------|-------------|
+| `year` | `2568` | Thai academic year to pull seat capacity from |
+
+**Response**
+```json
+{
+  "success": true,
+  "year": "2568",
+  "departments": [
+    {
+      "department": "CE",
+      "name": "CE",
+      "minScore": 66,
+      "maxScore": 138,
+      "chance": null,
+      "capacity": 100
+    },
+    {
+      "department": "CP",
+      "name": "CP",
+      "minScore": null,
+      "maxScore": null,
+      "chance": null,
+      "capacity": 33
+    }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `year` | The year whose capacity data was used |
+| `departments[].department` | Department code |
+| `departments[].name` | Department display name (falls back to code if unavailable) |
+| `departments[].minScore` | Cutoff score from the most recent year with real score data; `null` if no history |
+| `departments[].maxScore` | Highest score from the most recent year with real score data; `null` if no history |
+| `departments[].chance` | Always `null` (no grades submitted) |
+| `departments[].capacity` | Number of seats for the requested year; `null` if unknown |
+
+---
+
+### POST /calculator/predict
+Preference-order department admission prediction. Submit grades and an ordered preference list; the API simulates the sequential selection process and returns an estimated probability for each preferred department plus the full all-department comparison table.
+
+**Request body**
+```json
+{
+  "grades": [
+    { "subject": "General Physics 1", "grade": 3.5 },
+    { "subject": "Calculus 1", "grade": 4.0 }
+  ],
+  "preferences": ["CE", "EE", "ME"],
+  "department": "CE",
+  "year": "2568"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `grades` | array | yes | Same format as `POST /calculator` |
+| `preferences` | array | yes | Ordered department codes (first = most preferred) |
+| `department` | string | no | Department to use for top-level `admScore`/`chancePercent`. Defaults to the predicted department |
+| `year` | string | no | Academic year for capacity lookup (default `"2568"`) |
+
+**Response**
+```json
+{
+  "success": true,
+  "department": "CE",
+  "gpax": 3.72,
+  "weightedScore": 44.6,
+  "fullScore": 60.0,
+  "admScore": 58.5,
+  "admFullScore": 96.0,
+  "chancePercent": 72.00,
+  "predictedDepartment": "EE",
+  "allDepartments": [
+    {
+      "department": "CE",
+      "name": "CE",
+      "minScore": 66,
+      "maxScore": 138,
+      "chance": 72.00,
+      "capacity": 100,
+      "estimatedProbability": 72.00
+    },
+    {
+      "department": "EE",
+      "name": "EE",
+      "minScore": 102,
+      "maxScore": 180,
+      "chance": 55.00,
+      "capacity": 112,
+      "estimatedProbability": 15.40
+    },
+    {
+      "department": "ME",
+      "name": "ME",
+      "minScore": 90,
+      "maxScore": 160,
+      "chance": 60.00,
+      "capacity": 85,
+      "estimatedProbability": 7.92
+    },
+    {
+      "department": "CP",
+      "name": "CP",
+      "minScore": null,
+      "maxScore": null,
+      "chance": 30.00,
+      "capacity": 33,
+      "estimatedProbability": null
+    }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `department` | Department used for the top-level `admScore`/`admFullScore`/`chancePercent` fields |
+| `gpax` | GPAX using constant credit-hour weights |
+| `weightedScore` | GPAX raw weighted score |
+| `fullScore` | GPAX maximum possible score |
+| `admScore` | Admission weighted score for `department` |
+| `admFullScore` | Admission maximum possible score for `department` |
+| `chancePercent` | Estimated chance for `department` |
+| `predictedDepartment` | The preference entry with the highest `estimatedProbability` |
+| `allDepartments[].chance` | Raw chance for this department with the submitted grades (0–100.00) |
+| `allDepartments[].capacity` | Number of seats for the requested year; `null` if unknown |
+| `allDepartments[].estimatedProbability` | Sequential probability of being assigned here, accounting for higher preferences (`null` for non-preferred departments). Formula: `P(failed all prior) × chancePercent / 100`, expressed as 0–100.00. |
+
+> Grades are saved to D1 after a successful prediction (same as `POST /calculator`).
 
 ---
 

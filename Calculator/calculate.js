@@ -172,8 +172,266 @@ async function loadSavedGrades() {
     } catch { /* silent */ }
 }
 
+// ── Predict Feature (ชั่วคราว 2568) ────────────────────────
+const DEPARTMENTS = [
+    { code: 'CE',  name: 'วิศวกรรมโยธา (CE)' },
+    { code: 'EE',  name: 'วิศวกรรมไฟฟ้า (EE)' },
+    { code: 'ME',  name: 'วิศวกรรมเครื่องกล (ME)' },
+    { code: 'AE',  name: 'วิศวกรรมยานยนต์ (AE)' },
+    { code: 'IE',  name: 'วิศวกรรมอุตสาหการ (IE)' },
+    { code: 'CHE', name: 'วิศวกรรมเคมี (CHE)' },
+    { code: 'PE',  name: 'วิศวกรรมปิโตรเลียม (PE)' },
+    { code: 'GE',  name: 'วิศวกรรมเหมืองแร่ (GE)' },
+    { code: 'ENV', name: 'วิศวกรรมสิ่งแวดล้อม (ENV)' },
+    { code: 'SV',  name: 'วิศวกรรมสำรวจ (SV)' },
+    { code: 'MT',  name: 'วิศวกรรมโลหะการและวัสดุ (MT)' },
+    { code: 'CP',  name: 'วิศวกรรมคอมพิวเตอร์ (CP)' },
+    { code: 'NT',  name: 'วิศวกรรมนิวเคลียร์ (NT)' },
+];
+
+let prefOrder = DEPARTMENTS.map(d => ({ ...d, excluded: false }));
+let dragSrcIndex = null;
+
+function buildPrefList() {
+    const list = document.getElementById('prefList');
+    list.innerHTML = '';
+
+    prefOrder.forEach((dept, i) => {
+        const li = document.createElement('li');
+        li.className = 'pref-item' + (dept.excluded ? ' excluded' : '');
+        li.draggable = true;
+
+        li.innerHTML = `
+            <span class="drag-handle">⠿</span>
+            <span class="pref-rank">${i + 1}</span>
+            <span class="pref-name">${dept.name}</span>
+            <button class="pref-toggle" type="button">${dept.excluded ? '＋' : '✕'}</button>
+        `;
+
+        li.querySelector('.pref-toggle').addEventListener('click', () => {
+            prefOrder[i].excluded = !prefOrder[i].excluded;
+            buildPrefList();
+        });
+
+        li.addEventListener('dragstart', e => {
+            dragSrcIndex = i;
+            li.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(i));
+        });
+
+        li.addEventListener('dragover', e => { e.preventDefault(); });
+
+        li.addEventListener('dragenter', () => {
+            if (dragSrcIndex !== i) li.classList.add('drag-over');
+        });
+
+        li.addEventListener('dragleave', e => {
+            if (!li.contains(e.relatedTarget)) li.classList.remove('drag-over');
+        });
+
+        li.addEventListener('drop', e => {
+            e.preventDefault();
+            if (dragSrcIndex !== null && dragSrcIndex !== i) {
+                const [moved] = prefOrder.splice(dragSrcIndex, 1);
+                prefOrder.splice(i, 0, moved);
+                buildPrefList();
+            }
+        });
+
+        li.addEventListener('dragend', () => {
+            document.querySelectorAll('#prefList .pref-item').forEach(el => {
+                el.classList.remove('dragging', 'drag-over');
+            });
+            dragSrcIndex = null;
+        });
+
+        list.appendChild(li);
+    });
+}
+
+function showPredictResult(data) {
+    const card = document.getElementById('predictResultCard');
+    const content = document.getElementById('predictResultContent');
+    card.hidden = false;
+    document.getElementById('regularResultCard').hidden = true;
+    content.innerHTML = '';
+
+    const predicted = data.predictedDepartment;
+    const preferredDepts = prefOrder
+        .map(p => data.allDepartments?.find(d => d.department === p.code))
+        .filter(d => d?.estimatedProbability != null);
+
+    if (predicted) {
+        const local = DEPARTMENTS.find(d => d.code === predicted);
+        const banner = document.createElement('div');
+        banner.className = 'predict-winner-banner';
+        banner.innerHTML = `
+            <p class="predict-winner-label">ภาคที่คาดว่าจะได้</p>
+            <p class="predict-winner-dept">${local?.name ?? predicted}</p>
+        `;
+        content.appendChild(banner);
+    }
+
+    if (preferredDepts.length) {
+        const wrap = document.createElement('div');
+        wrap.style.overflowX = 'auto';
+        const rows = preferredDepts.map((d, i) => {
+            const isPredicted = d.department === predicted;
+            const localName = DEPARTMENTS.find(x => x.code === d.department)?.name ?? d.department;
+            return `<tr${isPredicted ? ' class="predicted-row"' : ''}>
+                <td>${i + 1}</td>
+                <td>${localName}</td>
+                <td><strong>${d.estimatedProbability.toFixed(1)}%</strong></td>
+                <td>${d.capacity ?? '-'}</td>
+            </tr>`;
+        }).join('');
+        wrap.innerHTML = `
+            <table id="predictDeptTable">
+                <thead><tr>
+                    <th>ลำดับ</th><th>ภาค</th><th>โอกาสได้จริง</th><th>ที่นั่ง</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+        content.appendChild(wrap);
+
+        const note = document.createElement('p');
+        note.style.cssText = 'color:var(--muted,#9aa4b2);font-size:0.82rem;margin-top:12px;text-align:center;';
+        note.textContent = '* โอกาสได้จริง = โอกาสหลังหักความเป็นไปได้ที่จะได้ภาคลำดับสูงกว่า';
+        content.appendChild(note);
+    }
+
+    card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Department Selection Countdown ──────────────────────────
+const DEPT_EVENTS = [
+    {
+        label: 'ตรวจสอบรายชื่อและประกาศอันดับ (Ranking)',
+        dateText: '22 มิ.ย. 2569',
+        start: new Date('2026-06-22'),
+        end:   new Date('2026-06-23'),
+    },
+    {
+        label: 'แจ้งเปลี่ยนแปลงผลการศึกษา (นิสิต M|X)',
+        dateText: '22–26 มิ.ย. 2569',
+        start: new Date('2026-06-22'),
+        end:   new Date('2026-06-27'),
+    },
+    {
+        label: 'แสดงความจำนงเลือกลำดับสาขาวิชา',
+        dateText: '29 มิ.ย. – 3 ก.ค. 2569',
+        start: new Date('2026-06-29'),
+        end:   new Date('2026-07-04'),
+    },
+    {
+        label: 'นำผลเสนอคณะกรรมการบริหารคณะฯ',
+        dateText: '15 ก.ค. 2569',
+        start: new Date('2026-07-15'),
+        end:   new Date('2026-07-16'),
+    },
+    {
+        label: 'ประกาศผลการเลือกสาขาวิชา',
+        dateText: '17 ก.ค. 2569',
+        start: new Date('2026-07-17'),
+        end:   new Date('2026-07-18'),
+    },
+];
+
+function initCountdown() {
+    const container = document.getElementById('countdownList');
+    if (!container) return;
+
+    const items = DEPT_EVENTS.map((ev, i) => {
+        const el = document.createElement('div');
+        el.className = 'countdown-item';
+        el.innerHTML = `
+            <div class="countdown-label">
+                <div class="countdown-label-text">${ev.label}</div>
+                <div class="countdown-date-text">${ev.dateText}</div>
+            </div>
+            <div class="countdown-digits" id="cd-${i}"></div>
+        `;
+        container.appendChild(el);
+        return el;
+    });
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    function tick() {
+        const now = new Date();
+        DEPT_EVENTS.forEach((ev, i) => {
+            const item = items[i];
+            const digits = document.getElementById(`cd-${i}`);
+            if (!item || !digits) return;
+
+            if (now >= ev.end) {
+                item.className = 'countdown-item passed';
+                digits.innerHTML = `<span class="countdown-status passed">ผ่านไปแล้ว</span>`;
+            } else if (now >= ev.start) {
+                item.className = 'countdown-item active';
+                digits.innerHTML = `<span class="countdown-status active">กำลังดำเนินการ</span>`;
+            } else {
+                item.className = 'countdown-item';
+                const diff  = ev.start - now;
+                const days  = Math.floor(diff / 86400000);
+                const hours = Math.floor((diff % 86400000) / 3600000);
+                const mins  = Math.floor((diff % 3600000) / 60000);
+                const secs  = Math.floor((diff % 60000) / 1000);
+                digits.innerHTML = `
+                    <div class="countdown-unit">
+                        <span class="countdown-num">${days}</span>
+                        <span class="countdown-unit-label">วัน</span>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-unit">
+                        <span class="countdown-num">${pad(hours)}</span>
+                        <span class="countdown-unit-label">ชม.</span>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-unit">
+                        <span class="countdown-num">${pad(mins)}</span>
+                        <span class="countdown-unit-label">นาที</span>
+                    </div>
+                    <span class="countdown-sep">:</span>
+                    <div class="countdown-unit">
+                        <span class="countdown-num">${pad(secs)}</span>
+                        <span class="countdown-unit-label">วินาที</span>
+                    </div>
+                `;
+            }
+        });
+    }
+
+    tick();
+    setInterval(tick, 1000);
+}
+
+async function loadSavedPreferences() {
+    try {
+        const res = await apiFetch('/calculator/preferences');
+        if (!res.ok) return;
+        const { success, preferences } = await res.json();
+        if (!success || !Array.isArray(preferences) || !preferences.length) return;
+
+        const savedItems = preferences
+            .map(code => DEPARTMENTS.find(d => d.code === code))
+            .filter(Boolean)
+            .map(d => ({ ...d, excluded: false }));
+
+        const rest = DEPARTMENTS
+            .filter(d => !preferences.includes(d.code))
+            .map(d => ({ ...d, excluded: true }));
+
+        prefOrder = [...savedItems, ...rest];
+    } catch { /* silent */ }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     loadSavedGrades();
+    loadSavedPreferences();
+    initCountdown();
     getHistory().catch(() => {}); // warm the cache early
 
     document.getElementById('calbutton').addEventListener('click', async () => {
@@ -211,6 +469,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (improved !== null) data.chancePercent = improved;
             }
 
+            document.getElementById('regularResultCard').hidden = false;
+            const prc = document.getElementById('predictResultCard');
+            if (prc) prc.hidden = true;
             updateResultUI(data, history);
         } catch (e) {
             alert('เกิดข้อผิดพลาด: ' + e.message);
@@ -219,4 +480,60 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.textContent = 'คำนวณ';
         }
     });
+
+    // ── Predict handlers (remove predictModal + predictBtn + predictResultCard to disable) ──
+    const predictModal = document.getElementById('predictModal');
+    if (predictModal) {
+
+    document.getElementById('predictBtn').addEventListener('click', () => {
+        buildPrefList();
+        predictModal.hidden = false;
+    });
+
+    document.getElementById('predictCancelBtn').addEventListener('click', () => {
+        predictModal.hidden = true;
+    });
+
+    predictModal.addEventListener('click', e => {
+        if (e.target === predictModal) predictModal.hidden = true;
+    });
+
+    document.getElementById('predictSubmitBtn').addEventListener('click', async () => {
+        const grades = getGradesFromDOM();
+        const department = document.getElementById('depart')?.getAttribute('data-value')?.trim() || undefined;
+        const preferences = prefOrder.filter(d => !d.excluded).map(d => d.code);
+
+        const btn = document.getElementById('predictSubmitBtn');
+        btn.disabled = true;
+        btn.textContent = 'กำลังคำนวณ...';
+
+        try {
+            const res = await apiFetch('/calculator/predict', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    grades,
+                    preferences,
+                    ...(department && { department }),
+                    year: '2568',
+                }),
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err.error || 'คำนวณไม่สำเร็จ');
+            }
+
+            const data = await res.json();
+            predictModal.hidden = true;
+            showPredictResult(data);
+        } catch (e) {
+            alert('เกิดข้อผิดพลาด: ' + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'คำนวณโอกาส';
+        }
+    });
+
+    } // end if (predictModal)
 });

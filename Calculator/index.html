@@ -360,11 +360,23 @@
         </section>
         <br>
 
-        <button class="button" id="calbutton">คำนวณ</button>
+        <div class="calc-btn-row">
+            <button id="calbutton">คำนวณ</button>
+            <button id="predictBtn" class="btn-predict">คาดการณ์โอกาสติด (2568)</button>
+        </div>
 
-        <br>
+        <div class="card" id="departCountdown">
+            <h2 style="margin-bottom:4px;">กำหนดการเลือกสาขาวิชา ปีการศึกษา 2568</h2>
+            <p style="color:var(--muted,#9aa4b2);font-size:0.82rem;margin-bottom:20px;">เพื่อเข้าศึกษาชั้นปีที่ 2 ปีการศึกษา 2569</p>
+            <div id="countdownList" class="countdown-list"></div>
+        </div>
 
-        <div class="card">
+        <div class="card" id="predictResultCard" hidden>
+            <h2 style="margin-bottom:16px;">ผลการคาดการณ์ (2568)</h2>
+            <div id="predictResultContent"></div>
+        </div>
+
+        <div class="card" id="regularResultCard">
             <h1 style="text-align: center; margin-bottom: 20px;">โอกาสที่ได้ :</h1>
 
             <div class="score-row">
@@ -420,6 +432,19 @@
                         <!-- Filled by calculate.js -->
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Predict Preference Modal (ชั่วคราว 2568) -->
+        <div id="predictModal" class="predict-overlay" hidden>
+            <div class="predict-modal">
+                <h3 class="predict-modal-title">จัดลำดับภาคที่อยากเข้า</h3>
+                <p class="predict-modal-desc">กดลูกศรเพื่อจัดลำดับความต้องการ อันดับ 1 = ต้องการสูงสุด</p>
+                <ol id="prefList" class="pref-list"></ol>
+                <div class="predict-modal-actions">
+                    <button id="predictCancelBtn" class="predict-cancel-btn">ยกเลิก</button>
+                    <button id="predictSubmitBtn" class="predict-submit-btn">คำนวณโอกาส</button>
+                </div>
             </div>
         </div>
 
