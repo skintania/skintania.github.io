@@ -369,30 +369,11 @@ function initCountdown() {
                 digits.innerHTML = `<span class="countdown-status active">กำลังดำเนินการ</span>`;
             } else {
                 item.className = 'countdown-item';
-                const diff  = ev.start - now;
-                const days  = Math.floor(diff / 86400000);
-                const hours = Math.floor((diff % 86400000) / 3600000);
-                const mins  = Math.floor((diff % 3600000) / 60000);
-                const secs  = Math.floor((diff % 60000) / 1000);
+                const days = Math.ceil((ev.start - now) / 86400000);
                 digits.innerHTML = `
                     <div class="countdown-unit">
                         <span class="countdown-num">${days}</span>
                         <span class="countdown-unit-label">วัน</span>
-                    </div>
-                    <span class="countdown-sep">:</span>
-                    <div class="countdown-unit">
-                        <span class="countdown-num">${pad(hours)}</span>
-                        <span class="countdown-unit-label">ชม.</span>
-                    </div>
-                    <span class="countdown-sep">:</span>
-                    <div class="countdown-unit">
-                        <span class="countdown-num">${pad(mins)}</span>
-                        <span class="countdown-unit-label">นาที</span>
-                    </div>
-                    <span class="countdown-sep">:</span>
-                    <div class="countdown-unit">
-                        <span class="countdown-num">${pad(secs)}</span>
-                        <span class="countdown-unit-label">วินาที</span>
                     </div>
                 `;
             }
@@ -400,7 +381,7 @@ function initCountdown() {
     }
 
     tick();
-    setInterval(tick, 1000);
+    setInterval(tick, 60000);
 }
 
 async function loadSavedPreferences() {

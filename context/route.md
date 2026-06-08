@@ -177,7 +177,7 @@ register/checkpassword.js (module)
 /auth-guard.js
 /Template/component.js
 profile/profile.js (module) → imports apiFetch
-  API: POST /users/search?q=&limit=12
+  API: GET /users/search?q=&limit=12  (q optional — omit for random-user discovery)
        GET /users/:id
        GET /users/:id/avatar
        PATCH /users/:id (admin: ban, role change)
@@ -209,6 +209,7 @@ admin/admin.js (module) → imports apiFetch
 |----------|-----------|
 | `GET /auth/me` | auth-guard.js, site-header.js, settings.js |
 | `GET /users/me` | settings.js |
+| `GET /users/search` | profile.js (`q` optional; empty returns random users, `offset` ignored) |
 | `GET /users/:id` | profile.js, loadEvent.js |
 | `GET /users/:id/avatar` | site-header.js, profile.js, loadEvent.js |
 | `GET /courses` | loadCourse.js |
@@ -222,6 +223,7 @@ admin/admin.js (module) → imports apiFetch
 | `POST /events` | post-create.js |
 | `POST /calculator` | calculate.js |
 | `GET /calculator/grades` | calculate.js, historyCache.js |
+| `GET /skdrive/tree` | (folder hierarchy, folders-only — use for sidebar/picker) |
 | `GET /skdrive?prefix=` | loadDrive.js |
 | `POST /skdrive/download` | loadDrive.js |
 | `GET /skdrive/*` | loadDrive.js |

@@ -149,6 +149,73 @@ function buildRoadmap() {
   svg.appendChild(mp);
   scene.appendChild(svg);
 
+  // ── Milestone labels (Freshy / Sophomore) ───────────────────────
+  // "Freshy" — vertical card in left margin, at road start
+  {
+    const ly  = yRow(0);
+    const cw  = mobile ? 48 : 72, ch = mobile ? 58 : 86;
+    const lx  = x1 / 2;
+    const iR  = mobile ? 11 : 17;
+    const iy  = ly - ch / 2 + iR + (mobile ? 9 : 13);
+    const t1y = iy + iR + (mobile ? 11 : 16);
+    const t2y = t1y + (mobile ? 10 : 14);
+    const g = document.createElementNS(ns, 'g');
+    g.innerHTML = `
+      <line x1="${lx + cw / 2}" y1="${ly}" x2="${x1}" y2="${ly}"
+        stroke="rgba(96,165,250,0.55)" stroke-width="2" stroke-dasharray="5 3"/>
+      <rect x="${lx - cw / 2}" y="${ly - ch / 2}" width="${cw}" height="${ch}" rx="14"
+        fill="rgba(23,52,140,0.45)" stroke="rgba(96,165,250,0.85)" stroke-width="2"
+        filter="url(#rmGlow)"/>
+      <circle cx="${lx}" cy="${iy}" r="${iR}"
+        fill="rgba(59,130,246,0.55)" stroke="rgba(147,197,253,0.9)" stroke-width="1.5"
+        filter="url(#rmGlowSm)"/>
+      <text x="${lx}" y="${iy + (mobile ? 4.5 : 6)}" text-anchor="middle"
+        fill="#fff" font-size="${mobile ? 11 : 16}"
+        font-family="Kanit,sans-serif" font-weight="700">★</text>
+      <text x="${lx}" y="${t1y}" text-anchor="middle"
+        fill="#bfdbfe" font-size="${mobile ? 7 : 9.5}"
+        font-family="Kanit,sans-serif" font-weight="700" letter-spacing="0.1em">YEAR 1</text>
+      <text x="${lx}" y="${t2y}" text-anchor="middle"
+        fill="#93c5fd" font-size="${mobile ? 7.5 : 10}"
+        font-family="Kanit,sans-serif" font-weight="700" letter-spacing="0.06em">FRESHY</text>`;
+    svg.appendChild(g);
+  }
+
+  // "Sophomore" — vertical card on whichever side the road ends
+  {
+    const lastRow  = rows - 1;
+    const goRight  = lastRow % 2 === 0;
+    const roadEndX = goRight ? x2 : x1;
+    const ly  = yRow(lastRow);
+    const cw  = mobile ? 54 : 80, ch = mobile ? 58 : 86;
+    const lx  = goRight ? roadEndX + margin / 2 : roadEndX - margin / 2;
+    const connX = goRight ? lx - cw / 2 : lx + cw / 2;
+    const iR  = mobile ? 11 : 17;
+    const iy  = ly - ch / 2 + iR + (mobile ? 9 : 13);
+    const t1y = iy + iR + (mobile ? 11 : 16);
+    const t2y = t1y + (mobile ? 10 : 14);
+    const g = document.createElementNS(ns, 'g');
+    g.innerHTML = `
+      <line x1="${roadEndX}" y1="${ly}" x2="${connX}" y2="${ly}"
+        stroke="rgba(52,211,153,0.55)" stroke-width="2" stroke-dasharray="5 3"/>
+      <rect x="${lx - cw / 2}" y="${ly - ch / 2}" width="${cw}" height="${ch}" rx="14"
+        fill="rgba(5,60,45,0.5)" stroke="rgba(52,211,153,0.85)" stroke-width="2"
+        filter="url(#rmGlow)"/>
+      <circle cx="${lx}" cy="${iy}" r="${iR}"
+        fill="rgba(16,185,129,0.55)" stroke="rgba(52,211,153,0.9)" stroke-width="1.5"
+        filter="url(#rmGlowSm)"/>
+      <text x="${lx}" y="${iy + (mobile ? 4.5 : 6)}" text-anchor="middle"
+        fill="#fff" font-size="${mobile ? 11 : 16}"
+        font-family="Kanit,sans-serif" font-weight="700">★</text>
+      <text x="${lx}" y="${t1y}" text-anchor="middle"
+        fill="#a7f3d0" font-size="${mobile ? 7 : 9.5}"
+        font-family="Kanit,sans-serif" font-weight="700" letter-spacing="0.1em">YEAR 2</text>
+      <text x="${lx}" y="${t2y}" text-anchor="middle"
+        fill="#34d399" font-size="${mobile ? 7 : 9.5}"
+        font-family="Kanit,sans-serif" font-weight="700" letter-spacing="0.04em">SOPHOMORE</text>`;
+    svg.appendChild(g);
+  }
+
   // ── Place pins ──────────────────────────────────────────────────
   const total = mp.getTotalLength();
   const now   = new Date();
@@ -215,29 +282,31 @@ function buildRoadmap() {
 }
 
 // ── Modal ────────────────────────────────────────────────────────────
-function openRmModal(item, num, color) {
-  const TABS = [
-    { key: 'info',     label: 'ข้อมูลพื้นฐาน' },
-    { key: 'duration', label: 'ระยะเวลา' },
-    { key: 'roles',    label: 'การเข้าฝ่าย' },
-    { key: 'tips',     label: 'คำแนะนำ' },
-  ];
+const SECTION_META = [
+  { key: 'info',     icon: '📋', label: 'ข้อมูล' },
+  { key: 'duration', icon: '⏱',  label: 'ระยะเวลา' },
+  { key: 'roles',    icon: '👥', label: 'บทบาท' },
+  { key: 'tips',     icon: '💡', label: 'คำแนะนำ', tip: true },
+];
 
-  let tabBtns = '', tabPanes = '';
-  let first = true;
+function openRmModal(item, num, color) {
+  const badge = BADGE_STYLES[item.type] ?? '';
+
+  let sections = '';
   if (item.details) {
-    TABS.forEach(tab => {
-      if (!item.details[tab.key]) return;
-      const a = first ? 'active' : '';
-      tabBtns  += `<button class="rm-mtab ${a}" onclick="switchRmTab(event,'rmt-${item.id}-${tab.key}')">${tab.label}</button>`;
-      tabPanes += `<div class="rm-mtab-pane ${a}" id="rmt-${item.id}-${tab.key}">${fmt(item.details[tab.key])}</div>`;
-      first = false;
+    SECTION_META.forEach(({ key, icon, label, tip }) => {
+      if (!item.details[key]) return;
+      sections += `
+        <div class="rm-msec${tip ? ' rm-msec--tip' : ''}">
+          <div class="rm-msec-label">${icon} ${label}</div>
+          <div class="rm-msec-body">${fmt(item.details[key])}</div>
+        </div>`;
     });
   }
 
-  const badge = BADGE_STYLES[item.type] ?? '';
   document.getElementById('rmModalContent').innerHTML = `
-    <div class="rm-mhead" style="--pin-clr:${color}">
+    <div class="rm-mhead" style="--pin-clr:${color};--pin-clr-a:${color}33">
+      <div class="rm-mhead-accent"></div>
       <div class="rm-mnum">${num}</div>
       <div class="rm-minfo">
         <span class="rm-mbadge" style="${badge}">${TYPE_LABELS[item.type] ?? item.type}</span>
@@ -246,7 +315,7 @@ function openRmModal(item, num, color) {
       </div>
     </div>
     <p class="rm-mdesc">${item.shortDesc}</p>
-    ${tabBtns ? `<div class="rm-mtabs">${tabBtns}</div><div class="rm-mpanes">${tabPanes}</div>` : ''}
+    ${sections ? `<div class="rm-msections">${sections}</div>` : ''}
   `;
 
   document.getElementById('rmModal').classList.add('open');
@@ -256,14 +325,6 @@ function openRmModal(item, num, color) {
 function closeRmModal() {
   document.getElementById('rmModal').classList.remove('open');
   document.body.style.overflow = '';
-}
-
-function switchRmTab(e, id) {
-  const box = e.target.closest('.rm-modal-box');
-  box.querySelectorAll('.rm-mtab').forEach(b => b.classList.remove('active'));
-  box.querySelectorAll('.rm-mtab-pane').forEach(c => c.classList.remove('active'));
-  e.target.classList.add('active');
-  box.querySelector('#' + id).classList.add('active');
 }
 
 function fmt(text) {

@@ -68,6 +68,13 @@
   - [DELETE /courses/:courseId/files/:fileId](#delete-coursescourseidfilesfileid)
 - [Assets](#assets)
 - [SKDrive](#skdrive)
+  - [GET /skdrive/tree](#get-skdrivetree)
+  - [GET /skdrive/*](#get-skdrive)
+  - [GET /skdrive?prefix=&cursor=](#get-skdriveprefix--cursor-)
+  - [PUT /skdrive/*](#put-skdrive)
+  - [DELETE /skdrive/*](#delete-skdrive)
+  - [POST /skdrive/bulk-delete](#post-skdrivebulk-delete)
+  - [POST /skdrive/download](#post-skdrivedownload)
 - [Problem Sets](#problem-sets)
   - [GET /courses/:courseId/problem-sets](#get-coursescourseidproblem-sets)
   - [POST /courses/:courseId/problem-sets](#post-coursescourseidproblem-sets)
@@ -97,6 +104,7 @@
 - [Calculator](#calculator)
   - [POST /calculator](#post-calculator)
   - [GET /calculator/grades](#get-calculatorgrades)
+  - [GET /calculator/preferences](#get-calculatorpreferences)
   - [GET /calculator/history](#get-calculatorhistory)
   - [GET /calculator/departments](#get-calculatordepartmentsyear2568)
   - [POST /calculator/predict](#post-calculatorpredict)
@@ -319,13 +327,15 @@ Get a user's public profile by ID.
 ### GET /users/search?q=&limit=20&offset=0
 Search users by name, username, or CU number (student ID). Returns public profile only (no email, no ban status).
 
+When `q` is omitted or empty, returns a random selection of users (useful for a "find friends" discovery page).
+
 **Auth required**
 
-| Query param | Type | Default |
-|-------------|------|---------|
-| `q` | string | required |
-| `limit` | number | 20 |
-| `offset` | number | 0 |
+| Query param | Type | Default | Description |
+|-------------|------|---------|-------------|
+| `q` | string | — | Search query. Omit or leave empty to get random users. |
+| `limit` | number | 30 | Max results to return (capped at 30) |
+| `offset` | number | 0 | Pagination offset (ignored when `q` is empty) |
 
 **Response 200**
 ```json
@@ -1078,6 +1088,44 @@ Delete an asset by key. **Admin only.**
 
 Shared file storage for the organization. All authenticated users can read; **admin only** can upload and delete.
 
+### GET /skdrive/tree
+Returns the full folder hierarchy as a nested tree. Files are excluded — folders only. Useful for rendering a folder picker or sidebar navigation.
+
+**Auth required**
+
+**Response 200**
+```json
+{
+  "success": true,
+  "tree": [
+    {
+      "name": "Engineering Materials",
+      "path": "Engineering Materials/",
+      "children": [
+        {
+          "name": "Week 1",
+          "path": "Engineering Materials/Week 1/",
+          "children": []
+        }
+      ]
+    },
+    {
+      "name": "Calculus 1",
+      "path": "Calculus 1/",
+      "children": []
+    }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `name` | Folder display name (last path segment) |
+| `path` | Full R2 prefix including trailing slash — use as `prefix` param in `GET /skdrive?prefix=` to list folder contents |
+| `children` | Nested sub-folders (empty array if none) |
+
+---
+
 ### GET /skdrive/*
 Serve a file by key (e.g., `GET /skdrive/documents/guidelines.pdf`).
 
@@ -1694,6 +1742,23 @@ Retrieve the current user's last saved grade selections.
 
 ---
 
+### GET /calculator/preferences
+Retrieve the current user's last saved department preference order. Returns an empty array if the user has never called `POST /calculator/predict`.
+
+**Response**
+```json
+{
+  "success": true,
+  "preferences": ["CP", "ME", "EE", "CE"]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `preferences` | Ordered array of department codes, most preferred first. Empty `[]` if not yet set. |
+
+---
+
 ### GET /calculator/history
 Get all historical admission score data for graph plotting.
 
@@ -1775,6 +1840,8 @@ List all departments with their seat capacity, name, and most recent historical 
 ### POST /calculator/predict
 Preference-order department admission prediction. Submit grades and an ordered preference list; the API simulates the sequential selection process and returns an estimated probability for each preferred department plus the full all-department comparison table.
 
+When `rank` is provided the chance for each department is calculated using historical `lowestRank` cutoffs instead of score percentiles — this is significantly more accurate once the official ranking is announced.
+
 **Request body**
 ```json
 {
@@ -1783,6 +1850,7 @@ Preference-order department admission prediction. Submit grades and an ordered p
     { "subject": "Calculus 1", "grade": 4.0 }
   ],
   "preferences": ["CE", "EE", "ME"],
+  "rank": 350,
   "department": "CE",
   "year": "2568"
 }
@@ -1792,6 +1860,7 @@ Preference-order department admission prediction. Submit grades and an ordered p
 |-------|------|----------|-------------|
 | `grades` | array | yes | Same format as `POST /calculator` |
 | `preferences` | array | yes | Ordered department codes (first = most preferred) |
+| `rank` | number | no | Student's official ranking position (lower = better). When provided, uses rank-based chance instead of score-based. |
 | `department` | string | no | Department to use for top-level `admScore`/`chancePercent`. Defaults to the predicted department |
 | `year` | string | no | Academic year for capacity lookup (default `"2568"`) |
 
@@ -1805,6 +1874,7 @@ Preference-order department admission prediction. Submit grades and an ordered p
   "fullScore": 60.0,
   "admScore": 58.5,
   "admFullScore": 96.0,
+  "rank": 350,
   "chancePercent": 72.00,
   "predictedDepartment": "EE",
   "allDepartments": [
@@ -1856,13 +1926,14 @@ Preference-order department admission prediction. Submit grades and an ordered p
 | `fullScore` | GPAX maximum possible score |
 | `admScore` | Admission weighted score for `department` |
 | `admFullScore` | Admission maximum possible score for `department` |
+| `rank` | The submitted student rank, or `null` if not provided |
 | `chancePercent` | Estimated chance for `department` |
 | `predictedDepartment` | The preference entry with the highest `estimatedProbability` |
-| `allDepartments[].chance` | Raw chance for this department with the submitted grades (0–100.00) |
+| `allDepartments[].chance` | Raw chance for this department (0–100.00). Rank-based if `rank` was submitted and history has `lowestRank` data; otherwise score-based. |
 | `allDepartments[].capacity` | Number of seats for the requested year; `null` if unknown |
 | `allDepartments[].estimatedProbability` | Sequential probability of being assigned here, accounting for higher preferences (`null` for non-preferred departments). Formula: `P(failed all prior) × chancePercent / 100`, expressed as 0–100.00. |
 
-> Grades are saved to D1 after a successful prediction (same as `POST /calculator`).
+> Grades and preferences are saved to D1 after a successful prediction. Retrieve them later with `GET /calculator/grades` and `GET /calculator/preferences`.
 
 ---
 

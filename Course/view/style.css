@@ -154,6 +154,25 @@
 .settings-backdrop,
 .settings-sheet { display: none; }
 
+/* Fullscreen button — lives outside .video-controls so it's never affected by auto-hide opacity */
+.video-fs-btn {
+  position: absolute;
+  bottom: 12px;
+  right: 10px;
+  z-index: 15;
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.22s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.player-wrap:hover .video-fs-btn,
+.player-wrap.touch-active .video-fs-btn { opacity: 1; }
+
 /* Seek preview thumbnail */
 .seek-preview {
   position: absolute;
@@ -1328,6 +1347,20 @@
     transition: opacity 0.22s, background 0.15s;
   }
   .player-wrap.touch-active .video-settings-btn { opacity: 1; }
+
+  /* Fullscreen button: always visible on mobile (not subject to auto-hide) */
+  .video-fs-btn {
+    opacity: 1 !important;
+    bottom: 10px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 50%;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    padding: 0;
+  }
 
   /* No thumbnail seek preview on mobile */
   .seek-preview { display: none !important; }

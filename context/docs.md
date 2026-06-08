@@ -140,7 +140,7 @@
 | File | What it does |
 |------|-------------|
 | `profile/index.html` | Two states: search view and profile detail view. |
-| `profile/profile.js` | Search: debounced `POST /users/search`. Profile: `GET /users/:id` + avatar + badge render. Admin section: ban toggle, role dropdown via `PATCH /users/:id`. |
+| `profile/profile.js` | Search: debounced `GET /users/search?q=` (`q` optional — omit for random-user discovery; `offset` ignored when empty). Profile: `GET /users/:id` + avatar + badge render. Admin section: ban toggle, role dropdown via `PATCH /users/:id`. |
 | `profile/style.css` | Search bar, results grid, profile card, info grid, admin zone. |
 
 ## settings/

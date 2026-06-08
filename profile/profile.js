@@ -59,7 +59,6 @@ function showSearch() {
         clearTimeout(debounce);
         const q = input.value.trim();
         clearBtn.style.display = q ? 'flex' : 'none';
-        if (!q) { results.innerHTML = ''; return; }
         results.innerHTML = '<div class="pf-hint"><i class="fa-solid fa-spinner fa-spin"></i></div>';
         debounce = setTimeout(() => doSearch(q), 350);
     });
@@ -67,16 +66,20 @@ function showSearch() {
     clearBtn.addEventListener('click', () => {
         input.value = '';
         clearBtn.style.display = 'none';
-        results.innerHTML = '';
         input.focus();
+        doSearch('');
     });
+
+    // Show random users immediately on load
+    results.innerHTML = '<div class="pf-hint"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+    doSearch('');
 }
 
 async function doSearch(q) {
     const results = document.getElementById('searchResults');
     const token   = localStorage.getItem('authToken');
     try {
-        const res  = await fetch(`${CONFIG.API_URL}/users/search?q=${encodeURIComponent(q)}&limit=12`, {
+        const res  = await fetch(`${CONFIG.API_URL}/users/search?q=${encodeURIComponent(q)}&limit=30`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         if (!res.ok) throw new Error();
