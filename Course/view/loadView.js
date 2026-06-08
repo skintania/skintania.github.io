@@ -19,18 +19,132 @@ async function loadCurrentUser() {
   } catch {}
 }
 
-function initTabs() {
-  const btns   = document.querySelectorAll('.tab-btn');
-  const panels = document.querySelectorAll('.tab-panel');
+const TAB_LABELS = { comments: 'ความคิดเห็น', files: 'สไลด์ / เอกสาร', qa: 'ถามตอบ' };
 
-  btns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      btns.forEach(b => b.classList.remove('active'));
-      panels.forEach(p => p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+  const panel = document.getElementById(`tab-${tabName}`);
+  if (btn) btn.classList.add('active');
+  if (panel) panel.classList.add('active');
+  const titleEl = document.getElementById('drawerTitle');
+  if (titleEl && TAB_LABELS[tabName]) titleEl.textContent = TAB_LABELS[tabName];
+}
+
+function initMobileSettings() {
+  const btn      = document.getElementById('videoSettingsBtn');
+  const sheet    = document.getElementById('settingsSheet');
+  const backdrop = document.getElementById('settingsBackdrop');
+  if (!btn || !sheet) return;
+
+  const open  = () => { sheet.classList.add('active');    backdrop.classList.add('active'); };
+  const close = () => { sheet.classList.remove('active'); backdrop.classList.remove('active'); };
+
+  btn.addEventListener('click', e => { e.stopPropagation(); sheet.classList.contains('active') ? close() : open(); });
+  backdrop.addEventListener('click', close);
+
+  // Speed chips
+  const player      = document.getElementById('videoPlayer');
+  const speedToggle = document.getElementById('speedToggle');
+  document.querySelectorAll('#settingsSpeedChips .settings-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const speed = parseFloat(chip.dataset.speed);
+      if (player) player.playbackRate = speed;
+      if (speedToggle) speedToggle.textContent = `${speed}×`;
+      document.querySelectorAll('#settingsSpeedChips .settings-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      close();
     });
   });
+
+  // Quality chips — proxy clicks to the hidden quality-opt buttons in player.js
+  document.querySelectorAll('#settingsQualityChips .settings-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      const q = chip.dataset.quality;
+      const target = document.querySelector(`.quality-opt[data-quality="${q}"]`);
+      if (target) target.click();
+      document.querySelectorAll('#settingsQualityChips .settings-chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      close();
+    });
+  });
+
+  // Show quality section only if quality options are available
+  const qualityWrap = document.getElementById('qualityWrap');
+  if (qualityWrap && !qualityWrap.hidden) {
+    document.getElementById('settingsQualitySection').hidden = false;
+  }
+  // Re-check once clips load (quality may become available later)
+  const observer = new MutationObserver(() => {
+    if (qualityWrap && !qualityWrap.hidden) {
+      document.getElementById('settingsQualitySection').hidden = false;
+    }
+  });
+  if (qualityWrap) observer.observe(qualityWrap, { attributes: true, attributeFilter: ['hidden'] });
+}
+
+function initTabs() {
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+}
+
+function initMobileDrawer() {
+  const tabsDrawer     = document.querySelector('.tabs-section');
+  const playlistDrawer = document.querySelector('.playlist-col');
+  const tabsClose      = document.getElementById('drawerCloseBtn');
+  const playlistClose  = document.getElementById('playlistDrawerClose');
+  const trigger        = document.getElementById('mobileTabsTrigger');
+  if (!trigger) return;
+
+  let activeType = null;
+
+  const getOverlayTop = () => {
+    const wrap = document.getElementById('playerWrap');
+    if (!wrap) return 200;
+    const rect = wrap.getBoundingClientRect();
+    // If the video bottom is still in the viewport, anchor there; otherwise scroll to top first
+    if (rect.bottom > 56) return rect.bottom;
+    window.scrollTo(0, 0);
+    return wrap.getBoundingClientRect().bottom;
+  };
+
+  const closeAll = () => {
+    tabsDrawer?.classList.remove('overlay-active');
+    playlistDrawer?.classList.remove('overlay-active');
+    trigger.querySelectorAll('.mtab-btn').forEach(b => b.classList.remove('active'));
+    document.body.classList.remove('overlay-lock');
+    activeType = null;
+  };
+
+  const openOverlay = (type, tab, btn) => {
+    closeAll();
+    const top = getOverlayTop();
+    activeType = type;
+    btn.classList.add('active');
+
+    if (type === 'playlist') {
+      playlistDrawer.style.top = top + 'px';
+      playlistDrawer.classList.add('overlay-active');
+    } else {
+      if (tab) switchTab(tab);
+      tabsDrawer.style.top = top + 'px';
+      tabsDrawer.classList.add('overlay-active');
+    }
+    document.body.classList.add('overlay-lock');
+  };
+
+  trigger.querySelectorAll('.mtab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.playlist ? 'playlist' : btn.dataset.tab;
+      if (activeType === type) { closeAll(); return; }
+      openOverlay(btn.dataset.playlist ? 'playlist' : 'tabs', btn.dataset.tab, btn);
+    });
+  });
+
+  tabsClose?.addEventListener('click', closeAll);
+  playlistClose?.addEventListener('click', closeAll);
 }
 
 async function loadOtherCourses(currentId) {
@@ -68,6 +182,8 @@ async function init() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePreview(); });
 
   initTabs();
+  initMobileDrawer();
+  initMobileSettings();
   initCommentForm();
 
   setOnClipChange(key => {

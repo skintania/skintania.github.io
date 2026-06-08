@@ -5,15 +5,11 @@
   <meta charset="utf-8">
   <meta name="description" content="คำแนะนำรายวิชาจากรุ่นพี่ OSK CU Intania">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Skintania</title>
+  <title>Skintania — Advice</title>
 
-  <style>
-    body {
-      display: none
-    }
-  </style>
-
+  <style>body { display: none }</style>
   <script type="module" src="/auth-guard.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
@@ -24,26 +20,38 @@
 
   <script src="render.js" defer></script>
   <script type="module" src="/Template/component.js" defer></script>
-
 </head>
 
 <body>
-
   <comment-widget></comment-widget>
+  <site-header page-title="Advice" page-desc="คำแนะนำรายวิชา"></site-header>
 
-  <main class="wrap">
-    <site-header page-title="Advice" page-desc="คำแนะนำรายวิชา"></site-header>
+  <main class="adv-main">
 
-    <section id="coursesGrid" class="grid" aria-label="Courses">
-    </section>
+    <div class="adv-page-head">
+      <div class="adv-head-text">
+        <h1 class="adv-heading">คำแนะนำรายวิชา</h1>
+        <p class="adv-sub">ข้อมูลเบื้องต้น จุดระวัง อาจารย์ และทริคเก็บ A จากรุ่นพี่ OSK</p>
+      </div>
+      <div class="adv-toolbar">
+        <div class="adv-search-box">
+          <svg class="adv-search-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15"
+            viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="advSearch" type="text" placeholder="ค้นหาวิชา..." autocomplete="off">
+        </div>
+        <span id="advCount" class="adv-count"></span>
+      </div>
+    </div>
 
-    <footer>
-      <p>เรื่องแจ้ง น่ารู้</p>
-      <ul>
-        <li>Waiting for annoucement...</li>
-      </ul>
-    </footer>
+    <section id="coursesGrid" class="adv-grid" aria-label="Courses"></section>
+
   </main>
+
+  <site-footer></site-footer>
 </body>
 
 </html>

@@ -1,9 +1,10 @@
 .hidden { display: none !important; }
 
-/* ── Override wrap width ── */
-.view-wrap {
+.vw-main {
   max-width: 1400px;
+  margin: 0 auto;
   padding: 0 20px 40px;
+  overflow-x: hidden;
 }
 
 /* ── Two-column layout ── */
@@ -14,6 +15,9 @@
   margin-top: 20px;
   align-items: start;
 }
+
+/* Sidebar spans both rows so it sits alongside player+info AND tabs */
+.sidebar-col { grid-row: 1 / 3; grid-column: 2; }
 
 /* ════════════════════════════════
    PLAYER FRAME
@@ -118,9 +122,6 @@
   opacity: 1;
   pointer-events: auto;
 }
-@media (hover: none) {
-  .video-controls { opacity: 1; pointer-events: auto; }
-}
 
 /* Seek bar */
 .seek-wrap {
@@ -147,6 +148,11 @@
   background: white;
   cursor: pointer;
 }
+
+/* Settings button + sheet hidden on desktop */
+.video-settings-btn,
+.settings-backdrop,
+.settings-sheet { display: none; }
 
 /* Seek preview thumbnail */
 .seek-preview {
@@ -634,11 +640,18 @@
    TABS
 ════════════════════════════════ */
 .tabs-section {
-  margin-top: 20px;
   border: 1px solid rgba(255,255,255,0.07);
   border-radius: 12px;
   overflow: hidden;
 }
+
+/* Drawer chrome (visible on mobile only) */
+.drawer-top { display: none; }
+.playlist-drawer-top { display: none; }
+.drawer-handle { display: none; }
+.drawer-close-btn { display: none; }
+.drawer-backdrop { display: none; }
+.mobile-tabs-trigger { display: none; }
 
 /* Tab bar */
 .tab-bar {
@@ -1135,11 +1148,325 @@
 }
 
 @media (max-width: 768px) {
-  .view-layout { grid-template-columns: 1fr; }
+  /* Full-width video: strip horizontal padding from main, re-apply to inner content */
+  .vw-main {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .video-info {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  /* Single flex column — no gap (video flush top) */
+  .view-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    align-items: stretch;
+    margin-top: 0;
+  }
+
+  .player-col  { order: 1; }
+  .sidebar-col {
+    order: 2;
+    grid-row: unset;
+    grid-column: unset;
+    padding: 14px 14px 0;
+    gap: 14px;
+  }
+
+  /* ── Both overlays: fixed, start transformed below screen, slide up when active ── */
+  .playlist-col,
+  .tabs-section {
+    position: fixed;
+    /* top: set by JS */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 500;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    background: var(--bg, #0f1724);
+    border: none;
+    border-radius: 0;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    margin: 0;
+    /* Start hidden below the screen */
+    transform: translateY(110%);
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.36s cubic-bezier(0.33, 1, 0.68, 1),
+                visibility 0s linear 0.36s;
+  }
+
+  /* Slide up into view */
+  .playlist-col.overlay-active,
+  .tabs-section.overlay-active {
+    transform: translateY(0);
+    visibility: visible;
+    pointer-events: auto;
+    transition: transform 0.36s cubic-bezier(0.33, 1, 0.68, 1),
+                visibility 0s linear 0s;
+  }
+
+  /* playlist-col must stay flex column */
+  .playlist-col { display: flex !important; flex-direction: column; }
+  /* tabs-section stays block */
+  .tabs-section { display: block !important; }
+
+  /* ── Sticky overlay header ── */
+  .drawer-top,
+  .playlist-drawer-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px 10px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    background: var(--bg, #0f1724);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    z-index: 1;
+  }
+
+  .drawer-title {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text, #e2e8f0);
+  }
+  .drawer-handle { display: none; }
+  .drawer-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    color: var(--muted, #9aa4b2);
+    font-size: 0.85rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .drawer-close-btn:hover { background: rgba(255,255,255,0.14); color: var(--text); }
+
+  /* Mobile trigger: Playlist full-width top row, 3 tabs below */
+  .mobile-tabs-trigger {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .mtab-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 11px 8px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    color: var(--muted, #9aa4b2);
+    font-family: inherit;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+  .mtab-btn:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.15);
+    color: var(--text, #e2e8f0);
+  }
+  .mtab-btn.active {
+    background: rgba(59,130,246,0.12);
+    border-color: rgba(59,130,246,0.35);
+    color: var(--accent, #3b82f6);
+  }
+  .mtab-btn svg { flex-shrink: 0; opacity: 0.7; }
+  .mtab-btn.active svg { opacity: 1; }
+
+  /* Playlist button: full row, visually prominent */
+  .mtab-btn[data-playlist] {
+    grid-column: 1 / -1;
+    padding: 13px 8px;
+    background: rgba(59,130,246,0.08);
+    border-color: rgba(59,130,246,0.22);
+    color: var(--text, #e2e8f0);
+    font-size: 0.88rem;
+    font-weight: 500;
+  }
+  .mtab-btn[data-playlist]:hover {
+    background: rgba(59,130,246,0.14);
+    border-color: rgba(59,130,246,0.38);
+  }
+  .mtab-btn[data-playlist].active {
+    background: rgba(59,130,246,0.18);
+    border-color: rgba(59,130,246,0.5);
+    color: var(--accent, #3b82f6);
+  }
+
+  /* Lock body scroll while overlay is open */
+  body.overlay-lock { overflow: hidden; }
+
+  /* Edge-to-edge video — no rounded corners */
+  .player-wrap { border-radius: 0; }
+
+  /* Auto-hide controls on mobile — shown via .touch-active class */
+  .video-controls {
+    padding: 0 12px 10px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.7));
+    transition: opacity 0.22s;
+  }
+
+  /* Settings button: hidden by default, shown with controls */
+  .video-settings-btn {
+    opacity: 0;
+    transition: opacity 0.22s, background 0.15s;
+  }
+  .player-wrap.touch-active .video-settings-btn { opacity: 1; }
+
+  /* No thumbnail seek preview on mobile */
+  .seek-preview { display: none !important; }
+
+  .video-info { margin-top: 10px; }
+
+  /* Tab bar hidden on mobile — trigger buttons on main page serve the same purpose */
+  .tabs-section .tab-bar { display: none; }
+
+  /* Simplified controls: hide everything except seek bar, runtime, fullscreen */
+  #playBtn,
+  #skipBackBtn,
+  #skipFwdBtn,
+  .volume-wrap,
+  .speed-wrap,
+  .quality-wrap { display: none !important; }
+
   .clip-thumb-mini { width: 120px; height: 68px; }
+
+  /* ── Settings button (top-right of video) ── */
+  .video-settings-btn {
+    display: flex;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20;
+    width: 34px;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.45);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: background 0.15s;
+  }
+  .video-settings-btn:hover { background: rgba(0,0,0,0.65); }
+
+  /* ── Settings bottom sheet ── */
+  .settings-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 600;
+  }
+  .settings-backdrop.active { display: block; }
+
+  .settings-sheet {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card, #0b1220);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 20px 36px;
+    z-index: 601;
+    transform: translateY(110%);
+    transition: transform 0.32s cubic-bezier(0.33, 1, 0.68, 1);
+  }
+  .settings-sheet.active { transform: translateY(0); }
+
+  .settings-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 2px;
+    margin: 0 auto 18px;
+  }
+
+  .settings-title {
+    font-size: 1rem;
+    font-weight: 500;
+    margin: 0 0 20px;
+    color: var(--text, #e6eef8);
+  }
+
+  .settings-section { margin-bottom: 22px; }
+  .settings-section:last-child { margin-bottom: 0; }
+
+  .settings-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--muted, #9aa4b2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 10px;
+  }
+
+  .settings-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .settings-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text, #e6eef8);
+    font-family: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .settings-chip.active {
+    background: var(--accent, #3b82f6);
+    border-color: var(--accent, #3b82f6);
+    color: #fff;
+  }
+
+  /* ── Slides/files: icon-only action buttons ── */
+  .file-prev-btn,
+  .file-dl-btn {
+    font-size: 0 !important;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+  }
+  .file-prev-btn::before { content: '👁'; font-size: 15px; }
+  .file-dl-btn::before   { content: '⬇'; font-size: 15px; }
+
+  .slide-item { gap: 8px; padding: 8px 10px; }
+  .slide-item.nested { margin-left: 8px; }
+  .file-size { display: none; }
 }
 
 @media (max-width: 500px) {
-  .view-wrap { padding: 0 12px 32px; }
+  .vw-main { padding: 0 0 32px; }
   .clip-thumb-mini { width: 96px; height: 54px; }
+  .mtab-btn { font-size: 0.76rem; padding: 10px 6px; }
 }

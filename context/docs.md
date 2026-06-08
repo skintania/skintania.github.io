@@ -9,8 +9,8 @@
 | `config.js` | Exports `CONFIG = { API_URL }`. Single source of truth for the backend URL. Import this before any fetch call. |
 | `auth-guard.js` | Module that runs immediately on import. Calls `GET /auth/me`, shows loading spinner, redirects to `/login/` on 401/403/banned. Sets `body.style.display = 'block'` on success. Network errors let user through. |
 | `global.css` | Dark theme CSS variables (`--bg`, `--card`, `--accent`, `--text`, `--muted`), body reset, `.wrap`, `.card`, button styles, skeleton shimmer animation, fullscreen loader. Loaded on every page. |
-| `style.css` (root) | Landing page layout styles. |
-| `index.html` (root) | Landing / home page. Includes auth-guard, site-header, comment-widget. |
+| `style.css` (root) | Landing page layout styles. Full homepage redesign (Assetario-inspired): hero section, feature sections, mini grid, footer. All classes prefixed `hp-` to avoid conflicts with global.css. |
+| `index.html` (root) | Landing / home page. Redesigned layout: hero (badge + large title + CTA + float cards), two feature sections (image + text alternating), 3-col mini card grid, multi-col footer. Includes auth-guard, site-header, comment-widget. Banner from API replaces float cards when loaded. |
 | `CLAUDE.md` | Original Claude Code instructions (architecture, patterns, API reference). |
 | `API.md` | Full backend API documentation. |
 

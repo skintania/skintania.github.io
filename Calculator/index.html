@@ -1,462 +1,359 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="description" content="คำนวณเกรดและโอกาสเข้าภาควิชา คณะวิศวกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย">
+  <meta charset="utf-8">
   <meta name="description" content="คำนวณเกรดและโอกาสเข้าภาควิชา คณะวิศวกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Skintania — Calculator</title>
-    
-    <style>body{display: none}</style>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Skintania — Calculator</title>
 
-    <script type="module" src="/auth-guard.js"></script>
+  <style>body { display: none }</style>
+  <script type="module" src="/auth-guard.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/Template/style.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="dropdown.css">
+  <link rel="stylesheet" href="dropdown.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
 
-    <script src="dropdown.js" defer></script>
-    <script type="module" src="calculate.js"></script>
-    <script type="module" src="graph.js"></script>
-
-    <script type="module" src="/Template/component.js" defer></script>
-
-    
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="dropdown.js" defer></script>
+  <script type="module" src="calculate.js"></script>
+  <script type="module" src="graph.js"></script>
+  <script type="module" src="/Template/component.js" defer></script>
 </head>
 
 <body>
-    <comment-widget></comment-widget>
-    <main class="wrap">
+  <comment-widget></comment-widget>
+  <site-header page-title="Calculator" page-desc="ระบบคำนวณคะแนนและระยะทางสู่ความฝัน"></site-header>
 
-        <site-header page-title="Calculator" page-desc="ระบบคำนวณคะแนนและระยะทางสู่ความฝัน">
-        </site-header>
+  <main class="calc-main">
+    <div class="calc-layout">
 
-        <br>
+      <!-- ── Left: inputs (sticky) ── -->
+      <aside class="calc-sidebar">
 
-        <div class="card">
-            <h2>เลือกภาคที่อยากเข้า</h2>
-            <div class="depart-row">
-                <h4>Select Department: </h4>
-
-                <div class="custom-dropdown">
-                    <div class="selected-option" id="depart"><a>ภาคที่เลือก</a></div>
-                    <ul class="options-list">
-                        <li value="CE">วิศวกรรมโยธา (CE)</li>
-                        <li value="EE">วิศวกรรมไฟฟ้า (EE)</li>
-                        <li value="ME">วิศวกรรมเครื่องกล (ME)</li>
-                        <li value="AE">วิศวกรรมยานยนต์ (AE)</li>
-                        <li value="IE">วิศวกรรมอุตสาหการ (IE)</li>
-                        <li value="CHE">วิศวกรรมเคมี (CHE)</li>
-                        <li value="PE">วิศวกรรมปิโตรเลียม (PE)</li>
-                        <li value="GE">วิศวกรรมเหมืองแร่ (GE)</li>
-                        <li value="ENV">วิศวกรรมสิ่งแวดล้อม (ENV)</li>
-                        <li value="SV">วิศวกรรมสำรวจ (SV)</li>
-                        <li value="MT">วิศวกรรมโลหะการและวัสดุ (MT)</li>
-                        <li value="CP">วิศวกรรมคอมพิวเตอร์ (CP)</li>
-                        <li value="NT">วิศวกรรมนิวเคลียร์ (NT)</li>
-                    </ul>
-                </div>
-            </div>
+        <div class="card calc-dept-card">
+          <p class="calc-section-label">ภาควิชา</p>
+          <div class="custom-dropdown calc-dept-dropdown">
+            <div class="selected-option" id="depart"><a>เลือกภาค</a></div>
+            <ul class="options-list">
+              <li value="CE">วิศวกรรมโยธา (CE)</li>
+              <li value="EE">วิศวกรรมไฟฟ้า (EE)</li>
+              <li value="ME">วิศวกรรมเครื่องกล (ME)</li>
+              <li value="AE">วิศวกรรมยานยนต์ (AE)</li>
+              <li value="IE">วิศวกรรมอุตสาหการ (IE)</li>
+              <li value="CHE">วิศวกรรมเคมี (CHE)</li>
+              <li value="PE">วิศวกรรมปิโตรเลียม (PE)</li>
+              <li value="GE">วิศวกรรมเหมืองแร่ (GE)</li>
+              <li value="ENV">วิศวกรรมสิ่งแวดล้อม (ENV)</li>
+              <li value="SV">วิศวกรรมสำรวจ (SV)</li>
+              <li value="MT">วิศวกรรมโลหะการและวัสดุ (MT)</li>
+              <li value="CP">วิศวกรรมคอมพิวเตอร์ (CP)</li>
+              <li value="NT">วิศวกรรมนิวเคลียร์ (NT)</li>
+            </ul>
+          </div>
         </div>
 
-        <section id="coursesGrid" class="grid" aria-label="Courses">
-            <article class="card">
-                <h2>General Physics 1</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+        <div class="card calc-grades-card">
+          <p class="calc-section-label">เกรดวิชา</p>
+          <div id="coursesGrid" class="grade-list">
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="phy1" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
+            <div class="grade-list-item">
+              <span class="grade-course-name">General Physics 1</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-            <article class="card">
-                <h2>Calculus 1</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Calculus 1</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="cal1" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Exploring Engineering World</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-            <article class="card">
-                <h2>Exploring Engineering World</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Computer Programming</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="expleng" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Experiential English 1</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-            <article class="card">
-                <h2>Computer Programming</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+            <div class="grade-list-item">
+              <span class="grade-course-name">General Physics Lab 1</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="com" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
+            <div class="grade-list-item">
+              <span class="grade-course-name">General Physics 2</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-            <article class="card">
-                <h2>Experiential English 1</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Calculus 2</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="expeng" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
+            <div class="grade-list-item">
+              <span class="grade-course-name">General Chemistry</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-            <article class="card">
-                <h2>General Physics Lab 1</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Engineering Material</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="phylab1" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Engineering Drawing</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-            <article class="card">
-                <h2>General Physics 2</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+            <div class="grade-list-item">
+              <span class="grade-course-name">Experiential English 2</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="phy2" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
+            <div class="grade-list-item">
+              <span class="grade-course-name">General Physics Lab 2</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-            <article class="card">
-                <h2>Calculus 2</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
+            <div class="grade-list-item">
+              <span class="grade-course-name">General Chemistry Lab</span>
+              <div class="grade-pills">
+                <button class="grade-pill" data-value="4">A</button>
+                <button class="grade-pill" data-value="3.5">B+</button>
+                <button class="grade-pill" data-value="3">B</button>
+                <button class="grade-pill" data-value="2.5">C+</button>
+                <button class="grade-pill" data-value="2">C</button>
+                <button class="grade-pill" data-value="1.5">D+</button>
+                <button class="grade-pill" data-value="1">D</button>
+                <button class="grade-pill" data-value="0">F</button>
+              </div>
+            </div>
 
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="cal2" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-
-            <article class="card">
-                <h2>General Chemistry</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
-
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="chem" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-
-            <article class="card">
-                <h2>Engineering Material</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
-
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="mat" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-
-            <article class="card">
-                <h2>Engineering Drawing</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
-
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="draw" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-
-            <article class="card">
-                <h2>Experiential English 2</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
-
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="expeng2" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-
-            <article class="card">
-                <h2>General Physics Lab 2</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
-
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="phylab2" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-
-            <article class="card">
-                <h2>General Chemistry Lab</h2>
-                <div class="grade-row">
-                    <h4>Select Grade: </h4>
-
-                    <div class="custom-dropdown">
-                        <div class="selected-option" id="chemlab" data-value="0"><a>GPA</a></div>
-                        <ul class="options-list">
-                            <li data-value="4">A </li>
-                            <li data-value="3.5">B+</li>
-                            <li data-value="3">B </li>
-                            <li data-value="2.5">C+</li>
-                            <li data-value="2">C </li>
-                            <li data-value="1.5">D+</li>
-                            <li data-value="1">D </li>
-                            <li data-value="0">F </li>
-                        </ul>
-                    </div>
-                </div>
-            </article>
-        </section>
-        <br>
+          </div>
+        </div>
 
         <div class="calc-btn-row">
-            <button id="calbutton">คำนวณ</button>
-            <button id="predictBtn" class="btn-predict">คาดการณ์โอกาสติด (2568)</button>
+          <button id="calbutton">คำนวณ</button>
+          <button id="predictBtn" class="btn-predict">คาดการณ์โอกาสติด (2568)</button>
+        </div>
+
+      </aside>
+
+      <!-- ── Right: results ── -->
+      <div class="calc-results">
+
+        <div class="card" id="regularResultCard">
+          <h2 style="text-align:center;margin-bottom:20px;">โอกาสที่ได้ :</h2>
+          <div class="score-row">
+            <div class="chance-circle" style="--percentage: 0%;">
+              <span class="chance-text">0.00 %</span>
+            </div>
+            <div class="score-details">
+              <h3 class="status-message error">Fill Out The Score First!</h3>
+              <p class="score-text">GPAX: 0.00</p>
+              <p class="score-text">Score: 0.0 / 0.0 (0.00%)</p>
+            </div>
+          </div>
         </div>
 
         <div class="card" id="departCountdown">
-            <h2 style="margin-bottom:4px;">กำหนดการเลือกสาขาวิชา ปีการศึกษา 2568</h2>
-            <p style="color:var(--muted,#9aa4b2);font-size:0.82rem;margin-bottom:20px;">เพื่อเข้าศึกษาชั้นปีที่ 2 ปีการศึกษา 2569</p>
-            <div id="countdownList" class="countdown-list"></div>
+          <h2 style="margin-bottom:4px;">กำหนดการเลือกสาขาวิชา ปีการศึกษา 2568</h2>
+          <p style="color:var(--muted);font-size:0.82rem;margin-bottom:20px;">เพื่อเข้าศึกษาชั้นปีที่ 2 ปีการศึกษา 2569</p>
+          <div id="countdownList" class="countdown-list"></div>
         </div>
 
         <div class="card" id="predictResultCard" hidden>
-            <h2 style="margin-bottom:16px;">ผลการคาดการณ์ (2568)</h2>
-            <div id="predictResultContent"></div>
+          <h2 style="margin-bottom:16px;">ผลการคาดการณ์ (2568)</h2>
+          <div id="predictResultContent"></div>
         </div>
-
-        <div class="card" id="regularResultCard">
-            <h1 style="text-align: center; margin-bottom: 20px;">โอกาสที่ได้ :</h1>
-
-            <div class="score-row">
-
-                <div class="chance-circle" style="--percentage: 0%;">
-                    <span class="chance-text">0.00 %</span>
-                </div>
-
-                <div class="score-details">
-                    <h3 class="status-message error">Fill Out The Score First!</h3>
-                    <p class="score-text">GPAX: 0.00</p>
-                    <p class="score-text">Score: 0.0 / 0.0 (0.00%)</p>
-                </div>
-
-            </div>
-        </div>
-
-        <br>
 
         <div class="card" id="trendChartCard">
-            <h2>สถิติคะแนนย้อนหลัง (%)</h2>
-            <p class="lead" style="margin-bottom: 20px;">เปรียบเทียบแนวโน้มคะแนนต่ำสุด-สูงสุด แต่ละสาขาวิชา</p>
-            
-            <div class="chart-controls">
-                <button id="btnMinScore" class="btn-chart active">คะแนนต่ำสุด</button>
-                <button id="btnMaxScore" class="btn-chart">คะแนนสูงสุด</button>
-                <button id="btnToggleAll" class="btn-chart" style="margin-left: auto; border-color: #8b5cf6; color: #8b5cf6;">ซ่อน/แสดงทั้งหมด</button>
-            </div>
-
-            <div style="position: relative; height: 400px; width: 100%; margin-top: 25px;">
-                <canvas id="scoreTrendChart"></canvas>
-            </div>
-
-            <div id="customLegend" class="custom-legend-container"></div>
-
+          <h2>สถิติคะแนนย้อนหลัง (%)</h2>
+          <p class="lead" style="margin-bottom:20px;">เปรียบเทียบแนวโน้มคะแนนต่ำสุด-สูงสุด แต่ละสาขาวิชา</p>
+          <div class="chart-controls">
+            <button id="btnMinScore" class="btn-chart active">คะแนนต่ำสุด</button>
+            <button id="btnMaxScore" class="btn-chart">คะแนนสูงสุด</button>
+            <button id="btnToggleAll" class="btn-chart" style="margin-left:auto;border-color:#8b5cf6;color:#8b5cf6;">ซ่อน/แสดงทั้งหมด</button>
+          </div>
+          <div style="position:relative;height:400px;width:100%;margin-top:25px;">
+            <canvas id="scoreTrendChart"></canvas>
+          </div>
+          <div id="customLegend" class="custom-legend-container"></div>
         </div>
-
-        <br>
 
         <div class="card">
-            <h2 style="text-align:center; margin-bottom: 10px;">เปรียบเทียบทุกภาค</h2>
-            <div style="overflow-x:auto;">
-                <table id="deptChanceTable">
-                    <thead>
-                        <tr>
-                            <th>ภาค</th>
-                            <th>Min Score</th>
-                            <th>Max Score</th>
-                            <th>โอกาส</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Filled by calculate.js -->
-                    </tbody>
-                </table>
-            </div>
+          <h2 style="text-align:center;margin-bottom:10px;">เปรียบเทียบทุกภาค</h2>
+          <div style="overflow-x:auto;">
+            <table id="deptChanceTable">
+              <thead>
+                <tr>
+                  <th>ภาค</th>
+                  <th>Min Score</th>
+                  <th>Max Score</th>
+                  <th>โอกาส</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
 
-        <!-- Predict Preference Modal (ชั่วคราว 2568) -->
-        <div id="predictModal" class="predict-overlay" hidden>
-            <div class="predict-modal">
-                <h3 class="predict-modal-title">จัดลำดับภาคที่อยากเข้า</h3>
-                <p class="predict-modal-desc">กดลูกศรเพื่อจัดลำดับความต้องการ อันดับ 1 = ต้องการสูงสุด</p>
-                <ol id="prefList" class="pref-list"></ol>
-                <div class="predict-modal-actions">
-                    <button id="predictCancelBtn" class="predict-cancel-btn">ยกเลิก</button>
-                    <button id="predictSubmitBtn" class="predict-submit-btn">คำนวณโอกาส</button>
-                </div>
-            </div>
+        <div class="card calc-notes-card">
+          <p class="calc-notes-heading">เรื่องแจ้ง น่ารู้</p>
+          <ul class="calc-notes-list">
+            <li>คะแนนผันเปลี่ยนไปตามความนิยม ณ ขณะนั้นๆ</li>
+            <li>โปรดเช็คความนิยมของภาคนั้นก่อน แล้วค่อยใช้สิ่งนี้พิจารณาตามหลัง</li>
+            <li>ทำคะแนนดีๆเข้าไว้ อย่า D+ Cal2 ก็พอ</li>
+          </ul>
         </div>
 
-        <footer>
-            <p>เรื่องแจ้ง น่ารู้</p>
-            <ul>
-                <li>คะแนนผันเปลี่ยนไปตามความนิยม ณ ขณะนั้นๆ</li>
-                <li>โปรดเช็คความนิยมของภาคนั้นก่อน แล้วค่อยใช้สิ่งนี้พิจารณาตามหลัง</li>
-                <li>ทำคะแนนดีๆเข้าไว้ อย่า D+ Cal2 ก็พอ</li>
-            </ul>
-        </footer>
-    </main>
+      </div>
+
+    </div>
+  </main>
+
+  <site-footer></site-footer>
+
+  <!-- Predict Preference Modal -->
+  <div id="predictModal" class="predict-overlay" hidden>
+    <div class="predict-modal">
+      <h3 class="predict-modal-title">จัดลำดับภาคที่อยากเข้า</h3>
+      <p class="predict-modal-desc">กดลูกศรเพื่อจัดลำดับความต้องการ อันดับ 1 = ต้องการสูงสุด</p>
+      <ol id="prefList" class="pref-list"></ol>
+      <div class="predict-modal-actions">
+        <button id="predictCancelBtn" class="predict-cancel-btn">ยกเลิก</button>
+        <button id="predictSubmitBtn" class="predict-submit-btn">คำนวณโอกาส</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 

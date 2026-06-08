@@ -26,7 +26,6 @@ async function fetchEventDetail(id) {
         const result = await res.json();
         const ev = result.event ?? null;
         if (!ev) return null;
-        // Merge top-level fields that the API may return outside the event object
         const { userVote, choices, isJoined, participantCount } = result;
         if (userVote !== undefined) ev.userVote = userVote;
         if (choices !== undefined) ev.choices = choices;
@@ -85,9 +84,9 @@ async function createCreatorHeader(ev) {
     const initial = username[0].toUpperCase();
 
     const a = document.createElement('a');
-    a.href = '#'; // future: /profile/?id=${ev.creatorId}
+    a.href = `/profile/?id=${ev.creatorId}`;
     a.className = 'creator-header';
-    a.title = 'ดูโปรไฟล์ (เร็วๆ นี้)';
+    a.title = `ดูโปรไฟล์ @${username}`;
 
     const avatarWrap = document.createElement('div');
     avatarWrap.className = 'creator-avatar-wrap';
@@ -134,13 +133,13 @@ async function fetchCurrentUser() {
 function createOptionsMenu(id, { canEdit, canDelete }) {
     const wrapper = document.createElement('div');
     wrapper.className = 'post-options-menu';
-    const editBtn  = canEdit  ? `<button class="edit-post-btn"   data-id="${id}">✏️ แก้ไข</button>` : '';
+    const editBtn   = canEdit   ? `<button class="edit-post-btn"   data-id="${id}">✏️ แก้ไข</button>` : '';
     const deleteBtn = canDelete ? `<button class="delete-post-btn" data-id="${id}" style="color:#ef4444">🗑️ ลบ</button>` : '';
     wrapper.innerHTML = `
         <button class="menu-dot-btn">⋮</button>
         <div class="menu-dropdown-content">${editBtn}${deleteBtn}</div>
     `;
-    const dot = wrapper.querySelector('.menu-dot-btn');
+    const dot  = wrapper.querySelector('.menu-dot-btn');
     const drop = wrapper.querySelector('.menu-dropdown-content');
     dot.addEventListener('click', e => {
         e.stopPropagation();
@@ -152,7 +151,6 @@ function createOptionsMenu(id, { canEdit, canDelete }) {
 
 async function renderPoll(ev) {
     const choices = Array.isArray(ev.choices) ? ev.choices : [];
-    // userVote can be a plain ID or an object {choiceId, ...}
     const rawVote = ev.userVote;
     let votedId = null;
     if (rawVote != null) {
@@ -161,51 +159,44 @@ async function renderPoll(ev) {
     }
 
     const container = document.createElement('div');
-    container.className = 'poll-choices';
+    container.className = 'ev-poll';
 
-    // Build DOM refs so we can update counts later
     const refs = [];
 
     for (const choice of choices) {
         const row = document.createElement('div');
-        row.className = 'poll-choice-row';
+        row.className = 'ev-poll-choice';
 
         if (choice.imgLink) {
             const img = document.createElement('img');
             img.src = await loadImageWithAuth(choice.imgLink) ?? '';
-            img.className = 'poll-choice-img';
+            img.className = 'ev-poll-choice-img';
             row.appendChild(img);
         }
 
-        const content = document.createElement('div');
-        content.className = 'poll-choice-content';
+        const top = document.createElement('div');
+        top.className = 'ev-poll-choice-top';
 
-        const header = document.createElement('div');
-        header.className = 'poll-choice-header';
-        const label = document.createElement('strong');
+        const label = document.createElement('span');
+        label.className = 'ev-poll-choice-text';
         label.textContent = choice.choiceText;
+
         const voteText = document.createElement('span');
-        voteText.className = 'poll-vote-count';
-        header.appendChild(label);
-        header.appendChild(voteText);
+        voteText.className = 'ev-poll-choice-count';
+
+        top.appendChild(label);
+        top.appendChild(voteText);
 
         const barOuter = document.createElement('div');
-        barOuter.className = 'poll-bar-track';
+        barOuter.className = 'ev-poll-bar-track';
         const bar = document.createElement('div');
-        bar.className = 'poll-bar-fill';
+        bar.className = 'ev-poll-bar-fill';
         barOuter.appendChild(bar);
 
-        content.appendChild(header);
-        content.appendChild(barOuter);
+        row.appendChild(top);
+        row.appendChild(barOuter);
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.className = 'poll-vote-checkbox';
-
-        refs.push({ choice: { ...choice, voteCount: choice.voteCount ?? 0 }, voteText, bar, checkbox });
-
-        row.appendChild(content);
-        row.appendChild(checkbox);
+        refs.push({ choice: { ...choice, voteCount: choice.voteCount ?? 0 }, voteText, bar, row });
         container.appendChild(row);
     }
 
@@ -216,19 +207,18 @@ async function renderPoll(ev) {
             r.voteText.textContent = `${r.choice.voteCount} โหวต (${pct.toFixed(0)}%)`;
             r.bar.style.width = `${pct}%`;
             // eslint-disable-next-line eqeqeq
-            r.checkbox.checked = votedId != null && r.choice.id == votedId;
+            r.row.classList.toggle('voted', votedId != null && r.choice.id == votedId);
         }
     }
 
     updateUI();
 
     for (const ref of refs) {
-        ref.checkbox.addEventListener('change', async e => {
-            const checking = e.target.checked;
+        ref.row.addEventListener('click', async () => {
+            const isVoted = votedId != null && String(ref.choice.id) === votedId;
             const prevRef = refs.find(r => String(r.choice.id) === votedId);
 
-            if (!checking) {
-                // Unvote: optimistic update
+            if (isVoted) {
                 if (prevRef) prevRef.choice.voteCount = Math.max(0, prevRef.choice.voteCount - 1);
                 votedId = null;
                 updateUI();
@@ -252,8 +242,6 @@ async function renderPoll(ev) {
                 return;
             }
 
-            // Vote: uncheck others, optimistic update
-            refs.forEach(r => { if (r.checkbox !== e.target) r.checkbox.checked = false; });
             if (prevRef) prevRef.choice.voteCount = Math.max(0, prevRef.choice.voteCount - 1);
             ref.choice.voteCount += 1;
             votedId = String(ref.choice.id);
@@ -284,94 +272,98 @@ async function renderPoll(ev) {
 
 async function renderActivity(ev) {
     const container = document.createElement('div');
-    container.className = 'activity-content';
+    container.className = 'ev-activity';
 
     if (ev.imgLink) {
         const img = document.createElement('img');
         img.src = await loadImageWithAuth(ev.imgLink) ?? '';
-        img.className = 'activity-img';
+        img.className = 'ev-activity-img';
         container.appendChild(img);
+    }
+
+    if (ev.description) {
+        const desc = document.createElement('p');
+        desc.className = 'ev-activity-desc';
+        desc.textContent = ev.description;
+        container.appendChild(desc);
     }
 
     let count = ev.participantCount ?? 0;
     let joined = ev.isJoined ?? false;
 
-    const textDiv = document.createElement('div');
-    textDiv.className = 'activity-text';
-    textDiv.innerHTML = `
-        <p style="margin:0 0 5px">${ev.description || ''}</p>
-        <div class="participant-count">👥 ผู้เข้าร่วม: ${count} คน</div>
-    `;
+    const footer = document.createElement('div');
+    footer.className = 'ev-activity-footer';
 
-    const joinBox = document.createElement('div');
-    joinBox.className = 'activity-join-box';
-    joinBox.innerHTML = `
-        <input type="checkbox" id="chk-${ev.id}" class="join-checkbox">
-        <label for="chk-${ev.id}" class="join-label">เข้าร่วม</label>
-    `;
+    const partText = document.createElement('span');
+    partText.className = 'ev-participant-count';
+    partText.textContent = `👥 ผู้เข้าร่วม: ${count} คน`;
 
-    const chk = joinBox.querySelector('input');
-    const lbl = joinBox.querySelector('label');
-    const partText = textDiv.querySelector('.participant-count');
-    chk.checked = joined;
-    if (joined) lbl.style.color = '#10b981';
+    const joinBtn = document.createElement('button');
+    joinBtn.className = `ev-join-btn${joined ? ' joined' : ''}`;
+    joinBtn.textContent = joined ? '✓ เข้าร่วมแล้ว' : 'เข้าร่วม';
 
-    chk.addEventListener('change', async () => {
-        // Optimistic update
-        joined = chk.checked;
+    joinBtn.addEventListener('click', async () => {
+        joined = !joined;
         count += joined ? 1 : -1;
-        lbl.style.color = joined ? '#10b981' : '#94a3b8';
-        partText.innerText = `👥 ผู้เข้าร่วม: ${count} คน`;
+        joinBtn.className = `ev-join-btn${joined ? ' joined' : ''}`;
+        joinBtn.textContent = joined ? '✓ เข้าร่วมแล้ว' : 'เข้าร่วม';
+        partText.textContent = `👥 ผู้เข้าร่วม: ${count} คน`;
         try {
             const res = await apiFetch(`/events/${ev.id}/join`, { method: 'POST' });
             const result = await res.json();
             if (result.isJoined !== undefined) {
                 joined = result.isJoined;
-                chk.checked = joined;
-                lbl.style.color = joined ? '#10b981' : '#94a3b8';
+                joinBtn.className = `ev-join-btn${joined ? ' joined' : ''}`;
+                joinBtn.textContent = joined ? '✓ เข้าร่วมแล้ว' : 'เข้าร่วม';
             }
             if (result.participantCount !== undefined) {
                 count = result.participantCount;
-                partText.innerText = `👥 ผู้เข้าร่วม: ${count} คน`;
+                partText.textContent = `👥 ผู้เข้าร่วม: ${count} คน`;
             }
         } catch { /* silent */ }
     });
 
-    container.appendChild(textDiv);
-    container.appendChild(joinBox);
+    footer.appendChild(partText);
+    footer.appendChild(joinBtn);
+    container.appendChild(footer);
     return container;
 }
 
 async function renderAnnouncement(ev) {
     const container = document.createElement('div');
-    container.className = 'announcement-content';
+    container.className = 'ev-announcement';
+
     if (ev.imgLink) {
         const img = document.createElement('img');
         img.src = await loadImageWithAuth(ev.imgLink) ?? '';
-        img.className = 'announcement-img';
+        img.className = 'ev-announcement-img';
         container.appendChild(img);
     }
+
     if (ev.description) {
         const p = document.createElement('p');
-        p.className = 'announcement-text';
-        p.innerText = ev.description;
+        p.className = 'ev-announcement-text';
+        p.textContent = ev.description;
         container.appendChild(p);
     }
+
     return container;
 }
 
-async function renderEvents(events, grid) {
-    grid.innerHTML = '';
+async function renderEvents(events, feed) {
+    feed.innerHTML = '';
     if (!events.length) {
-        grid.innerHTML = '<p class="events-empty">ยังไม่มีกิจกรรมในขณะนี้</p>';
+        feed.innerHTML = '<p class="ev-empty">ยังไม่มีกิจกรรมในขณะนี้</p>';
         return;
     }
 
     const isAdmin = currentUser?.role === 'admin';
+    const typeMap = { Poll: 'poll', Activity: 'activity', Announcement: 'announcement' };
+    const typeLabel = { Poll: '📊 โพล', Activity: '🏃 กิจกรรม', Announcement: '📢 ประกาศ' };
 
     for (const ev of events) {
         const card = document.createElement('article');
-        card.className = 'card';
+        card.className = 'ev-card';
 
         const isCreator = currentUser?.id === ev.creatorId;
         const canEdit   = isCreator;
@@ -380,43 +372,45 @@ async function renderEvents(events, grid) {
 
         card.appendChild(await createCreatorHeader(ev));
 
+        const badge = document.createElement('span');
+        badge.className = `ev-badge ev-badge--${typeMap[ev.type] ?? 'announcement'}`;
+        badge.textContent = typeLabel[ev.type] ?? ev.type;
+        card.appendChild(badge);
+
         const title = document.createElement('h2');
-        title.innerText = ev.header || `กิจกรรม ${ev.id}`;
+        title.className = 'ev-card-title';
+        title.textContent = ev.header || `กิจกรรม ${ev.id}`;
         card.appendChild(title);
 
-        const tag = document.createElement('span');
-        tag.innerText = ev.type;
-        tag.className = 'event-type-tag';
-        card.appendChild(tag);
-
-        if (ev.type === 'Poll') card.appendChild(await renderPoll(ev));
+        if (ev.type === 'Poll')          card.appendChild(await renderPoll(ev));
         else if (ev.type === 'Activity') card.appendChild(await renderActivity(ev));
-        else card.appendChild(await renderAnnouncement(ev));
+        else                             card.appendChild(await renderAnnouncement(ev));
 
-        grid.appendChild(card);
+        feed.appendChild(card);
     }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const grid = document.getElementById('coursesGrid');
-    if (grid) {
-        grid.innerHTML = Array.from({ length: 3 }, () => `
-            <article class="card" style="pointer-events:none">
-              <div class="creator-header" style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+    const feed = document.getElementById('evFeed');
+    if (feed) {
+        feed.innerHTML = Array.from({ length: 3 }, () => `
+            <article class="ev-card" style="pointer-events:none">
+              <div class="creator-header" style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
                 <div class="creator-avatar-wrap skeleton" style="background:none;flex-shrink:0"></div>
-                <span class="sk-line sk-line--md skeleton" style="height:12px;flex:1;margin:0"></span>
+                <span class="sk-line sk-line--md skeleton" style="height:11px;flex:1;margin:0"></span>
               </div>
-              <span class="sk-line sk-line--lg skeleton" style="height:18px;margin-bottom:10px"></span>
-              <span class="sk-line skeleton" style="width:72px;height:22px;border-radius:12px;margin-bottom:16px"></span>
+              <span class="sk-line skeleton" style="width:68px;height:20px;border-radius:10px;margin-bottom:10px"></span>
+              <span class="sk-line sk-line--lg skeleton" style="height:17px;margin-bottom:14px"></span>
               <span class="sk-line sk-line--lg skeleton"></span>
               <span class="sk-line sk-line--md skeleton"></span>
               <span class="sk-line sk-line--sm skeleton" style="margin-bottom:0"></span>
             </article>`).join('');
+
         [currentUser, window.eventList] = await Promise.all([fetchCurrentUser(), fetchEvents()]);
         if (currentUser?.role === 'admin') {
             document.getElementById('openModalBtn').hidden = false;
         }
-        await renderEvents(window.eventList, grid);
+        await renderEvents(window.eventList, feed);
     }
 
     const modal = document.getElementById('postModal');

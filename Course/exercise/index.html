@@ -52,9 +52,9 @@
   </footer>
 
   <comment-widget></comment-widget>
+  <site-header page-title="Exercise" page-desc="กำลังโหลด..."></site-header>
 
-  <main class="wrap">
-    <site-header page-title="Exercise" page-desc="กำลังโหลด..."></site-header>
+  <main class="ex-main">
 
     <div class="exercise-layout">
 
@@ -101,21 +101,25 @@
 
     </div>
 
-    <!-- File Preview Modal -->
-    <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
-      <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
-      <div class="preview-modal-container">
-        <div class="preview-modal-header">
-          <span id="previewFileName"></span>
-          <div class="preview-modal-actions">
-            <button id="previewDownloadBtn">⬇ ดาวน์โหลด</button>
-            <button id="previewCloseBtn" aria-label="Close">✕</button>
-          </div>
-        </div>
-        <div id="previewModalBody" class="preview-modal-body"></div>
-      </div>
-    </div>
   </main>
+
+  <site-footer></site-footer>
+
+  <!-- File Preview Modal -->
+  <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
+    <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
+    <div class="preview-modal-container">
+      <div class="preview-modal-header">
+        <span id="previewFileName"></span>
+        <div class="preview-modal-actions">
+          <button id="previewDownloadBtn">⬇ ดาวน์โหลด</button>
+          <button id="previewCloseBtn" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div id="previewModalBody" class="preview-modal-body"></div>
+    </div>
+  </div>
+
 </body>
 
 </html>

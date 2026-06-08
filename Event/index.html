@@ -1,99 +1,95 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="th">
+
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Skintania — Event</title>
-    <style>body{display:none}</style>
-    <script type="module" src="/auth-guard.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Skintania — Event</title>
+  <style>body { display: none }</style>
+  <script type="module" src="/auth-guard.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="/global.css">
-    <link rel="stylesheet" href="/Template/style.css">
-    <link rel="stylesheet" href="style.css">
-    <link rel="icon" href="/Assest/sk-cu.png">
-    <script type="module" src="/Template/component.js" defer></script>
+  <link rel="stylesheet" href="/Template/style.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
+  <script type="module" src="/Template/component.js" defer></script>
 </head>
+
 <body>
-    <comment-widget></comment-widget>
-    
-    <main class="wrap">
-        <site-header page-title="Event" page-desc="Event ต่างๆที่น่าสนใจสำหรับ SkIntania"></site-header>
+  <comment-widget></comment-widget>
+  <site-header page-title="Event" page-desc="กิจกรรมและข่าวสาร"></site-header>
 
-        <div class="action-bar">
-            <button id="openModalBtn" class="create-btn" hidden>
-                <span>+</span> สร้างกิจกรรมใหม่
-            </button>
-        </div>
+  <main class="ev-main">
 
-        <section id="coursesGrid" class="grid" aria-label="Courses"></section>
-
-        <footer>
-            <p>เรื่องแจ้ง น่ารู้</p>
-            <ul>
-                <li>ระบบรองรับการสร้าง Poll และ Activity แล้ว</li>
-                <li>รูปภาพจัดเก็บผ่าน R2 Storage</li>
-            </ul>
-        </footer>
-    </main>
-
-    <div id="postModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>สร้างกิจกรรมใหม่</h2>
-                <p>เลือกประเภทและกรอกข้อมูลให้ครบถ้วน</p>
-            </div>
-            
-            <form id="createPostForm">
-                <div class="form-group">
-                    <label>หัวข้อกิจกรรม</label>
-                    <input type="text" name="header" placeholder="เช่น โหวตเลือกเสื้อรุ่น" required>
-                </div>
-
-                <div class="form-group">
-                    <label>ประเภท</label>
-                    <select name="type" id="typeSelect">
-                        <option value="Announcement">📢 ประกาศ (Announcement)</option>
-                        <option value="Activity">🏃 กิจกรรม (Activity)</option>
-                        <option value="Poll">📊 โพล (Poll)</option>
-                    </select>
-                </div>
-
-                <div id="standardArea">
-                    <div class="form-group">
-                        <label>รายละเอียด</label>
-                        <textarea name="description" rows="3" placeholder="เขียนรายละเอียดที่นี่..."></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>รูปภาพประกอบ (1 รูป)</label>
-                        <input type="file" id="singleImageInput" name="singleImage" accept="image/*">
-                    </div>
-                </div>
-
-                <div id="pollArea" style="display:none;">
-                    <div class="form-group">
-                        <label>จำนวนตัวเลือก</label>
-                        <select id="pollCountSelect">
-                            <option value="2">2 ตัวเลือก</option>
-                            <option value="3">3 ตัวเลือก</option>
-                            <option value="4">4 ตัวเลือก</option>
-                            <option value="5">5 ตัวเลือก</option>
-                        </select>
-                    </div>
-                    <div id="pollChoicesContainer"></div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" id="closeModalBtn" class="btn-cancel">ยกเลิก</button>
-                    <button type="submit" id="submitBtn" class="btn-submit">โพสต์กิจกรรมเลย</button>
-                </div>
-            </form>
-        </div>
+    <div class="ev-page-head">
+      <div class="ev-head-text">
+        <h1 class="ev-heading">กิจกรรม & ประกาศ</h1>
+        <p class="ev-sub">โพล กิจกรรม และข่าวสารจาก OSK Intania</p>
+      </div>
+      <button id="openModalBtn" class="ev-create-btn" hidden>+ สร้างกิจกรรม</button>
     </div>
 
-    <script type="module" src="loadEvent.js" defer></script>
-    <script type="module" src="post-create.js" defer></script>
-    <script type="module" src="post-config.js" defer></script>
+    <section id="evFeed" class="ev-feed" aria-label="Events"></section>
+
+  </main>
+
+  <!-- Create / Edit Modal -->
+  <div id="postModal" class="ev-modal-overlay">
+    <div class="ev-modal-box">
+      <div class="modal-header">
+        <h2>สร้างกิจกรรมใหม่</h2>
+        <p>เลือกประเภทและกรอกข้อมูลให้ครบถ้วน</p>
+      </div>
+      <form id="createPostForm">
+        <div class="form-group">
+          <label>หัวข้อกิจกรรม</label>
+          <input type="text" name="header" placeholder="เช่น โหวตเลือกเสื้อรุ่น" required>
+        </div>
+        <div class="form-group">
+          <label>ประเภท</label>
+          <select name="type" id="typeSelect">
+            <option value="Announcement">📢 ประกาศ (Announcement)</option>
+            <option value="Activity">🏃 กิจกรรม (Activity)</option>
+            <option value="Poll">📊 โพล (Poll)</option>
+          </select>
+        </div>
+        <div id="standardArea">
+          <div class="form-group">
+            <label>รายละเอียด</label>
+            <textarea name="description" rows="3" placeholder="เขียนรายละเอียดที่นี่..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>รูปภาพประกอบ (1 รูป)</label>
+            <input type="file" id="singleImageInput" name="singleImage" accept="image/*">
+          </div>
+        </div>
+        <div id="pollArea" style="display:none;">
+          <div class="form-group">
+            <label>จำนวนตัวเลือก</label>
+            <select id="pollCountSelect">
+              <option value="2">2 ตัวเลือก</option>
+              <option value="3">3 ตัวเลือก</option>
+              <option value="4">4 ตัวเลือก</option>
+              <option value="5">5 ตัวเลือก</option>
+            </select>
+          </div>
+          <div id="pollChoicesContainer"></div>
+        </div>
+        <div class="form-actions">
+          <button type="button" id="closeModalBtn" class="btn-cancel">ยกเลิก</button>
+          <button type="submit" id="submitBtn" class="btn-submit">โพสต์กิจกรรมเลย</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="loadEvent.js" defer></script>
+  <script type="module" src="post-create.js" defer></script>
+  <script type="module" src="post-config.js" defer></script>
+
+  <site-footer></site-footer>
 </body>
+
 </html>

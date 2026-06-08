@@ -72,11 +72,11 @@ function improveLinearChance(linearPct) {
 // ── DOM helpers ───────────────────────────────────────────
 function getGradesFromDOM() {
     const grades = [];
-    document.querySelectorAll('article.card').forEach(card => {
-        const subject = card.querySelector('h2')?.innerText?.trim();
-        const selectedEl = card.querySelector('.selected-option');
-        if (!subject || !selectedEl) return;
-        const val = selectedEl.getAttribute('data-value');
+    document.querySelectorAll('.grade-list-item').forEach(item => {
+        const subject = item.querySelector('.grade-course-name')?.innerText?.trim();
+        const activePill = item.querySelector('.grade-pill.active');
+        if (!subject || !activePill) return;
+        const val = activePill.getAttribute('data-value');
         if (val !== null && val !== '') {
             grades.push({ subject, grade: parseFloat(val) });
         }
@@ -84,15 +84,10 @@ function getGradesFromDOM() {
     return grades;
 }
 
-function setDropdownValue(card, gradeValue) {
-    const displayBox = card.querySelector('.selected-option');
-    if (!displayBox) return;
-    const match = Array.from(card.querySelectorAll('.options-list li'))
-        .find(li => parseFloat(li.getAttribute('data-value')) === gradeValue);
-    if (match) {
-        displayBox.innerText = match.innerText;
-        displayBox.setAttribute('data-value', String(gradeValue));
-    }
+function setDropdownValue(item, gradeValue) {
+    item.querySelectorAll('.grade-pill').forEach(pill => {
+        pill.classList.toggle('active', parseFloat(pill.getAttribute('data-value')) === gradeValue);
+    });
 }
 
 function updateResultUI({ gpax, admScore, admFullScore, chancePercent, allDepartments }, history) {
@@ -163,10 +158,10 @@ async function loadSavedGrades() {
         const { grades } = await res.json();
         if (!Array.isArray(grades)) return;
         const gradeMap = Object.fromEntries(grades.map(g => [g.subject, g.grade]));
-        document.querySelectorAll('article.card').forEach(card => {
-            const subject = card.querySelector('h2')?.innerText?.trim();
+        document.querySelectorAll('.grade-list-item').forEach(item => {
+            const subject = item.querySelector('.grade-course-name')?.innerText?.trim();
             if (subject && gradeMap[subject] != null) {
-                setDropdownValue(card, gradeMap[subject]);
+                setDropdownValue(item, gradeMap[subject]);
             }
         });
     } catch { /* silent */ }
@@ -429,6 +424,17 @@ async function loadSavedPreferences() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Grade pill selection
+    document.querySelectorAll('.grade-pills').forEach(pills => {
+        pills.querySelectorAll('.grade-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const wasActive = btn.classList.contains('active');
+                pills.querySelectorAll('.grade-pill').forEach(b => b.classList.remove('active'));
+                if (!wasActive) btn.classList.add('active');
+            });
+        });
+    });
+
     loadSavedGrades();
     loadSavedPreferences();
     initCountdown();

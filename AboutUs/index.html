@@ -3,50 +3,34 @@
 
 <head>
   <meta charset="utf-8">
-  <meta name="description" content="เกี่ยวกับ SkIntania — ตำนาน OSK143">
+  <meta name="description" content="เกี่ยวกับ Skintania — OSK Intania 143">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Skintania</title>
-
-
-  <style>body{display:none}</style>
-
+  <title>Skintania — About Us</title>
+  <style>body { display: none }</style>
   <script type="module" src="/auth-guard.js"></script>
-
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/Template/style.css">
-  <link rel="stylesheet" href="/Advice/style.css">
+  <link rel="stylesheet" href="style.css">
   <link rel="icon" href="/Assest/sk-cu.png">
   <script type="module" src="/Template/component.js" defer></script>
-
 </head>
 
 <body>
+  <comment-widget></comment-widget>
+  <site-header page-title="About Us" page-desc="เกี่ยวกับเรา"></site-header>
 
-  <main class="wrap">
-    <site-header page-title="Home" page-desc="หน้าแรก">
-    </site-header>
-
-    <div class="construction-icon">🚧</div>
-    <h1>Under Construction</h1>
-    <p class="lead">
-      เว็บไซต์ Skintania กำลังอยู่ระหว่างการปรับปรุงระบบและอัปเดตเนื้อหา<br>
-      รอกันอีกนิดนะครับ แล้วพบกันใหม่เร็วๆ นี้!
-    </p>
-    <a href="javascript:history.back()" class="btn">กลับไปหน้าก่อนหน้า</a>
-
-    <section id="coursesGrid" class="grid" aria-label="Courses">
-    </section>
-
-    <footer>
-      <p>เรื่องแจ้ง น่ารู้</p>
-      <ul>
-        <li>In dev</li>
-      </ul>
-    </footer>
+  <main class="au-main">
+    <div class="au-center">
+      <div class="au-icon">🚧</div>
+      <h1 class="au-title">กำลังก่อสร้าง</h1>
+      <p class="au-desc">หน้านี้กำลังอยู่ระหว่างการพัฒนา<br>รอพบกันเร็วๆ นี้!</p>
+    </div>
   </main>
+
+  <site-footer></site-footer>
 </body>
 
 </html>

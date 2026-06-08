@@ -21,147 +21,183 @@
   <link rel="icon" href="/Assest/sk-cu.png">
 
   <script type="module" src="/Template/component.js" defer></script>
-
 </head>
 
 <body>
 
   <comment-widget></comment-widget>
+  <site-header page-title="Home" page-desc="หน้าแรก"></site-header>
 
-  <main class="wrap">
-    <img id="siteBanner" alt="SkIntania Banner" class="banner" fetchpriority="high" style="display:none">
+  <main class="hp-main">
 
-    <site-header page-title="Home" page-desc="หน้าแรก">
-    </site-header>
+    <!-- ======== HERO ======== -->
+    <section class="hp-hero">
+      <div class="hp-container hp-hero-inner">
 
-    <section id="coursesStack" class="card-stack" aria-label="Courses">
-
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>ยินดีต้อนรับเข้าสู่ SkIntania</h2>
-          <p>เว็บไซต์สำหรับนักเรียนในเครือสวนกุหลาบที่ได้เข้าเรียนที่ คณะวิศวกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย
-            เพื่อให้มีความพร้อมก่อนที่จะเข้าเรียนจริงๆ</p>
-          <div>
-            <a href="/" class="btn">ไปที่หน้าแรก</a>
-          </div>
-        </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?q=80&w=800&auto=format&fit=crop"
-            alt="University Campus" loading="lazy">
-        </div>
-      </article>
-
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>คอร์สเรียน</h2>
-          <p>สถานที่ที่เก็บรวบรวมคลิปการสอนในรายวิชาต่างๆ ให้วัยรุ่น OSK CU Intania ได้มาเรียนเตรียมความพร้อมก่อนสอบกัน
+        <div class="hp-hero-text">
+          <span class="hp-badge">OSK CU Intania · รุ่น 143</span>
+          <h1 class="hp-hero-title">
+            เตรียมพร้อม<br>
+            สู่รั้ว<span class="hp-gradient-text">วิศวฯ จุฬาฯ</span>
+          </h1>
+          <p class="hp-hero-desc">
+            แพลตฟอร์มสำหรับนักเรียนสวนกุหลาบที่ก้าวสู่คณะวิศวกรรมศาสตร์ จุฬาฯ
+            รวมคอร์สเรียน สื่อการเรียน เครื่องมือคำนวณ และกิจกรรมครบครัน
           </p>
-          <div>
-            <a href="/Course/" class="btn">ไปที่คอร์สเรียน</a>
+          <div class="hp-hero-actions">
+            <a href="/Course/" class="btn hp-btn-lg">เริ่มเรียนได้เลย →</a>
+            <a href="/AboutUs/" class="hp-btn-ghost">เกี่ยวกับเรา</a>
           </div>
         </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop"
-            alt="Online Course" loading="lazy">
-        </div>
-      </article>
 
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>สื่อการเรียน</h2>
-          <p>สถานที่ที่จัดเก็บรวบรวมไฟล์การเรียนต่างๆของพี่ๆ ไว้ให้มาโหลด แล้วไปเรียนกันก่อน</p>
-          <div>
-            <a href="/CourseMaterial/" class="btn">ไปที่ SK Drive</a>
+        <div class="hp-hero-visual">
+          <div class="hp-hero-glow"></div>
+          <img id="siteBanner" alt="SkIntania Banner" class="hp-banner-img" style="display:none">
+          <div class="hp-hero-cards" id="heroFloatCards">
+            <div class="hp-float-card">
+              <span class="hp-float-icon">📚</span>
+              <div>
+                <div class="hp-float-title">คอร์สเรียน</div>
+                <div class="hp-float-sub">คลิปการสอน พร้อมแบบฝึกหัด</div>
+              </div>
+            </div>
+            <div class="hp-float-card">
+              <span class="hp-float-icon">🎯</span>
+              <div>
+                <div class="hp-float-title">คำนวณโอกาส</div>
+                <div class="hp-float-sub">คาดการณ์ภาควิชาที่จะได้</div>
+              </div>
+            </div>
+            <div class="hp-float-card">
+              <span class="hp-float-icon">🏆</span>
+              <div>
+                <div class="hp-float-title">OSK รุ่น 143</div>
+                <div class="hp-float-sub">ร่วมกิจกรรมและชุมชน</div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=800&auto=format&fit=crop"
-            alt="Study Materials" loading="lazy">
-        </div>
-      </article>
 
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>คำนวณระยะแห่งความฝัน</h2>
-          <p>เครื่องคำนวณเกรด เพื่อหาแต้มและความเป็นไปได้ของการเข้าภาควิชาต่างๆ โดยเฉพาะเด็กภาครวม ปี 1 ที่ได้ใช้แน่ๆ
-          </p>
-          <div>
-            <a href="/Calculator/" class="btn">ไปคำนวณ</a>
-          </div>
-        </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop"
-            alt="Calculator and Grades" loading="lazy">
-        </div>
-      </article>
-
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>คำแนะนำรายวิชา</h2>
-          <p>คำแนะนำที่พี่ต้องการจะบอกกับน้องว่าต้องระวังเรื่องอะไรบ้าง และมีคะแนนมิดเทอมของปีก่อนๆ</p>
-          <div>
-            <a href="/Advice/" class="btn">รับคำแนะนำ</a>
-          </div>
-        </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=800&auto=format&fit=crop"
-            alt="Advice and Planning" loading="lazy">
-        </div>
-      </article>
-
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>กิจกรรม</h2>
-          <p>ไทม์ไลน์กิจกรรมสำหรับปี 1 คณะวิศวกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย หรือจะมีกิจกรรมอื่นๆนอกคณะที่น่าสนใจ
-            หรือกิจกรรมที่สาวๆเยอะ</p>
-          <div>
-            <a href="/Activity/" class="btn">ไปดูกิจกรรม</a>
-          </div>
-        </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=800&auto=format&fit=crop"
-            alt="University Activities and Events" loading="lazy">
-        </div>
-      </article>
-
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>ลงทะเบียนพบปะ</h2>
-          <p>หากเหงาหรือต้องการจะร่วมกิจกรรมของ OSK CU Intania สามารถไปลงทะเบียนได้ที่นี่
-            หรือร่วมสนุกโหวตโพลที่กำลังเป็นประเด็นอยู่ ณ ตอนนี้</p>
-          <div>
-            <a href="/Event/" class="btn">ไปร่วมสนุก</a>
-          </div>
-        </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1528605248644-14dd04022da1?q=80&w=800&auto=format&fit=crop"
-            alt="Meeting and Events" loading="lazy">
-        </div>
-      </article>
-
-      <article class="fade-card">
-        <div class="fade-card-content">
-          <h2>เกี่ยวกับเรา</h2>
-          <p>อยากรู้ตำนาน OSK143 ไหม ถ้าอยากรู้ก็ลองมาอ่านได้ที่นี่ และมาสานต่อตำนานไปด้วยกัน!</p>
-          <div>
-            <a href="/AboutUs/" class="btn">อ่านตำนาน</a>
-          </div>
-        </div>
-        <div class="fade-card-image-wrapper">
-          <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=800&auto=format&fit=crop"
-            alt="Brotherhood and History" loading="lazy">
-        </div>
-      </article>
+      </div>
     </section>
 
-    <footer>
-      <p>เรื่องแจ้ง น่ารู้</p>
-      <ul>
-        <li>วิชา Material ลงครบทุกคลิป update ล่าสุดแล้ว กำลังทำ streaming ให้ดีอยู่</li>
-        <li>วิชา Physics กำลังลง file การเรียน</li>
-      </ul>
-    </footer>
+    <!-- ======== FEATURE 1: เรียนรู้ ======== -->
+    <section class="hp-feature">
+      <div class="hp-container hp-feature-inner">
+
+        <div class="hp-feature-visual">
+          <div class="hp-img-wrap">
+            <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=800&auto=format&fit=crop"
+              alt="Online Course" loading="lazy">
+          </div>
+          <div class="hp-stat-badge hp-stat-top">
+            <span class="hp-stat-num">10+</span>
+            <span class="hp-stat-label">วิชาในระบบ</span>
+          </div>
+        </div>
+
+        <div class="hp-feature-content">
+          <span class="hp-section-tag">📖 เรียนรู้</span>
+          <h2 class="hp-feature-title">เนื้อหาครบ<br>เตรียมสอบได้เลย</h2>
+          <ul class="hp-feature-list">
+            <li>
+              <span class="hp-check">✓</span>
+              <div><strong>คอร์สเรียน</strong> — คลิปการสอนรายวิชาพร้อมแบบฝึกหัด</div>
+            </li>
+            <li>
+              <span class="hp-check">✓</span>
+              <div><strong>SK Drive</strong> — ไฟล์สรุปและสื่อการเรียนจากพี่ๆ</div>
+            </li>
+            <li>
+              <span class="hp-check">✓</span>
+              <div><strong>คำแนะนำ</strong> — สิ่งที่ต้องระวังและเกรดมิดเทอมปีก่อนๆ</div>
+            </li>
+          </ul>
+          <div class="hp-feature-actions">
+            <a href="/Course/" class="btn">คอร์สเรียน</a>
+            <a href="/CourseMaterial/" class="hp-link-btn">SK Drive →</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======== FEATURE 2: เครื่องมือ (reversed) ======== -->
+    <section class="hp-feature hp-feature-alt">
+      <div class="hp-container hp-feature-inner hp-feature-rev">
+
+        <div class="hp-feature-content">
+          <span class="hp-section-tag">🔧 เครื่องมือ</span>
+          <h2 class="hp-feature-title">วางแผนอนาคต<br>ด้วยข้อมูลจริง</h2>
+          <ul class="hp-feature-list">
+            <li>
+              <span class="hp-check">✓</span>
+              <div><strong>คำนวณ GPA</strong> — คาดการณ์โอกาสเข้าภาควิชา</div>
+            </li>
+            <li>
+              <span class="hp-check">✓</span>
+              <div><strong>จัดลำดับภาค</strong> — ดูโอกาสจากภาคที่สนใจ ปี 2568</div>
+            </li>
+            <li>
+              <span class="hp-check">✓</span>
+              <div><strong>ประวัติการคำนวณ</strong> — ย้อนดูผลที่ผ่านมา</div>
+            </li>
+          </ul>
+          <div class="hp-feature-actions">
+            <a href="/Calculator/" class="btn">คำนวณ GPA</a>
+            <a href="/Advice/" class="hp-link-btn">คำแนะนำ →</a>
+          </div>
+        </div>
+
+        <div class="hp-feature-visual">
+          <div class="hp-img-wrap">
+            <img src="https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=800&auto=format&fit=crop"
+              alt="Calculator and Grades" loading="lazy">
+          </div>
+          <div class="hp-stat-badge hp-stat-bottom">
+            <span class="hp-stat-num">13</span>
+            <span class="hp-stat-label">ภาควิชา</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======== MINI GRID ======== -->
+    <section class="hp-mini-section">
+      <div class="hp-container">
+        <h2 class="hp-section-title">ชุมชน & กิจกรรม</h2>
+        <p class="hp-section-sub">ร่วมเป็นส่วนหนึ่งของ OSK CU Intania</p>
+        <div class="hp-mini-grid">
+
+          <a href="/Activity/" class="hp-mini-card">
+            <div class="hp-mini-icon">🗓️</div>
+            <h3>กิจกรรม</h3>
+            <p>ไทม์ไลน์กิจกรรมสำหรับปี 1 คณะวิศวกรรมศาสตร์ จุฬาฯ</p>
+            <span class="hp-mini-link">ดูกิจกรรม →</span>
+          </a>
+
+          <a href="/Event/" class="hp-mini-card">
+            <div class="hp-mini-icon">🎉</div>
+            <h3>ลงทะเบียนพบปะ</h3>
+            <p>ร่วมสนุก โหวตโพล และลงทะเบียนกิจกรรมของ OSK</p>
+            <span class="hp-mini-link">ไปร่วมสนุก →</span>
+          </a>
+
+          <a href="/AboutUs/" class="hp-mini-card">
+            <div class="hp-mini-icon">⭐</div>
+            <h3>เกี่ยวกับเรา</h3>
+            <p>ตำนาน OSK143 และการสานต่อมรดกของรุ่นพี่</p>
+            <span class="hp-mini-link">อ่านตำนาน →</span>
+          </a>
+
+        </div>
+      </div>
+    </section>
+
   </main>
+
+  <site-footer></site-footer>
 
   <script type="module">
     import { CONFIG } from '/config.js';
@@ -174,7 +210,9 @@
           if (!blob) return;
           const img = document.getElementById('siteBanner');
           img.src = URL.createObjectURL(blob);
-          img.style.display = '';
+          img.style.display = 'block';
+          const cards = document.getElementById('heroFloatCards');
+          if (cards) cards.style.display = 'none';
         })
         .catch(() => {});
     }

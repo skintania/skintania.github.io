@@ -1,58 +1,65 @@
-<header class="header-container">
-    <div class="header-content">
-        <a href="/"><img src="/Assest/sk-cu.png" alt="Logo" class="header-logo"></a>
-        <div class="header-text">
-            <h1>SkIntania — <span id="dynamic-title"></span></h1>
-            <p class="lead" id="dynamic-desc"></p>
-        </div>
-    </div>
+<header class="sh-bar">
+    <div class="sh-inner">
 
-    <button id="menu-toggle" class="menu-toggle">☰</button>
+        <!-- Brand -->
+        <a href="/" class="sh-brand">
+            <img src="/Assest/sk-cu.png" alt="Logo" class="sh-logo">
+            <div class="sh-brand-info">
+                <span class="sh-brand-name">Skintania</span>
+                <span class="sh-page-label" id="dynamic-title"></span>
+            </div>
+        </a>
 
-    <div class="header-credits">
-        <div class="credits-info">
-            <div>จัดทำโดย</div>
-            <small>OSK143</small><br>
-            <small>IG : sk143</small>
-        </div>
+        <!-- Nav links (class="navbar" kept for JS toggle compatibility) -->
+        <nav class="navbar sh-nav">
+            <ul>
+                <li class="nav-label">เนื้อหา</li>
+                <li><a href="/Course/">คอร์สเรียน</a></li>
+                <li><a href="/CourseMaterial/">สื่อการเรียน</a></li>
+                <li><a href="/Advice/">คำแนะนำ</a></li>
+                <li><a href="/Calculator/">คำนวณ</a></li>
+                <li class="nav-label">ชุมชน</li>
+                <li><a href="/Activity/">กิจกรรม</a></li>
+                <li><a href="/Event/">ลงทะเบียน</a></li>
+                <li><a href="/AboutUs/">เกี่ยวกับเรา</a></li>
+            </ul>
+        </nav>
 
-        <div class="profile-dropdown">
-            <button class="profile-btn" id="profileBtn">
-                <div class="profile-avatar" id="headerAvatarContainer" style="background-color: #3b82f6; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%;">
-                    
-                    <img id="headerAvatarImg" alt=""
-                         style="width: 100%; height: 100%; object-fit: cover; display: none;">
+        <!-- Right: credits + avatar + hamburger -->
+        <div class="sh-right">
+            <div class="sh-credits">
+                <span>จัดทำโดย OSK143</span>
+                <span>IG · sk143</span>
+            </div>
 
-                    <span class="default-icon" id="headerDefaultIcon" style="display: flex; color: white; font-size: 20px;">
-                        <i class="fa-solid fa-user"></i>
-                    </span>
+            <div class="profile-dropdown">
+                <button class="profile-btn" id="profileBtn">
+                    <div class="profile-avatar" id="headerAvatarContainer"
+                         style="background-color:#3b82f6;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;">
+                        <img id="headerAvatarImg" alt=""
+                             style="width:100%;height:100%;object-fit:cover;display:none;">
+                        <span class="default-icon" id="headerDefaultIcon"
+                              style="display:flex;color:white;font-size:17px;">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                    </div>
+                </button>
 
-                </div>
-            </button>
-
-            <div class="dropdown-content" id="profileDropdown">
-                <div class="dropdown-menu-card">
-                    <a href="/settings/">ตั้งค่าโปรไฟล์</a>
-                    <a href="/profile/">ค้นหาเพื่อน</a>
-                    <hr style="margin:0; border:0; border-top:1px solid #eee;">
-                    <a href="#" id="logoutBtn" class="logout-text">ออกจากระบบ</a>
+                <div class="dropdown-content" id="profileDropdown">
+                    <div class="dropdown-menu-card">
+                        <a href="/settings/">ตั้งค่าโปรไฟล์</a>
+                        <a href="/profile/">ค้นหาเพื่อน</a>
+                        <hr style="margin:0;border:0;border-top:1px solid #eee;">
+                        <a href="#" id="logoutBtn" class="logout-text">ออกจากระบบ</a>
+                    </div>
                 </div>
             </div>
+
+            <button id="menu-toggle" class="sh-toggle">☰</button>
         </div>
+
     </div>
+
+    <!-- Hidden: page desc (set by JS, not displayed) -->
+    <span id="dynamic-desc" style="display:none"></span>
 </header>
-
-<br>
-
-<nav class="navbar">
-    <ul>
-        <li><a href="/">หน้าแรก</a></li>
-        <li><a href="/Course/">คอร์สเรียน</a></li>
-        <li><a href="/CourseMaterial/">สื่อการเรียน</a></li>
-        <li><a href="/Calculator/">คำนวณระยะแห่งความฝัน</a></li>
-        <li><a href="/Advice/">คำแนะนำรายวิชา</a></li>
-        <li><a href="/Activity/">กิจกรรม</a></li>
-        <li><a href="/Event/">ลงทะเบียนพบปะ</a></li>
-        <li><a href="/AboutUs/">เกี่ยวกับเรา</a></li>
-    </ul>
-</nav>

@@ -24,15 +24,32 @@ function showToast(message, type = 'success') {
 document.addEventListener('DOMContentLoaded', () => {
     loadUserData();
 
+    // Smooth scroll to section on nav click
     document.querySelectorAll('.nav-item[data-section]').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            this.classList.add('active');
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            document.getElementById('section-' + this.getAttribute('data-section'))?.classList.add('active');
+            const target = document.getElementById('section-' + this.getAttribute('data-section'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
+
+    // Highlight nav item based on scroll position
+    const sections = document.querySelectorAll('.content-section[id]');
+    const navItems = document.querySelectorAll('.nav-item[data-section]');
+    const setActive = id => {
+        navItems.forEach(n => n.classList.toggle('active', n.getAttribute('data-section') === id));
+    };
+    const onScroll = () => {
+        let current = sections[0]?.id.replace('section-', '');
+        sections.forEach(s => {
+            if (s.getBoundingClientRect().top <= 120) {
+                current = s.id.replace('section-', '');
+            }
+        });
+        setActive(current);
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
 
     const editBtn = document.getElementById('editProfileBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');
@@ -54,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (imageUpload) {
-        imageUpload.addEventListener('change', function(e) {
+        imageUpload.addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
             if (file.size > 5 * 1024 * 1024) {
@@ -62,8 +79,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.value = '';
                 return;
             }
+            // Show preview immediately
             const reader = new FileReader();
-            reader.onload = function(event) {
+            reader.onload = event => {
                 const imgPreview = document.getElementById('imagePreview');
                 const iconEl = document.getElementById('mainIcon');
                 imgPreview.src = event.target.result;
@@ -71,6 +89,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 iconEl.style.display = 'none';
             };
             reader.readAsDataURL(file);
+
+            // Auto-upload without needing edit mode
+            const token = localStorage.getItem('authToken');
+            const userId = localStorage.getItem('userId');
+            if (!token || !userId) return;
+            try {
+                const res = await fetch(`${CONFIG.API_URL}/users/${userId}/avatar`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': file.type, 'Authorization': `Bearer ${token}` },
+                    body: file,
+                });
+                if (!res.ok) throw new Error();
+                showToast('อัปเดตรูปโปรไฟล์สำเร็จ');
+                updateAvatarDisplay('sidebarAvatar', 'sidebarIcon', userId);
+            } catch {
+                showToast('อัปโหลดรูปโปรไฟล์ไม่สำเร็จ', 'error');
+            }
         });
     }
 
@@ -152,6 +187,14 @@ async function loadUserData() {
         const sidebarName = document.getElementById('sidebarUsername');
         if (sidebarName) sidebarName.innerText = user.username || 'User';
 
+        const roleBadge = document.getElementById('sidebarRoleBadge');
+        if (roleBadge) {
+            const role = user.role || 'member';
+            const roleLabel = role === 'admin' ? 'Admin' : role === 'OSK' ? 'OSK' : 'Member';
+            roleBadge.textContent = roleLabel;
+            roleBadge.className = `st-role-badge st-role-badge--${role.toLowerCase()}`;
+        }
+
         const unverifiedWarning = document.getElementById('unverifiedWarning');
         if (unverifiedWarning) {
             unverifiedWarning.style.display = user.is_verified ? 'none' : 'flex';
@@ -195,16 +238,6 @@ async function updateUserData() {
         const patchResult = await patchRes.json();
         if (!patchRes.ok) throw new Error(patchResult.error || 'บันทึกล้มเหลว');
 
-        const avatarFile = document.getElementById('imageUpload')?.files?.[0];
-        if (avatarFile) {
-            const avatarRes = await fetch(`${CONFIG.API_URL}/users/${userId}/avatar`, {
-                method: 'PUT',
-                headers: { 'Content-Type': avatarFile.type, 'Authorization': `Bearer ${token}` },
-                body: avatarFile,
-            });
-            if (!avatarRes.ok) throw new Error('อัปโหลดรูปโปรไฟล์ไม่สำเร็จ');
-        }
-
         showToast('บันทึกข้อมูลสำเร็จ');
         toggleEditMode(false);
         loadUserData();
@@ -230,9 +263,6 @@ function toggleEditMode(isEditing) {
     });
     const usernameEl = document.getElementById('username');
     if (usernameEl) usernameEl.disabled = true;
-
-    const avatarActions = document.querySelector('.avatar-actions');
-    if (avatarActions) avatarActions.style.display = isEditing ? 'flex' : 'none';
 
     const editBtn = document.getElementById('editProfileBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');

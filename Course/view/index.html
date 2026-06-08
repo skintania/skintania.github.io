@@ -23,9 +23,9 @@
 
 <body>
   <comment-widget></comment-widget>
+  <site-header page-title="Course" page-desc="กำลังโหลด..."></site-header>
 
-  <main class="wrap view-wrap">
-    <site-header page-title="Course" page-desc="กำลังโหลด..."></site-header>
+  <main class="vw-main">
 
     <div class="view-layout">
 
@@ -48,6 +48,13 @@
 
           <!-- YouTube player container -->
           <div id="ytPlayer" hidden></div>
+
+          <!-- Settings button (mobile, top-right of video) -->
+          <button class="video-settings-btn" id="videoSettingsBtn" aria-label="ตั้งค่า">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
 
           <!-- Double-tap indicators (mobile) -->
           <div class="dbl-tap left" id="dblLeft">
@@ -151,91 +158,18 @@
           <p class="video-desc" id="courseDesc"></p>
         </div>
 
-        <!-- ── Tabbed section ── -->
-        <section class="tabs-section">
-
-          <!-- Tab bar -->
-          <div class="tab-bar" role="tablist">
-            <button class="tab-btn active" data-tab="comments" role="tab">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-              </svg>
-              ความคิดเห็น
-            </button>
-            <button class="tab-btn" data-tab="files" role="tab">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-              </svg>
-              สไลด์ / เอกสาร
-              <span class="tab-badge" id="filesBadge" hidden></span>
-            </button>
-            <button class="tab-btn" data-tab="qa" role="tab">
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
-                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
-                <line x1="12" y1="17" x2="12.01" y2="17"></line>
-              </svg>
-              ถามตอบ
-            </button>
-          </div>
-
-          <!-- Tab: Comments -->
-          <div class="tab-panel active" id="tab-comments" role="tabpanel">
-            <div class="comment-form">
-              <div class="comment-input-row">
-                <div class="comment-avatar-sm" id="myAvatar">?</div>
-                <div class="comment-input-wrap">
-                  <textarea id="commentInput" class="comment-textarea" placeholder="แสดงความคิดเห็น..." rows="2"></textarea>
-                  <div class="comment-actions" id="commentActions" hidden>
-                    <button class="comment-cancel-btn" id="commentCancel">ยกเลิก</button>
-                    <button class="btn comment-submit-btn" id="commentSubmit">โพสต์</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div id="commentList" class="comment-list"></div>
-          </div>
-
-          <!-- Tab: Slides / Docs -->
-          <div class="tab-panel" id="tab-files" role="tabpanel">
-            <div id="courseDocs" class="course-docs-section"></div>
-            <div id="clipSlidesHeader" class="clip-slides-header" hidden>
-              <span>เอกสารประกอบคลิปนี้</span>
-            </div>
-            <div id="slideList" class="slide-list">
-              <div class="tab-coming-soon"><p>เลือกคลิปเพื่อดูเอกสาร</p></div>
-            </div>
-          </div>
-
-          <!-- Tab: Ask AI -->
-          <div class="tab-panel" id="tab-qa" role="tabpanel">
-            <div class="ask-ai-panel">
-              <p class="ask-ai-hint">จับภาพจากวิดีโอแล้วถาม AI เกี่ยวกับเนื้อหาในภาพ</p>
-              <div class="ask-ai-frame-section">
-                <canvas id="aiCanvas" class="ai-canvas" hidden></canvas>
-                <button class="btn capture-btn" id="captureFrameBtn">📸 จับภาพจากวิดีโอ</button>
-              </div>
-              <textarea id="aiQuestion" class="ai-question-input" placeholder="ถามอะไรก็ได้... (ไม่จำเป็นต้องระบุ)" rows="3"></textarea>
-              <div class="ask-ai-bottom-row">
-                <button class="btn" id="askAiBtn">ถามเลย</button>
-                <span class="ai-usage" id="aiUsage"></span>
-              </div>
-              <div class="ai-answer-box" id="aiAnswer" hidden></div>
-            </div>
-          </div>
-
-        </section>
-
       </div><!-- /player-col -->
 
       <!-- ── Right: playlist + other courses ── -->
       <div class="sidebar-col">
 
         <aside class="playlist-col">
+
+          <!-- Mobile drawer chrome (hidden on desktop) -->
+          <div class="playlist-drawer-top">
+            <span class="drawer-title">รายการเรียน</span>
+            <button class="drawer-close-btn" id="playlistDrawerClose" aria-label="ปิด">✕</button>
+          </div>
 
           <div class="playlist-header" id="playlistHeader">
             <div class="playlist-header-inner">
@@ -258,6 +192,46 @@
 
         </aside>
 
+        <!-- ── Mobile-only tab trigger buttons (between playlist and other courses) ── -->
+        <div class="mobile-tabs-trigger" id="mobileTabsTrigger">
+        <button class="mtab-btn" data-playlist="true">
+          <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <polyline points="3 6 4 6 4 6"></polyline>
+            <polyline points="3 12 4 12 4 12"></polyline>
+            <polyline points="3 18 4 18 4 18"></polyline>
+          </svg>
+          Playlist
+        </button>
+        <button class="mtab-btn" data-tab="comments">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          ความคิดเห็น
+        </button>
+        <button class="mtab-btn" data-tab="files">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          เอกสาร
+        </button>
+        <button class="mtab-btn" data-tab="qa">
+          <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+          ถามตอบ
+        </button>
+      </div><!-- end mobile-tabs-trigger -->
+
         <!-- ── Other courses directly below playlist ── -->
         <div class="other-courses-col" id="otherCoursesCol">
           <p class="other-courses-label">คอร์สอื่นๆ</p>
@@ -266,24 +240,147 @@
           </div>
         </div>
 
-      </div>
+      </div><!-- /sidebar-col -->
 
-    </div>
-    <!-- File Preview Modal -->
-    <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
-      <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
-      <div class="preview-modal-container">
-        <div class="preview-modal-header">
-          <span id="previewFileName"></span>
-          <div class="preview-modal-actions">
-            <button id="previewDownloadBtn">⬇ ดาวน์โหลด</button>
-            <button id="previewCloseBtn" aria-label="Close">✕</button>
+      <!-- ── Tabbed section (desktop: col 1 row 2 · mobile: bottom sheet) ── -->
+      <section class="tabs-section">
+
+        <!-- Mobile drawer handle + close (hidden on desktop) -->
+        <div class="drawer-top">
+          <span class="drawer-title" id="drawerTitle">ความคิดเห็น</span>
+          <button class="drawer-close-btn" id="drawerCloseBtn" aria-label="ปิด">✕</button>
+        </div>
+
+        <!-- Tab bar -->
+        <div class="tab-bar" role="tablist">
+          <button class="tab-btn active" data-tab="comments" role="tab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            ความคิดเห็น
+          </button>
+          <button class="tab-btn" data-tab="files" role="tab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            สไลด์ / เอกสาร
+            <span class="tab-badge" id="filesBadge" hidden></span>
+          </button>
+          <button class="tab-btn" data-tab="qa" role="tab">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+              fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            ถามตอบ
+          </button>
+        </div>
+
+        <!-- Tab: Comments -->
+        <div class="tab-panel active" id="tab-comments" role="tabpanel">
+          <div class="comment-form">
+            <div class="comment-input-row">
+              <div class="comment-avatar-sm" id="myAvatar">?</div>
+              <div class="comment-input-wrap">
+                <textarea id="commentInput" class="comment-textarea" placeholder="แสดงความคิดเห็น..." rows="2"></textarea>
+                <div class="comment-actions" id="commentActions" hidden>
+                  <button class="comment-cancel-btn" id="commentCancel">ยกเลิก</button>
+                  <button class="btn comment-submit-btn" id="commentSubmit">โพสต์</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="commentList" class="comment-list"></div>
+        </div>
+
+        <!-- Tab: Slides / Docs -->
+        <div class="tab-panel" id="tab-files" role="tabpanel">
+          <div id="courseDocs" class="course-docs-section"></div>
+          <div id="clipSlidesHeader" class="clip-slides-header" hidden>
+            <span>เอกสารประกอบคลิปนี้</span>
+          </div>
+          <div id="slideList" class="slide-list">
+            <div class="tab-coming-soon"><p>เลือกคลิปเพื่อดูเอกสาร</p></div>
           </div>
         </div>
-        <div id="previewModalBody" class="preview-modal-body"></div>
+
+        <!-- Tab: Ask AI -->
+        <div class="tab-panel" id="tab-qa" role="tabpanel">
+          <div class="ask-ai-panel">
+            <p class="ask-ai-hint">จับภาพจากวิดีโอแล้วถาม AI เกี่ยวกับเนื้อหาในภาพ</p>
+            <div class="ask-ai-frame-section">
+              <canvas id="aiCanvas" class="ai-canvas" hidden></canvas>
+              <button class="btn capture-btn" id="captureFrameBtn">📸 จับภาพจากวิดีโอ</button>
+            </div>
+            <textarea id="aiQuestion" class="ai-question-input" placeholder="ถามอะไรก็ได้... (ไม่จำเป็นต้องระบุ)" rows="3"></textarea>
+            <div class="ask-ai-bottom-row">
+              <button class="btn" id="askAiBtn">ถามเลย</button>
+              <span class="ai-usage" id="aiUsage"></span>
+            </div>
+            <div class="ai-answer-box" id="aiAnswer" hidden></div>
+          </div>
+        </div>
+
+      </section><!-- /tabs-section -->
+
+    </div><!-- /view-layout -->
+  </main>
+
+  <site-footer></site-footer>
+
+  <!-- Drawer backdrop (mobile) -->
+  <div class="drawer-backdrop" id="drawerBackdrop"></div>
+
+  <!-- Video settings bottom sheet (mobile) -->
+  <div class="settings-backdrop" id="settingsBackdrop"></div>
+  <div class="settings-sheet" id="settingsSheet" aria-modal="true" role="dialog">
+    <div class="settings-handle"></div>
+    <h3 class="settings-title">ตั้งค่าวิดีโอ</h3>
+
+    <div class="settings-section">
+      <p class="settings-label">ความเร็ว</p>
+      <div class="settings-chips" id="settingsSpeedChips">
+        <button class="settings-chip" data-speed="0.5">0.5×</button>
+        <button class="settings-chip" data-speed="0.75">0.75×</button>
+        <button class="settings-chip active" data-speed="1">1×</button>
+        <button class="settings-chip" data-speed="1.25">1.25×</button>
+        <button class="settings-chip" data-speed="1.5">1.5×</button>
+        <button class="settings-chip" data-speed="2">2×</button>
       </div>
     </div>
-  </main>
+
+    <div class="settings-section" id="settingsQualitySection" hidden>
+      <p class="settings-label">คุณภาพ</p>
+      <div class="settings-chips" id="settingsQualityChips">
+        <button class="settings-chip active" data-quality="auto">Auto</button>
+        <button class="settings-chip" data-quality="hd1080">1080p</button>
+        <button class="settings-chip" data-quality="hd720">720p</button>
+        <button class="settings-chip" data-quality="large">480p</button>
+        <button class="settings-chip" data-quality="medium">360p</button>
+        <button class="settings-chip" data-quality="small">240p</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- File Preview Modal -->
+  <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
+    <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
+    <div class="preview-modal-container">
+      <div class="preview-modal-header">
+        <span id="previewFileName"></span>
+        <div class="preview-modal-actions">
+          <button id="previewDownloadBtn">⬇ ดาวน์โหลด</button>
+          <button id="previewCloseBtn" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div id="previewModalBody" class="preview-modal-body"></div>
+    </div>
+  </div>
+
 </body>
 
 </html>

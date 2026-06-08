@@ -5,46 +5,85 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>เข้าสู่ระบบ - Skintania</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
 </head>
 
 <body>
+  <div class="auth-page">
 
-  <main class="auth-wrap">
-    <div class="card">
-      <h1>เข้าสู่ระบบ</h1>
-      <p class="lead">ยินดีต้อนรับกลับสู่ Skintania</p>
+    <!-- Left: branding panel -->
+    <div class="auth-left">
+      <div class="auth-left-top">
+        <a href="/" class="auth-logo-link">
+          <img src="/Assest/sk-cu.png" alt="Logo" class="auth-logo-img">
+          <span class="auth-brand-name">Skintania</span>
+        </a>
+      </div>
 
-      <form id="loginForm">
-        <div class="form-group">
-          <label for="student_id">รหัสนิสิต / อีเมล</label>
-          <input type="text" id="student_id" name="student_id" class="form-control" placeholder="กรอกรหัสนิสิตหรืออีเมล"
-            required>
-        </div>
+      <div class="auth-left-body">
+        <h2 class="auth-left-title">
+          ยินดีต้อนรับ<br>
+          กลับมา <span class="auth-gradient">Skintania</span>
+        </h2>
+        <p class="auth-left-desc">
+          แพลตฟอร์มสำหรับ OSK CU Intania รวมคอร์สเรียน
+          สื่อการเรียน และเครื่องมือเตรียมตัวครบครัน
+        </p>
+        <ul class="auth-feature-list">
+          <li><span class="af-icon">📚</span> คอร์สเรียนและแบบฝึกหัดรายวิชา</li>
+          <li><span class="af-icon">🎯</span> คำนวณโอกาสเข้าภาควิชา 2568</li>
+          <li><span class="af-icon">⭐</span> กิจกรรมและชุมชน OSK143</li>
+        </ul>
+      </div>
 
-        <div class="form-group">
-          <label for="password">รหัสผ่าน</label>
-          <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
-        </div>
-
-        <button type="submit" class="btn" id="loginBtn">เข้าสู่ระบบ</button>
-
-        <div style="text-align: center; margin-top: 15px;">
-          <a href="forgot-password.html" class="auth-link"
-            style="font-size: 0.85rem; color: #888;">ลืมรหัสผ่านใช่ไหม?</a>
-        </div>
-
-        <div style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px; text-align: center;">
-          <a href="/register/" class="auth-link">ยังไม่มีบัญชีใช่ไหม? สมัครสมาชิกที่นี่</a>
-        </div>
-      </form>
+      <div class="auth-left-foot">
+        OSK CU Intania · คณะวิศวกรรมศาสตร์ จุฬาฯ
       </div>
     </div>
-  </main>
+
+    <!-- Right: form panel -->
+    <div class="auth-right">
+      <div class="auth-form-box">
+
+        <div class="auth-form-head">
+          <h1>เข้าสู่ระบบ</h1>
+          <p>ยินดีต้อนรับกลับสู่ Skintania</p>
+        </div>
+
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="student_id">รหัสนิสิต / อีเมล</label>
+            <input type="text" id="student_id" name="student_id" class="form-control"
+              placeholder="กรอกรหัสนิสิตหรืออีเมล" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">รหัสผ่าน</label>
+            <input type="password" id="password" name="password" class="form-control"
+              placeholder="••••••••" required>
+          </div>
+
+          <button type="submit" class="auth-btn" id="loginBtn">เข้าสู่ระบบ</button>
+        </form>
+
+        <div class="auth-links">
+          <a href="forgot-password.html" class="auth-link-muted">ลืมรหัสผ่าน?</a>
+          <a href="/register/" class="auth-link-main">
+            ยังไม่มีบัญชี? <strong>สมัครสมาชิก →</strong>
+          </a>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
 
   <script type="module" src="login.js"></script>
-
 </body>
 
 </html>

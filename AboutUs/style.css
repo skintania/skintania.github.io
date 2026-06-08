@@ -1,0 +1,31 @@
+.au-main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 55vh;
+  padding: 40px 24px;
+}
+
+.au-center {
+  text-align: center;
+}
+
+.au-icon {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
+.au-title {
+  font-size: 1.6rem;
+  font-weight: 500;
+  color: var(--text);
+  margin: 0 0 12px;
+}
+
+.au-desc {
+  font-size: 0.95rem;
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 0;
+}

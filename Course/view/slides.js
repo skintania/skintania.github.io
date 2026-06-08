@@ -10,7 +10,7 @@ export async function loadSlides(clipKey) {
   if (!list) return;
 
   const clipSlidesHeader = document.getElementById('clipSlidesHeader');
-  if (clipSlidesHeader) clipSlidesHeader.hidden = false;
+  if (clipSlidesHeader) clipSlidesHeader.hidden = true;
 
   list.innerHTML = Array.from({ length: 3 }, () => `
     <div class="slide-item" style="pointer-events:none">
@@ -24,10 +24,12 @@ export async function loadSlides(clipKey) {
     list.innerHTML = '';
 
     if (!data.success || !data.slides?.length) {
-      list.innerHTML = '<div class="tab-coming-soon"><p>ยังไม่มีเอกสารสำหรับคลิปนี้</p></div>';
+      list.innerHTML = '';
+      if (clipSlidesHeader) clipSlidesHeader.hidden = true;
       return;
     }
 
+    if (clipSlidesHeader) clipSlidesHeader.hidden = false;
     if (badge) { badge.textContent = data.slides.length; badge.hidden = false; }
 
     for (const slide of data.slides) {

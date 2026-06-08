@@ -1,673 +1,851 @@
-/* drive.css */
+/* ── Google Drive-inspired layout ── */
 
-/* ===================== DELETE CONFIRMATION MODAL ===================== */
-
-.confirm-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1100;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    box-sizing: border-box;
+.gd-layout {
+  display: flex;
+  min-height: calc(100vh - 64px);
 }
 
-.confirm-modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
+/* ── Sidebar ── */
+.gd-sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: rgba(5, 10, 26, 0.55);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 20px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
-.confirm-modal-box {
-    position: relative;
-    z-index: 1;
-    background: #0f172a;
-    border: 1px solid rgba(231, 76, 60, 0.3);
-    border-radius: 16px;
-    padding: 32px 28px 24px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(231, 76, 60, 0.1);
-    text-align: center;
+.gd-sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
 }
 
-.confirm-modal-icon {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: rgba(231, 76, 60, 0.12);
-    border: 1px solid rgba(231, 76, 60, 0.25);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 16px;
-    font-size: 1.5rem;
-    color: #e74c3c;
+.gd-sidebar-icon {
+  font-size: 1.25rem;
+  color: #3b82f6;
 }
 
-.confirm-modal-title {
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #e6eef8;
-    margin: 0 0 8px;
+.gd-sidebar-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  letter-spacing: 0.01em;
 }
 
-.confirm-modal-desc {
-    font-size: 0.9rem;
-    color: var(--muted);
-    margin: 0 0 12px;
+.gd-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
-.confirm-modal-list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 14px;
-    max-height: 140px;
-    overflow-y: auto;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    border-radius: 8px;
-    text-align: left;
+.gd-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  border-radius: 100px;
+  font-size: 0.875rem;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  user-select: none;
 }
 
-.confirm-modal-list:empty {
-    display: none;
+.gd-nav-item:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--text);
 }
 
-.confirm-modal-list li {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 12px;
-    font-size: 0.85rem;
-    color: #c8d6e8;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+.gd-nav-item.gd-nav-active {
+  background: rgba(59, 130, 246, 0.14);
+  color: #93c5fd;
 }
 
-.confirm-modal-list li:last-child {
-    border-bottom: none;
+.gd-nav-item i {
+  width: 16px;
+  text-align: center;
+  font-size: 0.88rem;
+  flex-shrink: 0;
 }
 
-.confirm-modal-list li i {
-    opacity: 0.5;
-    flex-shrink: 0;
-    width: 14px;
+/* ── Main content column ── */
+.gd-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.confirm-modal-warn {
-    font-size: 0.82rem;
-    color: #e74c3c;
-    opacity: 0.8;
-    margin: 0 0 20px;
+/* ── Toolbar ── */
+.gd-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.01);
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
-.confirm-modal-actions {
-    display: flex;
-    gap: 10px;
+.gd-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
 
-.confirm-btn {
-    flex: 1;
-    padding: 10px;
-    border-radius: 10px;
-    font-family: inherit;
-    font-size: 0.9rem;
-    font-weight: 500;
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
+.gd-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-.confirm-btn-cancel {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #e6eef8;
+/* Back button — circular icon */
+.gd-back-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
 }
 
-.confirm-btn-cancel:hover {
-    background: rgba(255, 255, 255, 0.13);
+.gd-back-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-.confirm-btn-delete {
-    background: #e74c3c;
-    border-color: #e74c3c;
-    color: #fff;
+.gd-back-btn:disabled {
+  opacity: 0.2;
+  cursor: not-allowed;
 }
 
-.confirm-btn-delete:hover {
-    background: #c0392b;
-    border-color: #c0392b;
+/* Breadcrumb path */
+.gd-path {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
 }
 
-.confirm-btn-delete:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* Slightly adjusted min-width for better proportions */
-    gap: 18px;
-    margin-top: 10px;
-}
-
-.drive-card {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(0, 0, 0, 0.1));
-    padding: 0; /* Remove padding so the footer can touch the edges */
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(2, 6, 23, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.2s ease;
-    height: 320px; 
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Clips the footer and preview to the border-radius */
-    position: relative;
-    text-decoration: none;
-    color: inherit;
-}
-
-.drive-card:hover {
-    transform: translateY(-4px);
-    background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.15);
-}
-
-.drive-card.selected {
-    border-color: var(--accent) !important;
-    background: rgba(59, 130, 246, 0.1);
-}
-
-.drive-card:not(.selecting) .card-footer::after {
-    display: none;
-}
-
-.drive-icon {
-    flex-grow: 1; /* Takes up all space not used by footer */
-    flex-shrink: 0;
-    flex:1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 4rem;
-    background: rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    position: relative;
-}
-
-.drive-name {
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #e6eef8;
-    text-align: center; /* Centers the text inside its own box */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-grow: 1; /* Takes up all space between checkbox and the invisible spacer */
-}
-
-.card-footer {
-    display: flex;
-    align-items: center;
-    justify-content: center; /* Centers the content */
-    gap: 10px;
-    padding: 12px;
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(10px);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-    width: 100%;
-    box-sizing: border-box;
-}
-
-/* This invisible block balances the checkbox on the left */
-.card-footer::after {
-    content: "";
-    width: 18px; /* Must match .item-checkbox width */
-    display: block;
-    flex-shrink: 0;
-}
-
-.item-checkbox {
-    width: 18px;
-    height: 18px;
-    flex-shrink: 0;
-    margin: 0;
-    flex-shrink: 0;
-    accent-color: var(--accent);
-    cursor: pointer;
-}
-
-.breadcrumb-container {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between; /* Pushes items to the ends */
-    width: 100%;
-    gap: 20px; /* Space between path and button */
-}
-
-/* This is the magic part */
-.breadcrumb-left {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex: 1;          /* Takes up all remaining space */
-    min-width: 0;     /* Allows text to truncate if too long */
-    overflow: hidden; /* Prevents path from breaking the layout */
-}
-
-.breadcrumb-right {
-    display: flex;
-    align-items: center;
-    justify-content: flex-end; /* Align to the right */
-    gap: 8px;                 /* Space between buttons */
-    flex-shrink: 0;           /* Prevents the button group from squishing */
-    white-space: nowrap;      /* Forces buttons to stay on one line */
-}
-
-.toggle-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    height: 38px;             /* Fixed height so they match perfectly */
-    border-radius: 20px;
-    font-size: 0.85rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.path-text {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    color: var(--muted);
-    font-size: 0.95rem;
-}
-
-/* Style for clickable breadcrumb parts */
 .breadcrumb-link {
-    cursor: pointer;
-    transition: color 0.2s;
-    padding: 2px 4px;
-    border-radius: 4px;
+  cursor: pointer;
+  color: var(--muted);
+  border-radius: 5px;
+  padding: 2px 6px;
+  white-space: nowrap;
+  transition: color 0.15s, background 0.15s;
+}
+
+.breadcrumb-link:last-child {
+  color: var(--text);
 }
 
 .breadcrumb-link:hover {
-    color: var(--accent);
-    background: rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
 }
 
 .path-separator {
-    opacity: 0.5;
-    user-select: none;
-}
-/* --- Skintania Theme Buttons --- */
-
-/* The shared base style for both buttons */
-.back-btn, .toggle-btn {
-    background: rgba(255, 255, 255, 0.05); /* Semi-transparent white */
-    backdrop-filter: blur(8px);            /* Frosted glass effect */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #e6eef8;
-    padding: 8px 18px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-family: inherit;
-    font-weight: 500;
-    font-size: 0.9rem;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Space between icon and text */
+  color: var(--muted);
+  opacity: 0.45;
+  font-size: 0.78rem;
+  user-select: none;
 }
 
-/* Hover State - Glow and slightly brighter */
-.back-btn:hover:not(:disabled), 
-.toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: var(--accent); /* Uses your blue accent color for the border */
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); /* Soft blue glow */
-    transform: translateY(-1px);
+/* Action buttons */
+.gd-tool-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 34px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s;
+  flex-shrink: 0;
 }
 
-/* Active/Click State */
-.back-btn:active:not(:disabled), 
-.toggle-btn:active {
-    transform: translateY(1px);
+.gd-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* Disabled State (For the Back button at Home) */
-.back-btn:disabled {
-    opacity: 0.2;
-    cursor: not-allowed;
-    border-color: rgba(255, 255, 255, 0.05);
+.gd-tool-btn i {
+  font-size: 0.78rem;
 }
 
-
-/* Ensure the icons look good inside the buttons */
-.back-btn i, .toggle-btn i {
-    font-size: 0.85rem;
-    opacity: 0.8;
+.gd-tool-green {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.22);
+  color: #4ade80;
 }
 
-.path-text {
-    color: var(--muted);
-    font-size: 0.95rem;
+.gd-tool-green:hover {
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.35);
 }
 
-.loader {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #3498db;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
+.gd-tool-red {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.22);
+  color: #f87171;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.gd-tool-red:hover {
+  background: rgba(239, 68, 68, 0.18);
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.gd-sep {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 0 2px;
+  flex-shrink: 0;
+}
+
+/* ── Content area ── */
+.gd-content {
+  flex: 1;
+  padding: 20px 24px 60px;
+  overflow-y: auto;
+}
+
+/* ── File Grid ── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 14px;
+  margin-top: 0;
+}
+
+/* ── Drive Card (Google Drive style) ── */
+.drive-card {
+  background: rgba(11, 18, 32, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  height: 214px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  user-select: none;
+}
+
+.drive-card:hover {
+  border-color: rgba(255, 255, 255, 0.13);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.38);
+}
+
+.drive-card.selected {
+  border-color: var(--accent) !important;
+  background: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* ── Icon area ── */
+.drive-icon {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  overflow: hidden;
+  position: relative;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+/* Colored icons by file type (Google Drive inspired) */
+.drive-icon i.fa-folder,
+.drive-icon i.fa-folder-open,
+.drive-icon i.fa-book,
+.drive-icon i.fa-atom,
+.drive-icon i.fa-flask,
+.drive-icon i.fa-calculator,
+.drive-icon i.fa-square-root-variable,
+.drive-icon i.fa-microscope {
+  color: #fbbf24;
+}
+
+.drive-icon i.fa-file-pdf {
+  color: #f87171;
+}
+
+.drive-icon i.fa-file-image {
+  color: #60a5fa;
+}
+
+.drive-icon i.fa-file-lines,
+.drive-icon i.fa-file {
+  color: #94a3b8;
+}
+
+/* ── Card footer (filename row) ── */
+.card-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  background: rgba(5, 9, 22, 0.55);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* Balancer to center filename when checkbox is hidden */
+.card-footer::after {
+  content: "";
+  width: 16px;
+  display: block;
+  flex-shrink: 0;
+}
+
+.item-checkbox {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.drive-name {
+  flex: 1;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+  min-width: 0;
+}
+
+/* ── List View ── */
+.grid.list-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.grid.list-view .drive-card {
+  flex-direction: row;
+  height: auto;
+  border-radius: 8px;
+  padding: 9px 14px;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.grid.list-view .drive-card:hover {
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.grid.list-view .drive-icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  font-size: 1.35rem;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.grid.list-view .card-footer {
+  flex: 1;
+  background: none;
+  border-top: none;
+  padding: 0;
+  min-width: 0;
+}
+
+.grid.list-view .card-footer::after {
+  display: none;
+}
+
+.grid.list-view .drive-name {
+  font-size: 0.875rem;
+}
+
+/* ── Image & PDF thumbnails ── */
+.file-preview-img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+  object-position: center top;
 }
 
 .pdf-preview-canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: none; /* ซ่อนไว้ก่อนจนกว่าจะโหลดเสร็จ */
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
 }
 
-.file-preview-img {
-    width: 100% !important;   /* เต็มความกว้างของ .drive-icon */
-    height: 100% !important;  /* เต็มความสูงของ .drive-icon */
-    object-fit: cover;       /* สำคัญที่สุด! ขยายรูปให้เต็มกรอบโดยรักษาสัดส่วน (อาจตัดบางส่วนออก) */
-    object-position: center top; /* จัดวางรูปให้อยู่ตรงกลางและชิดด้านบน */
+/* ── Spinner ── */
+.loader {
+  border: 3px solid rgba(255, 255, 255, 0.08);
+  border-top: 3px solid var(--accent);
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: gd-spin 1s linear infinite;
+  display: inline-block;
 }
 
-/* ===================== FILE PREVIEW MODAL ===================== */
+@keyframes gd-spin {
+  to { transform: rotate(360deg); }
+}
 
+/* ── File Preview Modal ── */
 .preview-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
-    box-sizing: border-box;
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
 .preview-modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(6px);
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
 }
 
 .preview-modal-container {
-    position: relative;
-    z-index: 1;
-    background: #0f172a;
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    width: 100%;
-    max-width: 960px;
-    height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  position: relative;
+  z-index: 1;
+  background: #0b1525;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  width: 100%;
+  max-width: 960px;
+  height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.65);
 }
 
 .preview-modal-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
-    flex-shrink: 0;
-    gap: 12px;
-    min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  flex-shrink: 0;
+  gap: 12px;
+  min-width: 0;
 }
 
 .preview-modal-header > span {
-    font-weight: 500;
-    font-size: 0.95rem;
-    color: #e6eef8;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    flex: 1;
-    min-width: 0;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .preview-modal-actions {
-    display: flex;
-    gap: 8px;
-    flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .preview-modal-actions button {
-    background: rgba(255, 255, 255, 0.07);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #e6eef8;
-    padding: 7px 14px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 0.85rem;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s;
-    white-space: nowrap;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: var(--text);
+  padding: 7px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s;
+  white-space: nowrap;
 }
 
 .preview-modal-actions button:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: var(--accent);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(59, 130, 246, 0.5);
 }
 
 #previewCloseBtn {
-    padding: 7px 10px !important;
+  padding: 7px 10px !important;
 }
 
 .preview-modal-body {
-    flex: 1;
-    overflow: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #070e1a;
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #050c19;
 }
 
 .preview-iframe {
-    width: 100%;
-    height: 100%;
-    border: none;
-    display: block;
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
 }
 
 .preview-image {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .preview-loading {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-    color: var(--muted);
-    font-size: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .preview-loading i {
-    font-size: 2rem;
-    opacity: 0.6;
+  font-size: 2rem;
+  opacity: 0.55;
 }
 
 .preview-unsupported {
-    text-align: center;
-    padding: 40px 20px;
-    color: var(--muted);
-    line-height: 1.6;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  line-height: 1.65;
 }
 
-@media screen and (max-width: 600px) {
-    .preview-modal-container {
-        height: 95vh;
-        border-radius: 10px;
-    }
-    #previewDownloadBtn span,
-    #previewDownloadBtn {
-        padding: 7px 10px !important;
-    }
+/* ── Delete Confirmation Modal ── */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
 }
 
-/* 1. Change the container from a grid to a vertical column */
-.grid.list-view {
-    display: flex;
-    flex-direction: column;
-    gap: 8px; /* Tighter gap for lists */
+.confirm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
 }
 
-/* 2. Make the card horizontal, remove the tall height */
-.grid.list-view .drive-card {
-    flex-direction: row;
-    height: auto; /* Overrides the 320px height */
-    padding: 12px 16px;
-    align-items: center;
+.confirm-modal-box {
+  position: relative;
+  z-index: 1;
+  background: #0b1525;
+  border: 1px solid rgba(231, 76, 60, 0.28);
+  border-radius: 16px;
+  padding: 32px 28px 24px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  text-align: center;
 }
 
-/* 3. Shrink the big icon box and put it on the left */
-.grid.list-view .drive-icon {
-    width: 40px; /* Overrides the 100% width */
-    height: 40px; /* Overrides the 240px height */
-    font-size: 1.8rem; /* Shrinks the giant 5rem icons */
-    margin-bottom: 0;
-    margin-right: 16px;
-    background: transparent; /* Removes the dark box behind icons in list mode */
+.confirm-modal-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(231, 76, 60, 0.1);
+  border: 1px solid rgba(231, 76, 60, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  font-size: 1.4rem;
+  color: #e74c3c;
 }
 
-/* 4. Make images fit the new small square */
-.grid.list-view .file-preview-img {
-    border-radius: 4px;
+.confirm-modal-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 8px;
 }
 
-/* 5. Left-align the text and let it fill the space */
-.grid.list-view .drive-name {
-    text-align: left;
-    flex-grow: 1;
-    width: auto;
+.confirm-modal-desc {
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin: 0 0 12px;
+}
+
+.confirm-modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+  max-height: 140px;
+  overflow-y: auto;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.confirm-modal-list:empty { display: none; }
+
+.confirm-modal-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  font-size: 0.85rem;
+  color: var(--text);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.confirm-modal-list li:last-child { border-bottom: none; }
+.confirm-modal-list li i { opacity: 0.5; flex-shrink: 0; width: 14px; }
+
+.confirm-modal-warn {
+  font-size: 0.82rem;
+  color: #f87171;
+  opacity: 0.85;
+  margin: 0 0 20px;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.confirm-btn-cancel {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.09);
+  color: var(--text);
+}
+
+.confirm-btn-cancel:hover { background: rgba(255, 255, 255, 0.11); }
+
+.confirm-btn-delete {
+  background: #e74c3c;
+  border-color: #e74c3c;
+  color: #fff;
+}
+
+.confirm-btn-delete:hover { background: #c0392b; border-color: #c0392b; }
+.confirm-btn-delete:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ── Sidebar folder tree ── */
+.gd-tree {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.gd-tree::-webkit-scrollbar { width: 4px; }
+.gd-tree::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.gd-tree-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.gd-tree-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.81rem;
+  color: var(--muted);
+  transition: background 0.12s, color 0.12s;
+  user-select: none;
+}
+
+.gd-tree-row:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+.gd-tree-row.gd-tree-row-active {
+  background: rgba(59, 130, 246, 0.13);
+  color: #93c5fd;
+}
+
+.gd-tree-row.gd-tree-row-active .gd-tree-folder-icon {
+  color: #60a5fa;
+}
+
+.gd-tree-toggle {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 3px;
+  font-size: 0.6rem;
+  transition: color 0.12s;
+}
+
+.gd-tree-toggle:hover { color: var(--text); }
+
+.gd-tree-toggle i {
+  transition: transform 0.2s;
+}
+
+.gd-tree-toggle[data-expanded="1"] i {
+  transform: rotate(90deg);
+}
+
+.gd-tree-toggle[data-no-children] {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.gd-tree-folder-icon {
+  color: #fbbf24;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.gd-tree-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gd-tree-children {
+  display: flex;
+  flex-direction: column;
+}
+
+.gd-tree-children[hidden] { display: none !important; }
+
+.gd-tree-loading {
+  padding: 6px 12px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+/* ── Responsive ── */
+@media (max-width: 820px) {
+  .gd-sidebar { display: none; }
+
+  .gd-toolbar {
+    padding: 8px 14px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  /* On mobile: hide text labels, make buttons square */
+  .gd-tool-btn span { display: none; }
+
+  .gd-tool-btn {
+    width: 36px;
+    height: 36px;
     padding: 0;
-    -webkit-line-clamp: 1; /* Optional: forces text to a single line in list view */
+    justify-content: center;
+    border-radius: 50%;
+  }
+
+  .gd-sep { display: none; }
+
+  .gd-content {
+    padding: 12px 14px 48px;
+  }
+
+  .grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+
+  .drive-card { height: 170px; }
+  .drive-icon { font-size: 3rem; }
+  .drive-name { font-size: 0.78rem; }
 }
 
-.list-view .drive-card {
-    display: flex;
-    flex-direction: row; /* Force side-by-side */
-    align-items: center;
-    width: 100%;        /* Anchor 1: Card must be 100% */
-    padding: 12px;
-    gap: 12px;
+@media (max-width: 820px) {
+  .grid.list-view .drive-card { height: auto; }
+  .grid.list-view .drive-icon { height: 32px; width: 32px; flex: 0 0 32px; font-size: 1.1rem; }
 }
 
-/* 2. The Icon (Prevent Squishing) */
-.list-view .drive-icon {
-    flex-shrink: 0;   /* Don't let the long text compress the icon */
-    flex: 0 0 auto;   /* Don't let the icon grow or shrink */
-    width: 32px;      /* Standard size for list view */
-    margin-right: 12px;
-}
+@media (max-width: 480px) {
+  .preview-modal-container {
+    height: 95vh;
+    border-radius: 10px;
+  }
 
-/* 3. The Footer/Text Area */
-.list-view .card-footer {
-    display: flex;
-    align-items: center;
-    flex: 1 1 auto;     /* Anchor 2: Grow, shrink, and base size auto */
-    min-width: 0;       /* Essential for ellipsis, but needs the flex above */
-    overflow: hidden;   /* Keeps text inside */
-    background: none;   /* Remove any background that might be overlapping */
-}
-
-/* 4. The Filename Text */
-.list-view .drive-name {
-    display: block;     /* Anchor 3: Ensure it's not set to 'none' */
-    width: 100%;        /* Occupy the footer space */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: left;
-    color: #e6eef8;     /* Ensure color isn't matching the background */
-}
-/* Mobile Optimization for Header Buttons */
-@media screen and (max-width: 600px) {
-    /* Hide the text inside the buttons */
-    .toggle-btn span {
-        display: none;
-    }
-
-    /* Make buttons square-ish and centered */
-    .toggle-btn {
-        padding: 0;
-        width: 40px;
-        height: 40px;
-        justify-content: center;
-        border-radius: 50%; /* Optional: makes them circular on mobile */
-    }
-
-    /* Ensure the icon is centered and large enough to tap */
-    .toggle-btn i {
-        margin: 0;
-        font-size: 1.1rem;
-    }
-
-    /* Keep the buttons from squishing the path text too much */
-    .breadcrumb-right {
-        gap: 5px;
-    }
-}
-
-/* 6. Ensure mobile list view overrides the mobile grid heights */
-@media screen and (max-width: 768px){
-    .grid.list-view .drive-card {
-        height: auto; /* Overrides the 180px mobile height */
-    }
-    .grid.list-view .drive-icon {
-        height: 35px; /* Overrides the 110px mobile height */
-        width: 35px;
-        font-size: 1.5rem;
-    }
-}
-
-
-@media screen and (max-width: 768px){
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
-    }
-    .drive-card {
-        padding: 10px;
-        /* Adjusted height slightly up so the name doesn't get squished */
-        height: 180px; 
-    }
-    
-    .drive-icon {
-        font-size: 4rem;
-        /* Make the preview height dynamic for mobile */
-        height: 110px;
-    }
-    
-    .drive-name {
-        font-size: 0.9rem;
-    }
+  #previewDownloadBtn {
+    padding: 7px 10px !important;
+  }
 }

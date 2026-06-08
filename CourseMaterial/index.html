@@ -2,122 +2,135 @@
 <html lang="th">
 
 <head>
-    <meta charset="utf-8">
-    <meta name="description" content="SK Drive — ไฟล์การเรียนสำหรับ OSK CU Intania">
+  <meta charset="utf-8">
   <meta name="description" content="SK Drive — ไฟล์การเรียนสำหรับ OSK CU Intania">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>Skintania — Courses Materials</title>
-    
-    <style>body{display: none}</style>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Skintania — SK Drive</title>
 
-    <script type="module" src="/auth-guard.js"></script>
+  <style>body { display: none }</style>
+  <script type="module" src="/auth-guard.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/Template/style.css">
-    <link rel="stylesheet" href="/CourseMaterial/style.css">
-    <link rel="icon" href="/Assest/sk-cu.png">
-    <script type="module" src="/Template/component.js"></script>
-    <script type="module" src="loadDrive.js"></script>
-    <!-- PDF Reader icon-->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <link rel="stylesheet" href="/CourseMaterial/style.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
 
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
+    crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-        integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script type="module" src="/Template/component.js"></script>
+  <script type="module" src="loadDrive.js"></script>
 </head>
 
 <body>
-    <comment-widget></comment-widget>
+  <comment-widget></comment-widget>
+  <site-header page-title="SKDrive" page-desc="ไฟล์สำหรับวิชาต่างๆ"></site-header>
 
-    <main class="wrap">
+  <div class="gd-layout">
 
-        <site-header page-title="SKDrive" page-desc="ไฟล์สำหรับวิชาต่างๆ">
-        </site-header>
-
-        <div id="breadcrumbContainer" class="breadcrumb-container">
-            <div class="breadcrumb-left">
-                <button id="backBtn" class="back-btn"><i class="fa-solid fa-arrow-left"></i></button>
-                <div id="currentPathText" class="path-text">Home</div>
-            </div>
-        
-            <div class="breadcrumb-right">
-                <button id="selectBtn" class="toggle-btn">
-                    <i class="fa-solid fa-check-double"></i>
-                    <span>Select</span>
-                </button>
-        
-                <button id="downloadBtn" class="toggle-btn" style="display: none; background: #27ae60;">
-                    <i class="fa-solid fa-download"></i>
-                    <span>Download (<span id="selectedCount">0</span>)</span>
-                </button>
-
-                <button id="deleteBtn" class="toggle-btn" style="display: none; background: #e74c3c;">
-                    <i class="fa-solid fa-trash"></i>
-                    <span>Delete (<span id="deleteCount">0</span>)</span>
-                </button>
-        
-                <button id="viewToggleBtn" class="toggle-btn">
-                    <i class="fa-solid fa-list"></i>
-                    <span>View</span>
-                </button>
-            </div>
+    <!-- Sidebar -->
+    <aside class="gd-sidebar">
+      <div class="gd-sidebar-head">
+        <i class="fa-solid fa-hard-drive gd-sidebar-icon"></i>
+        <span class="gd-sidebar-title">SK Drive</span>
+      </div>
+      <nav class="gd-nav">
+        <div class="gd-nav-item gd-nav-active" id="gd-my-drive-btn">
+          <i class="fa-solid fa-folder-open"></i>
+          <span>My Drive</span>
         </div>
+      </nav>
 
-        <section id="coursesGrid" class="grid" aria-label="Courses">
-        </section>
+      <!-- Folder tree (populated by JS) -->
+      <div id="gd-tree" class="gd-tree"></div>
+    </aside>
 
-        <!-- File Preview Modal -->
-        <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
-            <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
-            <div class="preview-modal-container">
-                <div class="preview-modal-header">
-                    <span id="previewFileName"></span>
-                    <div class="preview-modal-actions">
-                        <button id="previewDownloadBtn">
-                            <i class="fa-solid fa-download"></i> Download
-                        </button>
-                        <button id="previewCloseBtn" aria-label="Close">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>
-                <div id="previewModalBody" class="preview-modal-body"></div>
-            </div>
+    <!-- Main area -->
+    <div class="gd-main">
+
+      <!-- Toolbar: breadcrumb + action buttons -->
+      <div class="gd-toolbar">
+        <div class="gd-toolbar-left">
+          <button id="backBtn" class="gd-back-btn" disabled>
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div id="currentPathText" class="gd-path">Home</div>
         </div>
-
-        <!-- Delete Confirmation Modal -->
-        <div id="deleteConfirmModal" class="confirm-modal" style="display:none" role="dialog" aria-modal="true">
-            <div class="confirm-modal-backdrop"></div>
-            <div class="confirm-modal-box">
-                <div class="confirm-modal-icon">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                </div>
-                <h3 class="confirm-modal-title">Delete Items?</h3>
-                <p class="confirm-modal-desc" id="confirmDeleteDesc"></p>
-                <ul class="confirm-modal-list" id="confirmDeleteList"></ul>
-                <p class="confirm-modal-warn">This action cannot be undone.</p>
-                <div class="confirm-modal-actions">
-                    <button id="confirmCancelBtn" class="confirm-btn confirm-btn-cancel">Cancel</button>
-                    <button id="confirmDeleteBtn" class="confirm-btn confirm-btn-delete">
-                        <i class="fa-solid fa-trash"></i> Delete
-                    </button>
-                </div>
-            </div>
+        <div class="gd-toolbar-right">
+          <button id="selectBtn" class="gd-tool-btn">
+            <i class="fa-solid fa-check-double"></i>
+            <span>Select</span>
+          </button>
+          <button id="downloadBtn" class="gd-tool-btn gd-tool-green" style="display:none">
+            <i class="fa-solid fa-download"></i>
+            <span>Download (<span id="selectedCount">0</span>)</span>
+          </button>
+          <button id="deleteBtn" class="gd-tool-btn gd-tool-red" style="display:none">
+            <i class="fa-solid fa-trash"></i>
+            <span>Delete (<span id="deleteCount">0</span>)</span>
+          </button>
+          <span class="gd-sep"></span>
+          <button id="viewToggleBtn" class="gd-tool-btn">
+            <i class="fa-solid fa-list"></i>
+            <span>View</span>
+          </button>
         </div>
+      </div>
 
-        <footer>
-            <p>เรื่องแจ้ง น่ารู้</p>
-            <ul>
-                <!-- <li>วิชา Material ดูคลิป Lecture 14 - 16 ได้ นอกจากนั้นกำลังอัปขึ้น Cloudflare</li>
-                <li>วิชา Physics ลงคลิปถึง Midterm 1</li>
-                <li></li>
-                <li>อันอื่นรอก่อนนๆ</li> -->
-            </ul>
-        </footer>
-    </main>
+      <!-- File grid -->
+      <div class="gd-content">
+        <section id="coursesGrid" class="grid" aria-label="Files and Folders"></section>
+      </div>
+
+    </div>
+  </div>
+
+  <site-footer></site-footer>
+
+  <!-- File Preview Modal -->
+  <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
+    <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
+    <div class="preview-modal-container">
+      <div class="preview-modal-header">
+        <span id="previewFileName"></span>
+        <div class="preview-modal-actions">
+          <button id="previewDownloadBtn">
+            <i class="fa-solid fa-download"></i> Download
+          </button>
+          <button id="previewCloseBtn" aria-label="Close">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div id="previewModalBody" class="preview-modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteConfirmModal" class="confirm-modal" style="display:none" role="dialog" aria-modal="true">
+    <div class="confirm-modal-backdrop"></div>
+    <div class="confirm-modal-box">
+      <div class="confirm-modal-icon">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+      <h3 class="confirm-modal-title">Delete Items?</h3>
+      <p class="confirm-modal-desc" id="confirmDeleteDesc"></p>
+      <ul class="confirm-modal-list" id="confirmDeleteList"></ul>
+      <p class="confirm-modal-warn">This action cannot be undone.</p>
+      <div class="confirm-modal-actions">
+        <button id="confirmCancelBtn" class="confirm-btn confirm-btn-cancel">Cancel</button>
+        <button id="confirmDeleteBtn" class="confirm-btn confirm-btn-delete">
+          <i class="fa-solid fa-trash"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 
 </html>

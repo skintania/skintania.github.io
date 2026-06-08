@@ -163,12 +163,28 @@ export function initControls() {
     el.classList.add('active');
   }
 
-  let lastTapTime  = 0;
-  let tapTimeoutId = null;
+  let lastTapTime   = 0;
+  let tapTimeoutId  = null;
+  let controlsTimer = null;
+
+  const videoControls = playerWrap.querySelector('.video-controls');
+
+  function showControls() {
+    playerWrap.classList.add('touch-active');
+    clearTimeout(controlsTimer);
+    controlsTimer = setTimeout(() => playerWrap.classList.remove('touch-active'), 3000);
+  }
+
+  // Show controls immediately on any touch within the player
+  playerWrap.addEventListener('touchstart', showControls, { passive: true });
+  if (videoControls) {
+    videoControls.addEventListener('touchstart', showControls, { passive: true });
+  }
 
   playerWrap.addEventListener('touchend', e => {
     if (e.target.closest('.video-controls')) return;
     e.preventDefault();
+    showControls();
     const now = Date.now();
     const gap = now - lastTapTime;
     if (gap < 300 && gap > 0) {
@@ -367,10 +383,65 @@ function initYouTubeControls(ytPlayer) {
   syncPlay();
   syncVol();
   syncQuality();
+
+  // Transparent overlay to capture touch events (iframe swallows them otherwise)
+  const dblLeft  = document.getElementById('dblLeft');
+  const dblRight = document.getElementById('dblRight');
+  const overlay  = document.createElement('div');
+  overlay.style.cssText = 'position:absolute;inset:0;z-index:5;touch-action:none;';
+  playerWrap.appendChild(overlay);
+
+  let ytCtTimer  = null;
+  let ytLastTap  = 0;
+  let ytTapTimer = null;
+
+  function showYTControls() {
+    playerWrap.classList.add('touch-active');
+    clearTimeout(ytCtTimer);
+    ytCtTimer = setTimeout(() => playerWrap.classList.remove('touch-active'), 3000);
+  }
+
+  function showYTTapIndicator(side) {
+    const el = side === 'left' ? dblLeft : dblRight;
+    if (!el) return;
+    el.classList.remove('active');
+    void el.offsetWidth;
+    el.classList.add('active');
+  }
+
+  overlay.addEventListener('touchstart', showYTControls, { passive: true });
+  overlay.addEventListener('touchend', e => {
+    e.preventDefault();
+    const now = Date.now();
+    const gap = now - ytLastTap;
+    if (gap < 300 && gap > 0) {
+      clearTimeout(ytTapTimer);
+      ytLastTap = 0;
+      const { left, width } = playerWrap.getBoundingClientRect();
+      if (e.changedTouches[0].clientX < left + width / 2) {
+        ytPlayer.seekTo(Math.max(0, ytPlayer.getCurrentTime() - 10), true);
+        showYTTapIndicator('left');
+      } else {
+        ytPlayer.seekTo(Math.min(ytPlayer.getDuration() || 0, ytPlayer.getCurrentTime() + 10), true);
+        showYTTapIndicator('right');
+      }
+    } else {
+      ytLastTap = now;
+      ytTapTimer = setTimeout(() => {
+        ytPlayer.getPlayerState() === 1 ? ytPlayer.pauseVideo() : ytPlayer.playVideo();
+      }, 300);
+    }
+  }, { passive: false });
+
+  const videoControls = playerWrap.querySelector('.video-controls');
+  if (videoControls) {
+    videoControls.addEventListener('touchstart', showYTControls, { passive: true });
+  }
+
   return {
     onStateChange:           playerState => { syncPlay(playerState); if (playerState === 1) applyQuality(); },
     onPlaybackQualityChange: ()          => applyQuality(),
-    destroy:                 ()          => clearInterval(pollId),
+    destroy:                 ()          => { clearInterval(pollId); overlay.remove(); },
   };
 }
 

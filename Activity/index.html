@@ -5,15 +5,11 @@
   <meta charset="utf-8">
   <meta name="description" content="ปฏิทินกิจกรรมสำหรับปี 1 คณะวิศวกรรมศาสตร์ จุฬาลงกรณ์มหาวิทยาลัย">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Skintania</title>
+  <title>Skintania — Activity</title>
 
-  <style>
-    body {
-      display: none
-    }
-  </style>
-
+  <style>body { display: none }</style>
   <script type="module" src="/auth-guard.js"></script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
@@ -24,30 +20,37 @@
 
   <script type="module" src="/Template/component.js" defer></script>
   <script src="roadmap.js" defer></script>
-
 </head>
 
 <body>
-
   <comment-widget></comment-widget>
+  <site-header page-title="Activity" page-desc="ปฏิทินกิจกรรม"></site-header>
 
-  <main class="wrap">
-    <site-header page-title="Activity" page-desc="ปฏิทินกิจกรรม">
-    </site-header>
+  <main class="rm-main">
 
-    <section id="roadmapContainer" class="roadmap-container" aria-label="Roadmap">
-    </section>
+    <div class="rm-page-head">
+      <div class="rm-head-text">
+        <h1 class="rm-heading">ปฏิทินกิจกรรม</h1>
+        <p class="rm-sub">กิจกรรมและเหตุการณ์สำคัญตลอดปี 1 วิศวกรรมศาสตร์ จุฬาฯ — กดที่หมุดเพื่อดูรายละเอียด</p>
+      </div>
+      <div class="rm-legend">
+        <div class="rm-legend-item"><span class="rm-legend-dot" style="background:#3b82f6"></span>กิจกรรม</div>
+        <div class="rm-legend-item"><span class="rm-legend-dot" style="background:#ef4444"></span>สอบ</div>
+        <div class="rm-legend-item"><span class="rm-legend-dot" style="background:#10b981"></span>อีเวนต์</div>
+      </div>
+    </div>
 
-    <footer>
-      <p>เรื่องแจ้ง น่ารู้</p>
-      <ul>
-        <li>วิชา Material ดูคลิป Lecture 14 - 16 ได้ นอกจากนั้นกำลังอัปขึ้น Cloudflare</li>
-        <li>วิชา Physics ลงคลิปถึง Midterm 1</li>
-        <li></li>
-        <li>อันอื่นรอก่อนนๆ</li>
-      </ul>
-    </footer>
+    <div id="rmScene" class="rm-scene"></div>
   </main>
+
+  <div id="rmModal" class="rm-modal">
+    <div class="rm-modal-box">
+      <button class="rm-modal-close" onclick="closeRmModal()">✕</button>
+      <div id="rmModalContent"></div>
+    </div>
+  </div>
+
+  <site-footer></site-footer>
 </body>
 
 </html>

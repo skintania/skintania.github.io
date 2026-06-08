@@ -5,33 +5,49 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>ยืนยันอีเมล - Skintania</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500&display=swap">
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="/Assest/sk-cu.png">
+  <style>html, body { overflow: hidden; }</style>
 </head>
 
 <body>
+  <div class="ac-wrap">
+    <div class="ac-card">
 
-  <main class="auth-wrap">
-    <div class="card">
+      <a href="/" class="ac-logo">
+        <img src="/Assest/sk-cu.png" alt="Logo">
+        <span>Skintania</span>
+      </a>
+
+      <div class="ac-icon">✉️</div>
       <h1>ยืนยันอีเมล</h1>
-      <p class="lead" id="leadText">กำลังส่งรหัส OTP ไปที่อีเมลของคุณ...</p>
+      <p class="ac-desc" id="leadText">กำลังส่งรหัส OTP ไปที่อีเมลของคุณ...</p>
 
       <form id="otpForm">
         <div class="form-group">
-          <input type="text" id="otp" name="otp" class="form-control"
-            style="text-align:center; letter-spacing:12px; font-size:1.4rem; font-weight:500;"
-            placeholder="------" maxlength="6" inputmode="numeric" autocomplete="one-time-code" required>
+          <label for="otp">รหัส OTP (6 หลัก)</label>
+          <input type="text" id="otp" name="otp" class="form-control otp-input"
+            placeholder="000000" maxlength="6" inputmode="numeric"
+            autocomplete="one-time-code" required>
         </div>
-        <button type="submit" class="btn" id="submitBtn">ยืนยันรหัส OTP</button>
+        <button type="submit" class="auth-btn" id="submitBtn">ยืนยันรหัส OTP</button>
       </form>
 
-      <div id="statusMsg" style="display:none; margin-top:20px; padding:14px 16px; border-radius:8px; text-align:center; font-size:0.95rem;"></div>
+      <div class="ac-status" id="statusMsg"></div>
 
-      <a href="javascript:void(0);" id="resendBtn" class="auth-link" style="margin-top:24px;">
-        ไม่ได้รับอีเมล? ส่งรหัสใหม่อีกครั้ง
-      </a>
+      <div class="ac-footer">
+        <a href="javascript:void(0);" id="resendBtn" class="auth-link-muted">
+          ไม่ได้รับอีเมล? ส่งรหัสใหม่อีกครั้ง
+        </a>
+        <a href="/register/" class="auth-link-muted">← กลับไปหน้าสมัครสมาชิก</a>
+      </div>
+
     </div>
-  </main>
+  </div>
 
   <script type="module">
     import { CONFIG } from '/config.js';
@@ -53,8 +69,6 @@
       const statusMsg = document.getElementById("statusMsg");
       const leadText  = document.getElementById("leadText");
 
-      // --- Helpers ---
-
       function showStatus(success, html) {
         statusMsg.style.display = "block";
         statusMsg.style.background = success ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)";
@@ -63,8 +77,6 @@
         statusMsg.innerHTML = html;
       }
 
-      // Build the correct field for resend-otp based on what the user typed.
-      // API accepts: { email } | { username } | { student_id }
       function resendBody(value) {
         if (value.includes('@'))   return { email: value };
         if (/^\d+$/.test(value))  return { student_id: value };
@@ -85,8 +97,6 @@
           }
         }, 1000);
       }
-
-      // --- resend-otp ---
 
       async function sendOtp(isInitial = false) {
         if (!isInitial && resendBtn.dataset.cooldown) return;
@@ -121,8 +131,6 @@
           resendBtn.innerText = "ไม่ได้รับอีเมล? ส่งรหัสใหม่อีกครั้ง";
         }
       }
-
-      // --- verify-otp ---
 
       otpInput.addEventListener('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '');
@@ -190,7 +198,7 @@
         sendOtp(false);
       });
 
-      
+      sendOtp(true);
     });
   </script>
 

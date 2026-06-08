@@ -498,7 +498,129 @@ const Actions = {
 };
 
 /**
- * --- 5. INITIALIZATION ---
+ * --- 5. SIDEBAR TREE ---
+ * Lazy-loading folder tree in the left sidebar
+ */
+const SidebarTree = {
+    container: null,
+
+    async init() {
+        this.container = document.getElementById('gd-tree');
+        if (!this.container) return;
+        try {
+            const items = await DriveAPI.fetchItems('');
+            const folders = items.filter(i => i.type === 'folder');
+            this.renderItems(this.container, folders, []);
+        } catch (e) {
+            console.warn('Sidebar tree load failed:', e);
+        }
+    },
+
+    renderItems(container, folders, pathParts) {
+        container.innerHTML = '';
+        if (folders.length === 0) return;
+        folders.forEach(folder => {
+            const fullPath = [...pathParts, folder.name];
+            const pathStr = fullPath.join('/');
+            const depth = pathParts.length;
+
+            const item = document.createElement('div');
+            item.className = 'gd-tree-item';
+            item.dataset.fullPath = pathStr;
+
+            const row = document.createElement('div');
+            row.className = 'gd-tree-row';
+            row.style.paddingLeft = `${8 + depth * 16}px`;
+
+            const toggle = document.createElement('button');
+            toggle.className = 'gd-tree-toggle';
+            toggle.setAttribute('data-expanded', '0');
+            toggle.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+
+            const folderIcon = document.createElement('i');
+            folderIcon.className = 'fa-solid fa-folder gd-tree-folder-icon';
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'gd-tree-name';
+            nameEl.textContent = folder.name;
+
+            row.append(toggle, folderIcon, nameEl);
+
+            const children = document.createElement('div');
+            children.className = 'gd-tree-children';
+            children.hidden = true;
+
+            // Navigate to folder on row click
+            row.addEventListener('click', (e) => {
+                if (toggle.contains(e.target)) return;
+                this.navigateTo(fullPath, pathStr, row);
+            });
+
+            // Expand / collapse on toggle click
+            toggle.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const isExpanded = toggle.getAttribute('data-expanded') === '1';
+
+                if (isExpanded) {
+                    toggle.setAttribute('data-expanded', '0');
+                    children.hidden = true;
+                    return;
+                }
+
+                // Lazy load subfolders
+                if (!children.dataset.loaded) {
+                    toggle.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const subItems = await DriveAPI.fetchItems(pathStr);
+                        const subFolders = subItems.filter(i => i.type === 'folder');
+                        children.dataset.loaded = '1';
+                        if (subFolders.length > 0) {
+                            this.renderItems(children, subFolders, fullPath);
+                        }
+                    } catch (_) { /* ignore */ }
+                    toggle.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+                }
+
+                if (children.children.length === 0) {
+                    // No subfolders — hide the toggle
+                    toggle.setAttribute('data-no-children', '');
+                    return;
+                }
+
+                toggle.setAttribute('data-expanded', '1');
+                children.hidden = false;
+            });
+
+            item.append(row, children);
+            container.appendChild(item);
+        });
+    },
+
+    navigateTo(pathParts, pathStr, rowEl) {
+        State.pathNames = ['Home', ...pathParts];
+        State.folderHistory = new Array(pathParts.length).fill([]);
+        State.isSelectMode = false;
+        State.selectedFiles.clear();
+        Actions.loadCurrentPath();
+        this.setActive(pathStr);
+    },
+
+    setActive(pathStr) {
+        if (!this.container) return;
+        this.container.querySelectorAll('.gd-tree-row').forEach(row => {
+            const item = row.closest('.gd-tree-item');
+            row.classList.toggle('gd-tree-row-active', item && item.dataset.fullPath === pathStr);
+        });
+    },
+
+    clearActive() {
+        if (!this.container) return;
+        this.container.querySelectorAll('.gd-tree-row').forEach(r => r.classList.remove('gd-tree-row-active'));
+    }
+};
+
+/**
+ * --- 6. INITIALIZATION ---
  * เริ่มทำงานเมื่อโหลดหน้าเว็บเสร็จ
  */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -561,6 +683,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
     }
 
+    // My Drive button → return to root
+    const myDriveBtn = document.getElementById('gd-my-drive-btn');
+    if (myDriveBtn) {
+        myDriveBtn.onclick = () => {
+            State.pathNames = ['Home'];
+            State.folderHistory = [];
+            State.isSelectMode = false;
+            State.selectedFiles.clear();
+            UI.updateSelectionUI();
+            const selectBtn = document.getElementById('selectBtn');
+            if (selectBtn) selectBtn.innerHTML = '<i class="fa-solid fa-check-double"></i> <span>Select</span>';
+            Actions.loadCurrentPath();
+            SidebarTree.clearActive();
+        };
+    }
+
     // 3. เริ่มโหลดข้อมูลโฟลเดอร์แรก
     Actions.loadCurrentPath();
+
+    // 4. โหลด sidebar tree
+    SidebarTree.init();
 });

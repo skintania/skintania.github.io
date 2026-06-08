@@ -1,3 +1,9 @@
+.ex-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
 /* ════════════════════════════════
    TWO-COLUMN LAYOUT
 ════════════════════════════════ */
@@ -632,7 +638,7 @@
   }
 
   /* ── Layout reset ── */
-  .wrap { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+  .ex-main { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
   .exercise-layout { display: block !important; margin: 0 !important; }
   .questions-panel { display: block !important; padding: 0 !important; margin: 0 !important; }
   .questions-container { display: block; }
