@@ -54,6 +54,17 @@ const DriveAPI = {
         return [...folders, ...files];
     },
 
+    async fetchTree() {
+        const token = localStorage.getItem("authToken");
+        const response = await fetch(`${CONFIG.API_URL}/skdrive/tree`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (response.status === 401) { window.location.replace("/login/"); return []; }
+        if (!response.ok) throw new Error(`API error: ${response.status}`);
+        const data = await response.json();
+        return data.tree ?? [];
+    },
+
     async bulkDownload(keys, prefixes) {
         const token = localStorage.getItem("authToken");
         const body = {};
@@ -508,21 +519,22 @@ const SidebarTree = {
         this.container = document.getElementById('gd-tree');
         if (!this.container) return;
         try {
-            const items = await DriveAPI.fetchItems('');
-            const folders = items.filter(i => i.type === 'folder');
-            this.renderItems(this.container, folders, []);
+            const tree = await DriveAPI.fetchTree();
+            this.renderItems(this.container, tree, []);
         } catch (e) {
             console.warn('Sidebar tree load failed:', e);
         }
     },
 
-    renderItems(container, folders, pathParts) {
+    // nodes have shape: { name, path, children[] } from GET /skdrive/tree
+    renderItems(container, nodes, pathParts) {
         container.innerHTML = '';
-        if (folders.length === 0) return;
-        folders.forEach(folder => {
-            const fullPath = [...pathParts, folder.name];
-            const pathStr = fullPath.join('/');
-            const depth = pathParts.length;
+        if (nodes.length === 0) return;
+        nodes.forEach(node => {
+            const fullPath = [...pathParts, node.name];
+            const pathStr  = fullPath.join('/');
+            const depth    = pathParts.length;
+            const hasKids  = node.children && node.children.length > 0;
 
             const item = document.createElement('div');
             item.className = 'gd-tree-item';
@@ -536,59 +548,33 @@ const SidebarTree = {
             toggle.className = 'gd-tree-toggle';
             toggle.setAttribute('data-expanded', '0');
             toggle.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
+            if (!hasKids) toggle.setAttribute('data-no-children', '');
 
             const folderIcon = document.createElement('i');
             folderIcon.className = 'fa-solid fa-folder gd-tree-folder-icon';
 
             const nameEl = document.createElement('span');
             nameEl.className = 'gd-tree-name';
-            nameEl.textContent = folder.name;
+            nameEl.textContent = node.name;
 
             row.append(toggle, folderIcon, nameEl);
 
             const children = document.createElement('div');
             children.className = 'gd-tree-children';
             children.hidden = true;
+            if (hasKids) this.renderItems(children, node.children, fullPath);
 
-            // Navigate to folder on row click
             row.addEventListener('click', (e) => {
                 if (toggle.contains(e.target)) return;
                 this.navigateTo(fullPath, pathStr, row);
             });
 
-            // Expand / collapse on toggle click
-            toggle.addEventListener('click', async (e) => {
+            toggle.addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (!hasKids) return;
                 const isExpanded = toggle.getAttribute('data-expanded') === '1';
-
-                if (isExpanded) {
-                    toggle.setAttribute('data-expanded', '0');
-                    children.hidden = true;
-                    return;
-                }
-
-                // Lazy load subfolders
-                if (!children.dataset.loaded) {
-                    toggle.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                    try {
-                        const subItems = await DriveAPI.fetchItems(pathStr);
-                        const subFolders = subItems.filter(i => i.type === 'folder');
-                        children.dataset.loaded = '1';
-                        if (subFolders.length > 0) {
-                            this.renderItems(children, subFolders, fullPath);
-                        }
-                    } catch (_) { /* ignore */ }
-                    toggle.innerHTML = '<i class="fa-solid fa-chevron-right"></i>';
-                }
-
-                if (children.children.length === 0) {
-                    // No subfolders — hide the toggle
-                    toggle.setAttribute('data-no-children', '');
-                    return;
-                }
-
-                toggle.setAttribute('data-expanded', '1');
-                children.hidden = false;
+                toggle.setAttribute('data-expanded', isExpanded ? '0' : '1');
+                children.hidden = isExpanded;
             });
 
             item.append(row, children);

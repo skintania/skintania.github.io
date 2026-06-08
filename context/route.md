@@ -223,7 +223,7 @@ admin/admin.js (module) → imports apiFetch
 | `POST /events` | post-create.js |
 | `POST /calculator` | calculate.js |
 | `GET /calculator/grades` | calculate.js, historyCache.js |
-| `GET /skdrive/tree` | (folder hierarchy, folders-only — use for sidebar/picker) |
+| `GET /skdrive/tree` | loadDrive.js (SidebarTree — full nested folder tree, loaded once on init) |
 | `GET /skdrive?prefix=` | loadDrive.js |
 | `POST /skdrive/download` | loadDrive.js |
 | `GET /skdrive/*` | loadDrive.js |
