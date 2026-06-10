@@ -557,8 +557,8 @@ body {
     background: #0a0c12;
     border: 1px solid var(--glass-border);
     border-radius: 12px;
-    padding: 20px;
-    height: 420px;
+    padding: 0;
+    height: 600px;
     overflow-y: auto;
     font-family: 'Courier New', 'Fira Code', monospace;
     font-size: 0.82rem;
@@ -972,3 +972,204 @@ body {
         flex: 1;
     }
 }
+
+/* ─── TAB NAVIGATION (show/hide) ────────────────────────────────────────────── */
+.admin-section[hidden] { display: none !important; }
+
+/* ─── LOG TOOLBAR REDESIGN ───────────────────────────────────────────────────── */
+.log-toolbar {
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.log-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 160px;
+    max-width: 280px;
+}
+
+.log-search-wrap i {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-subtle);
+    font-size: 0.78rem;
+    pointer-events: none;
+}
+
+.log-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--glass-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-main);
+    font-family: inherit;
+    font-size: 0.85rem;
+    padding: 8px 12px 8px 30px;
+    transition: border-color 0.2s;
+}
+
+.log-search-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+}
+
+.log-search-input::placeholder { color: var(--text-subtle); }
+
+.log-level-pills {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.log-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--glass-bg);
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.log-pill:hover        { border-color: var(--border-hover); color: var(--text-main); }
+.log-pill.active       { background: var(--accent-gradient); border-color: transparent; color: white; }
+
+.log-pill.pill-error.active  { background: rgba(239,68,68,.18);  border-color: rgba(239,68,68,.4);  color: #ef4444; }
+.log-pill.pill-warn.active   { background: rgba(234,179,8,.18);  border-color: rgba(234,179,8,.4);  color: #eab308; }
+.log-pill.pill-info.active   { background: rgba(14,165,233,.18); border-color: rgba(14,165,233,.4); color: #0ea5e9; }
+
+.log-toolbar-right { display: flex; gap: 8px; margin-left: auto; }
+
+.btn-active-refresh {
+    background: rgba(34,197,94,.15) !important;
+    border-color: rgba(34,197,94,.4) !important;
+    color: #22c55e !important;
+}
+
+/* ─── LOG ENTRIES (expandable rows) ─────────────────────────────────────────── */
+.log-entry {
+    border-bottom: 1px solid rgba(255,255,255,.04);
+}
+
+.log-entry:last-child { border-bottom: none; }
+
+.log-entry-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 14px;
+    min-height: 36px;
+    transition: background 0.1s;
+}
+
+.log-entry:hover .log-entry-main      { background: rgba(255,255,255,.025); }
+.log-entry.log-entry-open .log-entry-main { background: rgba(255,255,255,.04); }
+
+.log-lv-badge {
+    font-size: 0.62rem;
+    font-weight: 800;
+    padding: 2px 7px;
+    border-radius: 4px;
+    flex-shrink: 0;
+    letter-spacing: 0.05em;
+    font-family: 'Courier New', monospace;
+    min-width: 52px;
+    text-align: center;
+}
+
+.log-entry-time {
+    font-size: 0.71rem;
+    color: var(--text-subtle);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: 'Courier New', monospace;
+    min-width: 160px;
+}
+
+.log-entry-msg {
+    flex: 1;
+    font-size: 0.83rem;
+    line-height: 1.4;
+    word-break: break-word;
+    font-family: 'Courier New', monospace;
+}
+
+.log-entry-toggle {
+    font-size: 0.6rem;
+    color: var(--text-subtle);
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+    transition: color 0.15s;
+    user-select: none;
+}
+
+.log-entry-toggle-ph { width: 18px; flex-shrink: 0; }
+.log-entry-main:hover .log-entry-toggle { color: var(--accent-blue); }
+
+.log-entry-body {
+    padding: 0 14px 10px 14px;
+    background: rgba(0,0,0,.25);
+    border-top: 1px solid rgba(255,255,255,.04);
+}
+
+.log-entry-pre {
+    margin: 0;
+    font-size: 0.77rem;
+    color: var(--text-muted);
+    font-family: 'Courier New', 'Fira Code', monospace;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.65;
+    padding: 10px 12px;
+    background: rgba(255,255,255,.02);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    margin-top: 8px;
+}
+
+/* Level colours */
+.log-lv-error   .log-lv-badge { background: rgba(239,68,68,.2);   color: #ef4444; }
+.log-lv-error   .log-entry-msg { color: #fca5a5; }
+
+.log-lv-warning .log-lv-badge { background: rgba(234,179,8,.2);   color: #eab308; }
+.log-lv-warning .log-entry-msg { color: #fde68a; }
+
+.log-lv-info    .log-lv-badge { background: rgba(14,165,233,.2);  color: #0ea5e9; }
+.log-lv-info    .log-entry-msg { color: #94a3b8; }
+
+.log-lv-success .log-lv-badge { background: rgba(34,197,94,.2);   color: #22c55e; }
+.log-lv-success .log-entry-msg { color: #86efac; }
+
+.log-empty {
+    padding: 48px 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* ─── LOG SECTION STATS BAR ──────────────────────────────────────────────────── */
+.log-stats-bar {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+    font-size: 0.78rem;
+    color: var(--text-subtle);
+}
+
+.log-stats-bar span { display: flex; align-items: center; gap: 5px; }
+.log-stats-bar .lsb-error   { color: #ef4444; }
+.log-stats-bar .lsb-warning { color: #eab308; }
+.log-stats-bar .lsb-info    { color: #0ea5e9; }
+.log-stats-bar .lsb-total   { color: var(--text-muted); }

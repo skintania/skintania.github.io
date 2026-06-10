@@ -14,13 +14,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadWorkerStats();
     loadConfig();
     loadAuditLog();
-    loadServerLogs();
 
     document.getElementById('workerStatsDate')?.addEventListener('change', e => loadWorkerStats(e.target.value));
     document.getElementById('saveConfigBtn')?.addEventListener('click', saveConfig);
     document.getElementById('reloadConfigBtn')?.addEventListener('click', loadConfig);
     document.getElementById('refreshLogsBtn')?.addEventListener('click', () => loadServerLogs());
-    document.getElementById('logLevelFilter')?.addEventListener('change', () => loadServerLogs());
+    document.getElementById('autoRefreshBtn')?.addEventListener('click', toggleAutoRefresh);
+
+    // Level pill filter
+    document.querySelectorAll('.log-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            document.querySelectorAll('.log-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            serverLogCursorMap = { 1: null };
+            loadServerLogs();
+        });
+    });
+
+    // Live search (debounced)
+    let searchTimer;
+    document.getElementById('logSearch')?.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => renderServerLogs(), 200);
+    });
 });
 
 async function checkAdminAccess() {
@@ -42,25 +58,23 @@ function setupNavigation() {
     const navItems = document.querySelectorAll('.admin-nav-item[data-section]');
     const sections = document.querySelectorAll('.admin-section');
 
+    function showSection(id) {
+        sections.forEach(s => { s.hidden = s.id !== 'section-' + id; });
+        navItems.forEach(n => n.classList.toggle('active', n.getAttribute('data-section') === id));
+        sessionStorage.setItem('adminSection', id);
+        // Load log data on first visit to the logs section
+        if (id === 'logs' && allServerLogs.length === 0) loadServerLogs();
+        // Stop auto-refresh when leaving logs
+        if (id !== 'logs' && autoRefreshInterval) toggleAutoRefresh();
+        window.scrollTo({ top: 0 });
+    }
+
     navItems.forEach(item => {
-        item.addEventListener('click', () => {
-            const id = 'section-' + item.getAttribute('data-section');
-            document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            navItems.forEach(n => n.classList.remove('active'));
-            item.classList.add('active');
-        });
+        item.addEventListener('click', () => showSection(item.getAttribute('data-section')));
     });
 
-    window.addEventListener('scroll', () => {
-        let current = '';
-        sections.forEach(s => {
-            if (pageYOffset >= s.offsetTop - s.clientHeight / 3)
-                current = s.id.replace('section-', '');
-        });
-        navItems.forEach(n => n.classList.toggle('active', n.getAttribute('data-section') === current));
-    });
-
-    window.dispatchEvent(new Event('scroll'));
+    const saved = sessionStorage.getItem('adminSection') || 'overview';
+    showSection(saved);
 }
 
 // ─── OVERVIEW STATS ───────────────────────────────────────────────────────────
@@ -485,13 +499,40 @@ let allServerLogs = [];
 let serverLogPage = 1;
 let serverLogCursorMap = { 1: null };
 let serverLogNextCursor = null;
+let autoRefreshInterval = null;
+
+function getActiveLogLevel() {
+    return document.querySelector('.log-pill.active')?.getAttribute('data-level') || '';
+}
+
+function toggleAutoRefresh() {
+    const btn = document.getElementById('autoRefreshBtn');
+    if (!btn) return;
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+        btn.classList.remove('btn-active-refresh');
+        btn.innerHTML = '<i class="fa-solid fa-rotate"></i> Auto';
+    } else {
+        loadServerLogs();
+        autoRefreshInterval = setInterval(() => loadServerLogs(), 10000);
+        btn.classList.add('btn-active-refresh');
+        btn.innerHTML = '<i class="fa-solid fa-circle-stop"></i> Stop (10s)';
+    }
+}
 
 async function loadServerLogs(cursor = null, targetPage = 1) {
     const terminal = document.getElementById('logTerminal');
     if (!terminal) return;
-    terminal.innerHTML = '<div class="log-line info"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</div>';
+    terminal.innerHTML = `
+        <div class="log-entry log-lv-info">
+            <div class="log-entry-main">
+                <span class="log-lv-badge">INFO</span>
+                <span class="log-entry-msg"><i class="fa-solid fa-spinner fa-spin"></i> Loading...</span>
+            </div>
+        </div>`;
 
-    const level = document.getElementById('logLevelFilter')?.value || '';
+    const level = getActiveLogLevel();
 
     try {
         let url = `${API_URL}/admin/server-logs?limit=${LOG_PER_PAGE}`;
@@ -509,32 +550,79 @@ async function loadServerLogs(cursor = null, targetPage = 1) {
 
         renderServerLogs();
     } catch (err) {
-        terminal.innerHTML = `<div class="log-line error"><i class="fa-solid fa-triangle-exclamation"></i> ไม่สามารถโหลด Log ได้: ${err.message}</div>`;
+        terminal.innerHTML = `
+            <div class="log-entry log-lv-error">
+                <div class="log-entry-main">
+                    <span class="log-lv-badge">ERR</span>
+                    <span class="log-entry-msg"><i class="fa-solid fa-triangle-exclamation"></i> ไม่สามารถโหลด Log ได้: ${escapeHtml(err.message)}</span>
+                </div>
+            </div>`;
     }
 }
 
 function renderServerLogs() {
     const terminal   = document.getElementById('logTerminal');
     const pagination = document.getElementById('logPagination');
+    const statsBar   = document.getElementById('logStatsBar');
     if (!terminal) return;
+
+    const searchVal = (document.getElementById('logSearch')?.value || '').toLowerCase().trim();
+    const filtered = searchVal
+        ? allServerLogs.filter(log =>
+            (log.message || '').toLowerCase().includes(searchVal) ||
+            JSON.stringify(log.detail || {}).toLowerCase().includes(searchVal))
+        : allServerLogs;
+
+    // Update stats bar
+    if (statsBar) {
+        const counts = { error: 0, warning: 0, info: 0, success: 0 };
+        filtered.forEach(l => { const lv = (l.level || 'info').toLowerCase(); if (lv in counts) counts[lv]++; });
+        statsBar.innerHTML = `
+            <span class="lsb-total"><i class="fa-solid fa-list"></i> ${filtered.length} entries</span>
+            ${counts.error   ? `<span class="lsb-error"><i class="fa-solid fa-circle-xmark"></i> ${counts.error} error</span>` : ''}
+            ${counts.warning ? `<span class="lsb-warning"><i class="fa-solid fa-triangle-exclamation"></i> ${counts.warning} warn</span>` : ''}
+            ${counts.info    ? `<span class="lsb-info"><i class="fa-solid fa-circle-info"></i> ${counts.info} info</span>` : ''}
+        `;
+    }
 
     terminal.innerHTML = '';
 
-    if (allServerLogs.length === 0) {
-        terminal.innerHTML = '<div class="log-line info">ไม่มี Log ในช่วงเวลานี้</div>';
+    if (filtered.length === 0) {
+        terminal.innerHTML = '<div class="log-empty">ไม่พบ Log ที่ตรงเงื่อนไข</div>';
     } else {
-        allServerLogs.forEach(log => {
-            const level  = (log.level || 'info').toLowerCase();
-            const time   = log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : '';
-            const msg    = log.message || '-';
-            const detail = log.detail ? ` <span class="log-detail">${escapeHtml(JSON.stringify(log.detail))}</span>` : '';
+        filtered.forEach(log => {
+            const level     = (log.level || 'info').toLowerCase();
+            const time      = log.created_at ? new Date(log.created_at).toLocaleString('th-TH') : '';
+            const msg       = log.message || '-';
+            const hasDetail = log.detail && Object.keys(log.detail).length > 0;
 
-            const div = document.createElement('div');
-            div.className = `log-line ${level}`;
-            div.innerHTML = `<span class="log-time">${time}</span> <span class="log-level">${level.toUpperCase()}</span> ${escapeHtml(msg)}${detail}`;
-            terminal.appendChild(div);
+            const row = document.createElement('div');
+            row.className = `log-entry log-lv-${level}`;
+            row.innerHTML = `
+                <div class="log-entry-main">
+                    <span class="log-lv-badge">${level.toUpperCase()}</span>
+                    <span class="log-entry-time">${escapeHtml(time)}</span>
+                    <span class="log-entry-msg">${escapeHtml(msg)}</span>
+                    ${hasDetail ? '<span class="log-entry-toggle">▶</span>' : '<span class="log-entry-toggle-ph"></span>'}
+                </div>
+                ${hasDetail ? `<div class="log-entry-body" hidden><pre class="log-entry-pre">${escapeHtml(JSON.stringify(log.detail, null, 2))}</pre></div>` : ''}
+            `;
+
+            if (hasDetail) {
+                const main   = row.querySelector('.log-entry-main');
+                const body   = row.querySelector('.log-entry-body');
+                const toggle = row.querySelector('.log-entry-toggle');
+                main.style.cursor = 'pointer';
+                main.addEventListener('click', () => {
+                    const open   = !body.hidden;
+                    body.hidden  = open;
+                    toggle.textContent = open ? '▶' : '▼';
+                    row.classList.toggle('log-entry-open', !open);
+                });
+            }
+
+            terminal.appendChild(row);
         });
-        terminal.scrollTop = terminal.scrollHeight;
     }
 
     if (!pagination) return;

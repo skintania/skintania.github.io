@@ -132,7 +132,7 @@
       </section>
 
       <!-- 2. SERVER CONFIG -->
-      <section id="section-config" class="admin-section">
+      <section id="section-config" class="admin-section" hidden>
         <div class="section-header">
           <h2><i class="fa-solid fa-sliders"></i> Server Config</h2>
           <p>ปรับการตั้งค่าเซิร์ฟเวอร์แบบ Real-time</p>
@@ -323,7 +323,7 @@
       </section>
 
       <!-- 4. AUDIT LOG -->
-      <section id="section-audit" class="admin-section">
+      <section id="section-audit" class="admin-section" hidden>
         <div class="section-header">
           <h2><i class="fa-solid fa-clock-rotate-left"></i> Audit Log</h2>
           <p>ประวัติการกระทำของ Admin ทั้งหมด</p>
@@ -355,26 +355,34 @@
       </section>
 
       <!-- 5. SERVER LOG -->
-      <section id="section-logs" class="admin-section">
+      <section id="section-logs" class="admin-section" hidden>
         <div class="section-header">
           <h2><i class="fa-solid fa-terminal"></i> Server Log</h2>
           <p>บันทึก Error, Warning และ Event ของระบบ</p>
         </div>
 
         <div class="log-toolbar">
-          <div class="filter-group">
-            <select id="logLevelFilter">
-              <option value="">All Levels</option>
-              <option value="error">Error</option>
-              <option value="warning">Warning</option>
-              <option value="info">Info</option>
-            </select>
+          <div class="log-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="logSearch" class="log-search-input" placeholder="ค้นหาใน message...">
           </div>
-          <button class="btn-reload-cfg" id="refreshLogsBtn">
-            <i class="fa-solid fa-rotate-right"></i> Refresh
-          </button>
+          <div class="log-level-pills">
+            <button class="log-pill active" data-level="">All</button>
+            <button class="log-pill pill-error" data-level="error"><i class="fa-solid fa-circle-xmark"></i> Error</button>
+            <button class="log-pill pill-warn" data-level="warning"><i class="fa-solid fa-triangle-exclamation"></i> Warn</button>
+            <button class="log-pill pill-info" data-level="info"><i class="fa-solid fa-circle-info"></i> Info</button>
+          </div>
+          <div class="log-toolbar-right">
+            <button class="btn-reload-cfg" id="autoRefreshBtn" title="Auto-refresh ทุก 10s">
+              <i class="fa-solid fa-rotate"></i> Auto
+            </button>
+            <button class="btn-reload-cfg" id="refreshLogsBtn">
+              <i class="fa-solid fa-rotate-right"></i> Refresh
+            </button>
+          </div>
         </div>
 
+        <div class="log-stats-bar" id="logStatsBar"></div>
         <div class="log-terminal" id="logTerminal">
           <div class="log-line info">
             <i class="fa-solid fa-spinner fa-spin"></i> Loading logs...
