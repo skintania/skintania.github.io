@@ -75,19 +75,20 @@
   - [DELETE /skdrive/*](#delete-skdrive)
   - [POST /skdrive/bulk-delete](#post-skdrivebulk-delete)
   - [POST /skdrive/download](#post-skdrivedownload)
-- [Problem Sets](#problem-sets)
-  - [GET /courses/:courseId/problem-sets](#get-coursescourseidproblem-sets)
-  - [POST /courses/:courseId/problem-sets](#post-coursescourseidproblem-sets)
-  - [GET /courses/:courseId/problem-sets/:psId](#get-coursescourseidproblem-setspsid)
-  - [PATCH /courses/:courseId/problem-sets/:psId](#patch-coursescourseidproblem-setspsid)
-  - [DELETE /courses/:courseId/problem-sets/:psId](#delete-coursescourseidproblem-setspsid)
 - [Exercises](#exercises)
   - [GET /courses/:courseId/exercises](#get-coursescourseidexercises)
-  - [POST /courses/:courseId/exercises](#post-coursescourseidexercises)
-  - [GET /courses/:courseId/exercises/:exerciseId](#get-coursescourseidexercisesexerciseid)
-  - [PATCH /courses/:courseId/exercises/:exerciseId](#patch-coursescourseidexercisesexerciseid)
-  - [DELETE /courses/:courseId/exercises/:exerciseId](#delete-coursescourseidexercisesexerciseid)
-  - [POST /courses/:courseId/exercises/:exerciseId/submit](#post-coursescourseidexercisesexerciseidsubmit)
+  - [PUT /courses/:courseId/exercises/:filename](#put-coursescourseidexercisesfilename)
+  - [GET /courses/:courseId/exercises/:filename/pdf](#get-coursescourseidexercisesfilenamepdf)
+  - [DELETE /courses/:courseId/exercises/:filename](#delete-coursescourseidexercisesfilename)
+  - [GET /courses/:courseId/exercises/:filename/solutions](#get-coursescourseidexercisesfilenamesolutions)
+  - [PUT /courses/:courseId/exercises/:filename/solutions](#put-coursescourseidexercisesfilenamesolutions)
+  - [GET /courses/:courseId/exercises/:filename/solutions/:solutionId/pdf](#get-coursescourseidexercisesfilenamesolutionssolutionidpdf)
+  - [DELETE /courses/:courseId/exercises/:filename/solutions](#delete-coursescourseidexercisesfilenamesolutions)
+  - [DELETE /courses/:courseId/exercises/:filename/solutions/:solutionId](#delete-coursescourseidexercisesfilenamesolutionssolutionid)
+  - [POST /courses/:courseId/exercises/:filename/solutions/:solutionId/vote](#post-coursescourseidexercisesfilenamesolutionssolutionidvote)
+  - [GET /courses/:courseId/exercises/:filename/solutions/:solutionId/comments](#get-coursescourseidexercisesfilenamesolutionssolutionidcomments)
+  - [POST /courses/:courseId/exercises/:filename/solutions/:solutionId/comments](#post-coursescourseidexercisesfilenamesolutionssolutionidcomments)
+  - [DELETE /courses/:courseId/exercises/:filename/solutions/:solutionId/comments/:commentId](#delete-coursescourseidexercisesfilenamesolutionssolutionidcommentscommentid)
 - [Comments](#comments)
   - [GET /courses/:courseId/comments](#get-coursescourseidcomments)
   - [POST /courses/:courseId/comments](#post-coursescourseidcomments)
@@ -334,7 +335,7 @@ When `q` is omitted or empty, returns a random selection of users (useful for a 
 | Query param | Type | Default | Description |
 |-------------|------|---------|-------------|
 | `q` | string | — | Search query. Omit or leave empty to get random users. |
-| `limit` | number | 30 | Max results to return (capped at 30) |
+| `limit` | number | 30 | Max results to return |
 | `offset` | number | 0 | Pagination offset (ignored when `q` is empty) |
 
 **Response 200**
@@ -1234,100 +1235,20 @@ Content-Disposition: attachment; filename="Engineering Materials.zip"
 
 ---
 
-## Problem Sets
-
-Available only on courses with `type: "exercise"`. Problem sets group exercises under a course.
-
-- **Read** — any authenticated user
-- **Write** — admin only
-
-### GET /courses/:courseId/problem-sets
-
-List all problem sets for a course, each with an `exercise_count`.
-
-**Auth required**
-
-**Response 200**
-```json
-{
-  "success": true,
-  "problemSets": [
-    { "id": 1, "course_id": 1, "title": "Week 1", "description": "Kinematics basics", "author": "Skintania", "sort_order": 0, "exercise_count": 5, "created_at": "...", "updated_at": "..." }
-  ]
-}
-```
-
----
-
-### POST /courses/:courseId/problem-sets
-
-Create a problem set. **Admin only.**
-
-**Body**
-```json
-{ "title": "Week 1", "description": "Optional description", "author": "Dr. Smith", "sort_order": 0 }
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `title` | string | yes | Problem set title |
-| `description` | string | no | Optional description |
-| `author` | string | no | Author name (defaults to `"Skintania"` if blank or omitted) |
-| `sort_order` | number | no | Display order (default 0) |
-
-**Response 201**
-```json
-{ "success": true, "message": "Problem set created", "id": 1 }
-```
-
----
-
-### GET /courses/:courseId/problem-sets/:psId
-
-Get a single problem set with all its exercises (without answers).
-
-**Response 200**
-```json
-{
-  "success": true,
-  "problemSet": {
-    "id": 1, "course_id": 1, "title": "Week 1", "description": "...", "author": "Skintania", "sort_order": 0,
-    "exercises": [
-      { "id": 1, "problem_set_id": 1, "title": "Q1", "sort_order": 0, "type": "multiple_choice", "question": "...", "choices": ["..."], "solution": null, "created_at": "...", "updated_at": "..." }
-    ]
-  }
-}
-```
-
----
-
-### PATCH /courses/:courseId/problem-sets/:psId
-
-Update a problem set. **Admin only.** All fields optional.
-
-**Body**
-```json
-{ "title": "Week 1 Updated", "description": "New description", "sort_order": 1 }
-```
-
----
-
-### DELETE /courses/:courseId/problem-sets/:psId
-
-Delete a problem set and all its exercises. **Admin only.**
-
----
-
 ## Exercises
 
-Available only on courses with `type: "exercise"`. Exercises must belong to a problem set. The correct `answer` is **never returned** in GET responses — only revealed after a submit call.
+PDF-based exercise system. Template PDFs live in `ASSETS_BUCKET` under `Exercises/{courseTitle}/{filename}`. No database table for exercises — R2 is the source of truth. Solutions, votes, and comments are stored in D1.
 
-- **Read / Submit** — any authenticated user
-- **Write** — admin only
+- **Read** — any authenticated user
+- **Upload/Delete exercise PDF** — admin only
+- **Upload/Delete own solution, vote, comment** — member, OSK, admin
+- **Delete any solution or comment** — admin only
+
+> `:filename` in all URLs is the PDF filename, e.g. `2568_Midterm.pdf`. URL-encode spaces and special characters.
 
 ### GET /courses/:courseId/exercises
 
-List all exercises across all problem sets for a course, ordered by problem set `sort_order` then exercise `sort_order`.
+List all exercise PDFs for a course by reading the `Exercises/{courseTitle}/` prefix in R2.
 
 **Auth required**
 
@@ -1337,134 +1258,187 @@ List all exercises across all problem sets for a course, ordered by problem set 
   "success": true,
   "exercises": [
     {
-      "id": 1, "problem_set_id": 1, "title": "Kinematics Q1", "sort_order": 0,
-      "type": "multiple_choice",
-      "question": "A 5kg object accelerates under $F = 30\\text{ N}$, $m = 5\\text{ kg}$. Find $a$.",
-      "choices": ["$a = 6\\ \\text{ms}^{-2}$", "$a = 3\\ \\text{ms}^{-2}$", "$a = 150\\ \\text{ms}^{-2}$"],
-      "solution": null,
-      "image_key": null,
+      "filename": "2568_Midterm.pdf",
+      "key": "Exercises/Calculus 1/2568_Midterm.pdf",
+      "name": "2568_Midterm",
+      "size": 460840,
+      "uploaded": "2026-06-09T15:11:04.000Z"
+    }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `filename` | Bare filename including extension |
+| `key` | Full R2 key — use as reference when linking solutions |
+| `name` | Filename without `.pdf` extension — good for display |
+| `size` | File size in bytes |
+| `uploaded` | Upload timestamp |
+
+---
+
+### PUT /courses/:courseId/exercises/:filename
+
+Upload or replace an exercise PDF. **Admin only.** Send raw `application/pdf` body. Max **50MB**.
+
+```
+PUT /courses/3/exercises/2568_Midterm.pdf
+Content-Type: application/pdf
+```
+
+**Response 201**
+```json
+{ "success": true, "message": "Exercise uploaded", "key": "Exercises/Calculus 1/2568_Midterm.pdf" }
+```
+
+---
+
+### GET /courses/:courseId/exercises/:filename/pdf
+
+Stream the exercise template PDF. Requires auth.
+
+**Response** — raw PDF stream (`Content-Type: application/pdf`).
+
+---
+
+### DELETE /courses/:courseId/exercises/:filename
+
+Delete the exercise PDF from R2. **Admin only.**
+
+Pass `?solved=true` to instead keep the file and only wipe all comments on all solutions (use when admin re-uploads a corrected PDF and wants to clear reported errors).
+
+| Query param | Description |
+|-------------|-------------|
+| `solved` | `true` — delete all comments, keep the file |
+
+---
+
+### GET /courses/:courseId/exercises/:filename/solutions
+
+List all solutions for an exercise, sorted by votes descending.
+
+**Response 200**
+```json
+{
+  "success": true,
+  "solutions": [
+    {
+      "id": 1,
+      "exercise_key": "Exercises/Calculus 1/2568_Midterm.pdf",
+      "user_id": 5,
+      "r2_key": "Exercises/Calculus 1/2568_Midterm.pdf/solutions/5.pdf",
+      "filename": "my_solution.pdf",
+      "votes": 12,
+      "firstname": "Beam", "lastname": "S", "username": "beams", "profile_url": null,
       "created_at": "...", "updated_at": "..."
     }
   ]
 }
 ```
 
-> `answer` is omitted from all list and detail responses. `question`, `choices`, and `solution` all support LaTeX.
+---
+
+### PUT /courses/:courseId/exercises/:filename/solutions
+
+Upload or overwrite the current user's solution PDF. One slot per user per exercise. Max **50MB**.
+
+Send raw `application/pdf` body with optional `?filename=` query param for the display name.
+
+**Response 201**
+```json
+{ "success": true, "message": "Solution uploaded", "id": 1 }
+```
 
 ---
 
-### POST /courses/:courseId/exercises
+### GET /courses/:courseId/exercises/:filename/solutions/:solutionId/pdf
 
-Create an exercise. **Admin only.**
+Stream a specific solution PDF. Requires auth.
 
-Accepts either `application/json` (no image) or `multipart/form-data` (with optional image).
+**Response** — raw PDF stream (`Content-Type: application/pdf`).
 
-**JSON body**
+---
+
+### DELETE /courses/:courseId/exercises/:filename/solutions
+
+Delete the current user's own solution for this exercise.
+
+---
+
+### DELETE /courses/:courseId/exercises/:filename/solutions/:solutionId
+
+Delete a specific solution by ID. **Admin only.**
+
+---
+
+### POST /courses/:courseId/exercises/:filename/solutions/:solutionId/vote
+
+Toggle an upvote on a solution (Reddit-style). Calling again removes the vote. Cannot vote on your own solution.
+
+**Response 200**
+```json
+{ "success": true, "voted": true, "votes": 13 }
+```
+
+| Field | Description |
+|-------|-------------|
+| `voted` | `true` if vote was added, `false` if removed |
+| `votes` | Updated total vote count |
+
+---
+
+### GET /courses/:courseId/exercises/:filename/solutions/:solutionId/comments
+
+List all comments on a solution, ordered by `created_at` ascending.
+
+**Response 200**
 ```json
 {
-  "problem_set_id": 1,
-  "title": "Kinematics Q1",
-  "type": "multiple_choice",
-  "question": "A 5kg object accelerates under $F = 30\\text{ N}$. Find $a$.",
-  "choices": ["$a = 6\\ \\text{ms}^{-2}$", "$a = 3\\ \\text{ms}^{-2}$", "$a = 150\\ \\text{ms}^{-2}$"],
-  "answer": "0",
-  "solution": "$a = \\frac{F}{m} = \\frac{30}{5} = 6\\ \\text{ms}^{-2}$",
-  "sort_order": 0
+  "success": true,
+  "comments": [
+    {
+      "id": 1, "solution_id": 1, "user_id": 5,
+      "content": "Page 3 has a sign error", "page_number": 3, "is_wrong": 1,
+      "firstname": "Beam", "lastname": "S", "username": "beams", "profile_url": null,
+      "created_at": "..."
+    }
+  ]
 }
 ```
 
-**multipart/form-data** — same fields as text parts, plus an optional file field (any name) for the image. Send `choices` as a JSON string. Allowed image types: `image/jpeg`, `image/png`, `image/webp`. Max **5MB**.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `problem_set_id` | number | yes | ID of the problem set this exercise belongs to |
-| `title` | string | yes | Exercise title |
-| `type` | string | yes | `multiple_choice`, `fill_blank`, or `free_response` |
-| `question` | string | yes | Question text — supports LaTeX |
-| `choices` | array | if `multiple_choice` | Array of strings (supports LaTeX) — min 2 |
-| `answer` | string | if `multiple_choice` or `fill_blank` | Correct choice index (`"0"`) or expected text |
-| `solution` | string | no | Solution shown after submission — supports LaTeX |
-| `sort_order` | number | no | Display order (default 0) |
-
-**Response 201**
-```json
-{ "success": true, "message": "Exercise created", "id": 1 }
-```
-
-> If an image is included, it is stored in the assets bucket at `Exercises/{course_title}/{problem_set_title}/q{exercise_title}.{ext}` and the `image_key` is set automatically. Serve it via `GET /assets/{image_key}`.
+| Field | Description |
+|-------|-------------|
+| `page_number` | Page in the PDF the comment refers to; `null` if not pinned |
+| `is_wrong` | `1` if the commenter flagged this solution as incorrect, `0` otherwise |
 
 ---
 
-### GET /courses/:courseId/exercises/:exerciseId
+### POST /courses/:courseId/exercises/:filename/solutions/:solutionId/comments
 
-Get a single exercise (without answer).
-
----
-
-### PATCH /courses/:courseId/exercises/:exerciseId
-
-Update an exercise. **Admin only.** All fields optional.
-
----
-
-### DELETE /courses/:courseId/exercises/:exerciseId
-
-Delete an exercise. **Admin only.**
-
----
-
-### PUT /courses/:courseId/exercises/:exerciseId/image
-
-Upload or replace the image for an exercise. **Admin only.**
-
-**Headers**
-```
-Content-Type: image/jpeg | image/png | image/webp
-Content-Length: <bytes>
-```
-Max size: **5MB**
-
-**Response 201**
-```json
-{ "success": true, "message": "Image uploaded", "image_key": "Exercises/Calculus I/Week 1/qChain Rule.jpeg" }
-```
-
-> The `image_key` is stored on the exercise and follows the pattern `Exercises/{course_title}/{problem_set_title}/q{exercise_title}.{ext}`. Serve it via `GET /assets/{image_key}`.
-
----
-
-### DELETE /courses/:courseId/exercises/:exerciseId/image
-
-Remove the image from an exercise. **Admin only.**
-
----
-
-### POST /courses/:courseId/exercises/:exerciseId/submit
-
-Submit an answer. For `free_response`, no answer is needed — the solution is always revealed.
+Add a comment on a solution.
 
 **Body**
 ```json
-{ "answer": "0" }
+{ "content": "Page 3 has a sign error", "page_number": 3, "is_wrong": true }
 ```
 
-**Response 200 — multiple_choice / fill_blank**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `content` | string | yes | Comment text |
+| `page_number` | number | no | Page number in the PDF (positive integer) |
+| `is_wrong` | boolean | no | Flag this solution as incorrect (default `false`) |
+
+**Response 201**
 ```json
-{
-  "success": true,
-  "correct": true,
-  "solution": "$a = \\frac{F}{m} = \\frac{30}{5} = 6\\ \\text{ms}^{-2}$"
-}
+{ "success": true, "message": "Comment added", "id": 1 }
 ```
 
-**Response 200 — free_response**
-```json
-{
-  "success": true,
-  "result": "revealed",
-  "solution": "..."
-}
-```
+---
+
+### DELETE /courses/:courseId/exercises/:filename/solutions/:solutionId/comments/:commentId
+
+Delete a comment. Comment author, solution owner, or admin.
 
 ---
 

@@ -15,111 +15,110 @@
   <link rel="stylesheet" href="/global.css">
   <link rel="stylesheet" href="/Template/style.css">
   <link rel="stylesheet" href="/Course/exercise/style.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
   <link rel="icon" href="/Assest/sk-cu.png">
 
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
   <script type="module" src="/Template/component.js" defer></script>
   <script type="module" src="/Course/exercise/loadExercise.js" defer></script>
 </head>
 
 <body>
 
-  <!-- ══ Print-only page header (hidden on screen) ══ -->
-  <header class="print-page-header" id="printPageHeader">
-    <div class="ph-top">
-      <div class="ph-left">
-        <span class="ph-course" id="phCourse"></span>
-        <span class="ph-ps"     id="phPs"></span>
-        <!-- ph-author: populate from problem-set author field when API supports it -->
-        <span class="ph-author" id="phAuthor"></span>
-      </div>
-      <div class="ph-right">
-        <span class="ph-brand">Exported from Skintania</span>
-        <img src="/Assest/sk-cu.png" alt="SK" class="ph-logo">
-      </div>
-    </div>
-    <div class="ph-divider"></div>
-  </header>
-
-  <!-- ══ Print-only page footer (hidden on screen) ══ -->
-  <footer class="print-page-footer" id="printPageFooter">
-    <div class="pf-divider"></div>
-    <div class="pf-row">
-      <span id="pfExportBy"></span>
-      <span id="pfDate"></span>
-    </div>
-  </footer>
-
   <comment-widget></comment-widget>
   <site-header page-title="Exercise" page-desc="กำลังโหลด..."></site-header>
 
   <main class="ex-main">
-
     <div class="exercise-layout">
 
-      <!-- ── Left: problem set list ── -->
+      <!-- ── Left: exercise file list ── -->
       <aside class="ps-sidebar">
         <div class="ps-sidebar-top">
           <p class="ps-course-name" id="sidebarCourseName">—</p>
           <p class="ps-course-sub"  id="sidebarCourseSub"></p>
-          <a id="manageExerciseLink" class="manage-exercise-link" href="#" hidden>⚙ จัดการ</a>
-          <div id="syllabusSection" class="syllabus-sidebar" hidden></div>
+          <div class="sidebar-top-actions">
+            <a id="manageExerciseLink" class="manage-exercise-link" href="#" hidden>⚙ จัดการ</a>
+            <button id="uploadExBtn" class="upload-ex-btn" hidden>+ อัปโหลด PDF</button>
+          </div>
         </div>
-        <ul class="ps-list" id="psList">
+        <ul class="ps-list" id="exList">
           <li class="ps-skeleton"></li>
           <li class="ps-skeleton"></li>
           <li class="ps-skeleton"></li>
         </ul>
       </aside>
 
-      <!-- ── Right: stacked questions ── -->
-      <div class="questions-panel">
+      <!-- ── Right: PDF viewer + solutions ── -->
+      <div class="ex-right-panel">
 
-        <div class="qs-panel-header" id="qsPanelHeader" hidden>
-          <div>
-            <h2 class="qs-panel-title" id="qsPanelTitle"></h2>
-            <p class="qs-panel-sub"   id="qsPanelSub"></p>
-          </div>
-          <div class="qs-header-right">
-            <div class="qs-score-badge" id="qsScoreBadge"></div>
-            <button class="btn-sm print-trigger-btn" id="printBtn">⬇ Export PDF</button>
-          </div>
-        </div>
-
-        <div id="questionsContainer" class="questions-container"></div>
-
+        <!-- Empty state -->
         <div class="qs-empty" id="qsEmpty">
           <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" stroke-width="1" opacity="0.2">
-            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
           </svg>
-          <p>เลือกชุดโจทย์จากรายการด้านซ้าย</p>
+          <p>เลือกแบบฝึกหัดจากรายการด้านซ้าย</p>
+        </div>
+
+        <!-- Exercise panel (shown when an exercise is selected) -->
+        <div id="exPanel" hidden>
+
+          <div class="ex-panel-header">
+            <div>
+              <h2 class="qs-panel-title" id="exPanelTitle"></h2>
+              <p class="qs-panel-sub"   id="exPanelMeta"></p>
+            </div>
+          </div>
+
+          <!-- PDF viewer -->
+          <div class="ex-pdf-wrap" id="exPdfWrap"></div>
+
+          <!-- Solutions section -->
+          <div class="solutions-section">
+            <div class="sol-section-header">
+              <h3 class="sol-section-title">เฉลยจากชุมชน</h3>
+              <div class="sol-upload-row" id="solutionUploadRow"></div>
+            </div>
+            <div class="sol-list" id="solutionsContainer"></div>
+          </div>
+
         </div>
 
       </div>
-
     </div>
-
   </main>
 
-  <site-footer></site-footer>
-
-  <!-- File Preview Modal -->
-  <div id="filePreviewModal" class="preview-modal" style="display:none" role="dialog" aria-modal="true">
-    <div id="previewModalBackdrop" class="preview-modal-backdrop"></div>
-    <div class="preview-modal-container">
-      <div class="preview-modal-header">
-        <span id="previewFileName"></span>
-        <div class="preview-modal-actions">
-          <button id="previewDownloadBtn">⬇ ดาวน์โหลด</button>
-          <button id="previewCloseBtn" aria-label="Close">✕</button>
+  <!-- Solution PDF Modal -->
+  <div id="solPdfModal" class="sol-modal" hidden>
+    <div class="sol-modal-backdrop"></div>
+    <div class="sol-modal-box">
+      <div class="sol-modal-header">
+        <div class="sol-modal-meta">
+          <div id="solModalAvatarWrap"></div>
+          <div>
+            <div class="sol-modal-name" id="solModalName"></div>
+            <div class="sol-modal-date" id="solModalDate"></div>
+          </div>
+        </div>
+        <div class="sol-modal-actions">
+          <button id="solModalExtBtn" class="ex-pdf-bar-ext">⧉ เปิดหน้าต่างใหม่</button>
+          <button id="solModalDlBtn" class="ex-pdf-bar-dl" disabled>กำลังโหลด...</button>
+          <button id="solModalClose" class="sol-modal-close" aria-label="ปิด">✕</button>
         </div>
       </div>
-      <div id="previewModalBody" class="preview-modal-body"></div>
+      <div class="sol-modal-body" id="solModalBody">
+        <div class="sol-modal-pdf-panel" id="solModalPdfPanel">
+          <div class="sol-modal-pdf-content" id="solModalPdfContent">
+            <div class="pdf-loading"><div class="pdf-spinner"></div><span>กำลังโหลด PDF...</span></div>
+          </div>
+          <div class="sol-modal-cmt-overlay" id="solModalCmtOverlay"></div>
+        </div>
+      </div>
+      <div class="sol-modal-footer" id="solModalFooter"></div>
     </div>
   </div>
 
 </body>
-
 </html>

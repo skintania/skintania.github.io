@@ -10,7 +10,7 @@
 | `auth-guard.js` | Module that runs immediately on import. Calls `GET /auth/me`, shows loading spinner, redirects to `/login/` on 401/403/banned. Sets `body.style.display = 'block'` on success. Network errors let user through. |
 | `global.css` | Dark theme CSS variables (`--bg`, `--card`, `--accent`, `--text`, `--muted`), body reset, `.wrap`, `.card`, button styles, skeleton shimmer animation, fullscreen loader. Loaded on every page. |
 | `style.css` (root) | Landing page layout styles. Full homepage redesign (Assetario-inspired): hero section, feature sections, mini grid, footer. All classes prefixed `hp-` to avoid conflicts with global.css. |
-| `index.html` (root) | Landing / home page. Redesigned layout: hero (badge + large title + CTA + float cards), two feature sections (image + text alternating), 3-col mini card grid, multi-col footer. Includes auth-guard, site-header, comment-widget. Banner from API replaces float cards when loaded. |
+| `index.html` (root) | Landing / home page. Redesigned layout: hero (badge + large title + CTA + float cards), two feature sections (image + text alternating), 4-col mini card grid (Course, SKDrive, Calculator, Minigame external link), multi-col footer. Includes auth-guard, site-header, comment-widget. Banner from API replaces float cards when loaded. |
 | `CLAUDE.md` | Original Claude Code instructions (architecture, patterns, API reference). |
 | `API.md` | Full backend API documentation. |
 
@@ -20,7 +20,7 @@
 |------|-------------|
 | `shared/api.js` | Exports `apiFetch(path, method='GET', body=null)` — wraps `fetch` with `Authorization: Bearer <token>` header. Also exports `token()` and `API_URL`. Use this for all authenticated API calls. |
 | `shared/utils.js` | Exports `GRADIENTS` array, `gradientFor(n)` (deterministic card color), `timeAgo(isoString)` (Thai relative time), `formatSize(bytes)`, `fileIcon(mimeType)` (emoji for file type). |
-| `shared/latex.js` | Renders LaTeX markup in exercise questions/choices/solutions. Called by exercise pages. |
+| `shared/latex.js` | LaTeX rendering helper (legacy — no longer used by the PDF-based exercise system). |
 | `shared/file-preview.js` | Opens a preview modal for files (PDF inline via pdf.js, image display, download fallback). Used by `loadDrive.js`. |
 
 ## Template/
@@ -50,7 +50,7 @@
 |------|-------------|
 | `view/index.html` | Single course page: video player, clips list, notes panel, comments. |
 | `view/loadView.js` | Entry point — fetches course metadata, initializes the view page, wires up all sub-modules. |
-| `view/player.js` | Controls the `<video>` element: play/pause, seek, fullscreen, quality switching. Sets `src` to clip URL with JWT token in query string. |
+| `view/player.js` | Controls the `<video>` element: play/pause, seek, fullscreen, quality switching. Sets `src` to clip URL with JWT token in query string. On mobile, controls auto-hide (`.touch-active` class on touch). Fullscreen button lives outside `.video-controls` at playerWrap level (`.video-fs-btn`) to avoid opacity inheritance hiding it. |
 | `view/clips.js` | Fetches `GET /courses/:id/clips` (paginated), renders clip list in sidebar, handles clip selection. |
 | `view/slides.js` | Fetches lecture slides from SKDrive (if `slides_folder` set on course), renders slide navigation. |
 | `view/comments.js` | Fetches and posts comments for the current course/clip. |
@@ -61,20 +61,20 @@
 
 | File | What it does |
 |------|-------------|
-| `exercise/index.html` | Exercise/problem-set page. Shows questions one by one or all at once. |
-| `exercise/loadExercise.js` | Fetches `GET /courses/:id/problem-sets/:psId`. Renders questions (uses `latex.js` for LaTeX). On answer submit: `POST .../exercises/:exId/submit` → reveals correct answer + solution. |
-| `exercise/style.css` | Exercise layout, question cards, choice buttons, answer reveal styles. |
-| `exercise/manage/index.html` | Admin interface for creating/editing exercises. |
-| `exercise/manage/loadManage.js` | Admin CRUD for problem sets and exercises. |
+| `exercise/index.html` | Exercise page. Left sidebar: exercise file list (name, size, date). Right: PDF iframe viewer + community solutions panel. |
+| `exercise/loadExercise.js` | Fetches `GET /courses/:id/exercises` for sidebar. Streams PDFs via auth-required fetch → blob URL (template and solution). Solutions sorted by votes, upload/delete own, Reddit-style vote toggle, comment threads with page_number pin badge and is_wrong red badge. Admin: upload/delete exercises, clear wrong flags (`?solved=true`), delete any solution. |
+| `exercise/style.css` | Two-column layout, file-list sidebar, PDF iframe wrap, solution cards, vote button, comment thread, page/wrong badge styles. No print or LaTeX styles. |
+| `exercise/manage/index.html` | Admin interface for uploading and editing exercise PDFs. |
+| `exercise/manage/loadManage.js` | Admin: `POST /courses/:id/exercises` (upload PDF), `PUT` to update, `DELETE` to remove. No more problem-set CRUD. |
 
 ## Activity/
 
 | File | What it does |
 |------|-------------|
 | `Activity/index.html` | Roadmap timeline page. |
-| `Activity/roadmap.js` | Classic (non-module) script. Loads `roadmap.json`, renders vertical timeline cards. Each card is expandable with tabs: info / duration / roles / tips. Compares dates to mark items as past/current/upcoming. |
+| `Activity/roadmap.js` | Classic (non-module) script. Loads `roadmap.json`, renders vertical timeline cards. Cards are expandable modals with stacked info sections (description, duration, roles, tips). Compares dates to mark items as past/current/upcoming. Draws SVG Freshy/Sophomore milestone labels at road start/end. |
 | `Activity/roadmap.json` | Local JSON data for the OSK activity timeline. Not fetched from API. |
-| `Activity/style.css` | Timeline layout, connector lines, card expand animation, tab styles. |
+| `Activity/style.css` | Timeline layout, connector lines, card expand animation, modal section styles, milestone label styles. |
 
 ## Event/
 
@@ -103,7 +103,7 @@
 | File | What it does |
 |------|-------------|
 | `CourseMaterial/index.html` | SKDrive file browser. Breadcrumb nav, grid/list toggle, select/download/delete toolbar. |
-| `CourseMaterial/loadDrive.js` | Full file browser logic. Fetches `GET /skdrive?prefix=<path>` to list contents. Grid and list render modes. Breadcrumb navigation. File selection state. Opens `file-preview.js` modal on click. Bulk ZIP download via `POST /skdrive/download`. Admin file deletion. |
+| `CourseMaterial/loadDrive.js` | Full file browser logic. `SidebarTree` fetches `GET /skdrive/tree` once on init for full nested folder tree (synchronous toggle). Main panel fetches `GET /skdrive?prefix=<path>` to list contents. Grid and list render modes. Breadcrumb navigation. File selection state. Opens `file-preview.js` modal on click. Bulk ZIP download via `POST /skdrive/download`. Admin file deletion. |
 | `CourseMaterial/icons.json` | Maps folder/subject names to emoji icons for display. |
 | `CourseMaterial/style.css` | File browser grid/list layouts, breadcrumb bar, toolbar, file card styles. |
 

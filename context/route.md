@@ -74,17 +74,28 @@ global.css, Template/style.css, Course/style.css
 ```
 /auth-guard.js
 /Template/component.js
-/Course/exercise/loadExercise.js → imports apiFetch, latex.js
-  API: GET /courses/:id/problem-sets/:psId
-       POST /courses/:id/exercises/:exId/submit
+/Course/exercise/loadExercise.js
+  API: GET  /courses/:id/exercises
+       GET  /courses/:id/exercises/:exId/pdf         (streamed into <iframe>)
+       GET  /courses/:id/exercises/:exId/solutions
+       GET  /courses/:id/exercises/:exId/solutions/:solId/pdf
+       PUT  /courses/:id/exercises/:exId/solutions   (upload/overwrite own PDF)
+       DELETE /courses/:id/exercises/:exId/solutions (delete own)
+       POST /courses/:id/exercises/:exId/solutions/:solId/vote
+       GET  /courses/:id/exercises/:exId/solutions/:solId/comments
+       POST /courses/:id/exercises/:exId/solutions/:solId/comments
+       DELETE /courses/:id/exercises/:exId/solutions/:solId/comments/:commentId
 ```
 
 ### `Course/exercise/manage/index.html`
 ```
 /auth-guard.js
 /Template/component.js
-/Course/exercise/manage/loadManage.js → admin exercise CRUD
-  API: admin exercise endpoints
+/Course/exercise/manage/loadManage.js → admin exercise PDF CRUD
+  API: GET    /courses/:id/exercises
+       POST   /courses/:id/exercises          (upload PDF — multipart or raw)
+       PUT    /courses/:id/exercises/:exId    (update title / re-upload PDF)
+       DELETE /courses/:id/exercises/:exId
 ```
 
 ### `Activity/index.html`
@@ -114,7 +125,11 @@ Activity/roadmap.js (classic script, NOT module)
 /Template/component.js
 external: Chart.js CDN
 Calculator/calculate.js → imports CONFIG, historyCache.js
-  API: POST /calculator, GET /calculator/grades
+  API: POST /calculator                    (admission chance; allDepartments includes capacity)
+       GET  /calculator/grades             (score history)
+       GET  /calculator/departments        (dept list without submitting grades, ?year=2568)
+       POST /calculator/predict            (preference-order prediction, estimatedProbability)
+       GET  /calculator/preferences        (restore last saved preference order)
 Calculator/graph.js     → imports Chart.js, reads DOM result
 Calculator/historyCache.js → caches grade history locally
 Calculator/dropdown.js  → classic script, custom dropdown UI
@@ -126,7 +141,8 @@ Calculator/dropdown.js  → classic script, custom dropdown UI
 /Template/component.js
 external: pdf.js CDN, Font Awesome CDN
 /CourseMaterial/loadDrive.js → imports apiFetch, utils, file-preview
-  API: GET /skdrive?prefix=<path>
+  API: GET /skdrive/tree         (SidebarTree — full nested folder tree, loaded once on init)
+       GET /skdrive?prefix=<path>
        POST /skdrive/download
        DELETE /skdrive/* (admin)
        GET /skdrive/* (file stream)
@@ -215,14 +231,24 @@ admin/admin.js (module) → imports apiFetch
 | `GET /courses` | loadCourse.js |
 | `POST /courses` | loadCourse.js (admin) |
 | `GET /courses/:id/clips` | Course/view/clips.js |
-| `GET /courses/:id/problem-sets/:psId` | loadExercise.js |
-| `POST .../exercises/:exId/submit` | loadExercise.js |
+| `GET /courses/:id/exercises` | loadExercise.js, loadManage.js |
+| `GET /courses/:id/exercises/:exId/pdf` | loadExercise.js |
+| `GET /courses/:id/exercises/:exId/solutions` | loadExercise.js |
+| `PUT /courses/:id/exercises/:exId/solutions` | loadExercise.js |
+| `DELETE /courses/:id/exercises/:exId/solutions` | loadExercise.js |
+| `POST .../solutions/:solId/vote` | loadExercise.js |
+| `GET/POST .../solutions/:solId/comments` | loadExercise.js |
+| `DELETE .../comments/:commentId` | loadExercise.js |
+| `POST/PUT/DELETE /courses/:id/exercises/:exId` | loadManage.js (admin) |
 | `GET /events` | loadEvent.js |
 | `POST /events/:id/vote` | loadEvent.js |
 | `POST /events/:id/join` | loadEvent.js |
 | `POST /events` | post-create.js |
-| `POST /calculator` | calculate.js |
+| `POST /calculator` | calculate.js (`allDepartments` now includes `capacity`) |
 | `GET /calculator/grades` | calculate.js, historyCache.js |
+| `GET /calculator/departments` | calculate.js (load dept list without submitting grades) |
+| `POST /calculator/predict` | calculate.js (preference-order prediction, `estimatedProbability`) |
+| `GET /calculator/preferences` | calculate.js (restore last saved preference order) |
 | `GET /skdrive/tree` | loadDrive.js (SidebarTree — full nested folder tree, loaded once on init) |
 | `GET /skdrive?prefix=` | loadDrive.js |
 | `POST /skdrive/download` | loadDrive.js |
