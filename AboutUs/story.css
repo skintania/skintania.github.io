@@ -1,0 +1,53 @@
+.story{
+
+  height:100vh;
+
+  position:relative;
+
+  overflow:hidden;
+
+
+}
+
+.containerImg{
+
+  width:100%;
+  height:100%;
+
+  position:relative;
+
+  
+
+}
+
+.containerImg img{
+
+  position:absolute;
+
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+
+  top:0;
+  left:0;
+
+  will-change:transform;
+
+}
+
+#main{
+  z-index:1;opacity: 0;
+}
+
+#SK{
+  z-index:2;opacity: 0;
+}
+
+#std{
+  z-index:3;opacity: 0;
+
+
+}#tree{
+  z-index:4;opacity: 0;
+}

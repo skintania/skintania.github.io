@@ -1,0 +1,334 @@
+
+.spacer{
+
+  height:100vh;
+
+  display:flex;
+
+  justify-content:center;
+  align-items:center;
+
+  font-size:40px;
+
+  opacity:0.3;
+
+}
+
+/* =========================
+   CHAT SECTION
+========================= */
+
+.chat-section{
+
+  min-height:100vh;
+  overflow:hidden;
+  display:flex;
+
+  justify-content:center;
+  align-items:center;
+
+  padding:40px;
+
+}
+
+/* =========================
+   CHAT CONTAINER
+========================= */
+
+.chat-container{
+
+  width:100%;
+
+  display:flex;
+  flex-direction:column;
+
+}
+
+/* =========================
+   MESSAGE
+========================= */
+
+.message{
+
+  display:flex;
+
+  opacity:0;
+
+}
+
+/* left / right */
+
+.left{
+  flex-direction:row;
+}
+
+.right{
+  flex-direction:row-reverse;
+}
+
+.chat-image{
+
+    width:100%;
+    max-width:260px;
+
+    border-radius:14px;
+
+    display:block;
+    padding-bottom: 10px;
+
+}
+
+/* =========================
+   AVATAR
+========================= */
+
+.avatar{
+
+  border-radius:50%;
+
+  object-fit:cover;
+
+  flex-shrink:0;
+
+}
+
+/* =========================
+   BUBBLE
+========================= */
+
+.bubble{
+
+  background:#222;
+
+  word-break:break-word;
+
+}
+
+.right .bubble{
+
+  background:#3478ff;
+
+}
+
+.name{
+
+  opacity:0.7;
+
+}
+
+.time{
+
+  opacity:0.5;
+
+}
+
+/* =========================
+   TYPING
+========================= */
+
+.typing{
+
+  display:flex;
+
+  opacity:0;
+
+}
+
+.typing span{
+
+  border-radius:50%;
+
+  background:white;
+
+  display:block;
+
+}
+
+/* =====================================================
+   DESKTOP MODE
+===================================================== */
+
+@media (min-width: 769px){
+
+  .chat-container{
+
+    max-width:700px;
+    gap:28px;
+
+  }
+
+  .message{
+
+    gap:14px;
+
+  }
+
+  .left{
+
+    margin-right:120px;
+
+  }
+
+  .right{
+
+    margin-left:120px;
+
+  }
+
+  .avatar{
+
+    width:52px;
+    height:52px;
+
+  }
+
+  .bubble{
+
+    padding:16px 20px;
+
+    border-radius:22px;
+
+    max-width:420px;
+
+  }
+
+  .name{
+
+    font-size:13px;
+
+    margin-bottom:6px;
+
+  }
+
+  .text{
+
+    font-size:17px;
+
+    line-height:1.5;
+
+  }
+
+  .time{
+
+    font-size:12px;
+
+    margin-top:8px;
+
+  }
+
+  .typing{
+
+    gap:6px;
+
+    padding-left:70px;
+
+  }
+
+  .typing span{
+
+    width:11px;
+    height:11px;
+
+  }
+
+}
+
+/* =====================================================
+   MOBILE MODE
+===================================================== */
+
+@media (max-width: 768px){
+
+  .chat-section{
+    /* align-items:flex-end; */
+    padding:20px;
+
+  }
+
+  .chat-container{
+
+    gap:18px;
+
+  }
+
+  .message{
+
+    gap:10px;
+
+  }
+
+  .left{
+
+    margin-right:40px;
+
+  }
+
+  .right{
+
+    margin-left:40px;
+
+  }
+
+  .avatar{
+
+    width:40px;
+    height:40px;
+
+  }
+
+  .bubble{
+
+    padding:12px 16px;
+
+    border-radius:18px;
+
+    max-width:75vw;
+
+  }
+
+  .name{
+
+    font-size:11px;
+
+    margin-bottom:4px;
+
+  }
+
+  .text{
+
+    font-size:15px;
+
+    line-height:1.4;
+
+  }
+
+  .time{
+
+    font-size:10px;
+
+    margin-top:6px;
+
+  }
+
+  .typing{
+
+    gap:5px;
+
+    padding-left:52px;
+
+  }
+
+  .typing span{
+
+    width:9px;
+    height:9px;
+
+  }
+
+  .spacer{
+
+    font-size:28px;
+
+  }
+
+}
