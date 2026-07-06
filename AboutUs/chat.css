@@ -66,6 +66,18 @@
   flex-direction:row-reverse;
 }
 
+.chat-image{
+
+    width:100%;
+    max-width:260px;
+
+    border-radius:14px;
+
+    display:block;
+    padding-bottom: 10px;
+
+}
+
 /* =========================
    AVATAR
 ========================= */

@@ -51,7 +51,7 @@ export function createStoryTimeline(){
       opacity:1
     },
 
-    ">"
+    "<"
   )
 
   // school
@@ -69,7 +69,7 @@ export function createStoryTimeline(){
       duration:2
     },
 
-    ">"
+    "<"
   )
 
   // student

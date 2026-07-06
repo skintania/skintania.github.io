@@ -30,8 +30,8 @@ export async function createChatTimeline() {
 
   messages.forEach((msg, index) => {
 
-    container.innerHTML += `
-
+    
+    let pre_innerhtml = `
       <div class="message ${msg.side} msg-${index}">
 
         <img
@@ -44,6 +44,8 @@ export async function createChatTimeline() {
           <div class="name">
             ${msg.name}
           </div>
+
+          <div id="pend-img"></div>
 
           <div class="text">
             ${msg.text}
@@ -58,7 +60,14 @@ export async function createChatTimeline() {
       </div>
 
     `;
-
+    if(msg.img){
+      const parser = new DOMParser();
+      const dc = parser.parseFromString(pre_innerhtml, 'text/html');
+      dc.getElementById("pend-img").innerHTML += `<img class="chat-image" src="${msg.img}">`
+      pre_innerhtml = dc.body.innerHTML
+      console.log(dc.body.innerHTML)
+    }
+    container.innerHTML += pre_innerhtml
   });
 
   // =========================
@@ -155,13 +164,13 @@ export async function createChatTimeline() {
 
         filter:"blur(0px)",
 
-        duration:1,
+        duration:2,
 
         ease:"power2.out"
 
       }
 
-    ,">");
+    ,"+=1");
 
   });
 
