@@ -133,6 +133,7 @@ const TOGGLE_FIELDS = [
     { id: 'cfg-registration',  key: 'REGISTRATION_OPEN' },
     { id: 'cfg-token-check',   key: 'ENABLE_TOKEN_CHECK' },
     { id: 'cfg-rate-limit',    key: 'RATE_LIMIT_ENABLED' },
+    { id: 'cfg-bypass-otp',   key: 'BYPASS_OTP' },
 ];
 const NUMBER_FIELDS = [
     { id: 'cfg-max-reg',        key: 'MAX_REGISTRATIONS' },
@@ -150,6 +151,7 @@ const CONFIG_LABELS = {
     REGISTRATION_OPEN:           'Registration Open',
     ENABLE_TOKEN_CHECK:          'Token Check',
     RATE_LIMIT_ENABLED:          'Rate Limiting',
+    BYPASS_OTP:                  'Bypass OTP',
     MAX_REGISTRATIONS:           'Max Registrations',
     OTP_EXPIRES_MINUTES:         'OTP Expiry',
     OTP_RESEND_COOLDOWN_SECONDS: 'OTP Resend Cooldown',

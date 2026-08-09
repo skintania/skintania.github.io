@@ -54,7 +54,15 @@ async function submitRegistration(endpoint, formData, submitBtn) {
     const result = await response.json();
 
     if (response.ok && result.success) {
-      window.location.replace(`verify-email.html?identifier=${encodeURIComponent(formData.email)}`);
+      if (result.token) {
+        localStorage.setItem('authToken', result.token);
+        localStorage.setItem('userId',    result.user?.id ?? '');
+        localStorage.setItem('username',  result.user?.username ?? '');
+        localStorage.setItem('role',      result.user?.role ?? '');
+        window.location.replace('/');
+      } else {
+        window.location.replace(`verify-email.html?identifier=${encodeURIComponent(formData.email)}`);
+      }
     } else {
       alert("เกิดข้อผิดพลาด: " + (result.error || "ไม่สามารถลงทะเบียนได้"));
       submitBtn.innerText = originalText;
